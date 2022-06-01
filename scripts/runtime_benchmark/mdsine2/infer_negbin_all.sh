@@ -14,6 +14,8 @@ for n_taxa in 10 25 50 100; do
 
 		negbin_out_dir=${trial_dir}/negbin
 		runtime_file=${negbin_out_dir}/negbin_runtime.txt
+		seed_file=${negbin_out_dir}/negbin_seed.txt
+		echo "${seed}" > $seed_file
 
 		echo "[*] Running negative-binomial inference (n_taxa=${n_taxa}, trial=${trial}; using seed=${seed})"
 		start_time=$(date +%s%N)  # nanoseconds
