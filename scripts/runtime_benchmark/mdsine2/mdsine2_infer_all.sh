@@ -20,7 +20,7 @@ for n_taxa in 10 25 50 100; do
 
 		# ======= Generate and report seed
 		seed=$((n_taxa * trial + 1))
-		seed_file=${inference_out_dir}/seed.txt
+		seed_file=${inference_out_dir}/inference_seed.txt
 		echo "${seed}" > $seed_file
 
 		# ======= Run inference (and compute runtime)
