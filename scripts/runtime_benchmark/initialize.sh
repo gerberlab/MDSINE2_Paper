@@ -7,17 +7,17 @@ require_program python
 
 cd runtime_benchmark/helpers
 study=${DATASET_DIR}/preprocessed/gibson_healthy_agg.pkl
+replicate_study=${DATASET_DIR}/preprocessed/gibson_replicates_agg_taxa.pkl
 
-echo "[*] Preparing dataset of 10 taxa..."
-python select_topk_bugs.py -f ${study} -n 10 -o ${DATASET_DIR}/trimmed_10/top_10_otus.pkl
+for n_taxa in 10 25 50 100; do
+	echo "[*] Preparing dataset of ${n_taxa} taxa..."
+	target_dataset=${DATASET_DIR}/trimmed_${n_taxa}/dataset.pkl
+	target_replicate=${DATASET_DIR}/trimmed_${n_taxa}/replicates.pkl
 
-echo "[*] Preparing dataset of 25 taxa..."
-python select_topk_bugs.py -f ${study} -n 25 -o ${DATASET_DIR}/trimmed_25/top_25_otus.pkl
-
-echo "[*] Preparing dataset of 50 taxa..."
-python select_topk_bugs.py -f ${study} -n 50 -o ${DATASET_DIR}/trimmed_50/top_50_otus.pkl
-
-echo "[*] Preparing dataset of 100 taxa..."
-python select_topk_bugs.py -f ${study} -n 100 -o ${DATASET_DIR}/trimmed_100/top_100_otus.pkl
-
+	python select_topk_bugs.py -f ${study} -n $n_taxa -o $target_dataset
+	python filter_replicates_like_other_dataset.py \
+			--replicate-dataset $replicate_study \
+			--like-other $target_dataset \
+			--output-basepath $target_replicate
+done
 echo "[*] Done."
