@@ -24,5 +24,18 @@ require_program()
 		exit 1;
 	}
 }
+
+require_variable()
+{
+	var_name=$1
+	value=$2
+	if [ -z "$value" ]
+	then
+		echo "var \"$var_name\" is empty"
+		exit 1
+	fi
+}
+
 export require_program
+export require_variable
 
