@@ -35,7 +35,7 @@ for n_taxa in 10 25 50 100; do
 				--n-samples 15000 \
 				--checkpoint 1000 \
 				--multiprocessing 0 \
-				--basepath $out_dir \
+				--basepath $inference_out_dir \
 				--interaction-ind-prior "strong-sparse" \
 				--perturbation-ind-prior "weak-agnostic"
 
