@@ -9,7 +9,7 @@ require_program date
 for n_taxa in 10 25 50 100; do
 	for (( trial = 1; trial < ${N_TRIALS}+1; trial++ )); do
 		seed=$((n_taxa * trial))
-		dataset=${DATASET_DIR}/trimmed_${n_taxa}/healthy.pkl
+		dataset=${DATASET_DIR}/trimmed_${n_taxa}/top_${n_taxa}_otus.pkl
 		trial_dir=${MDSINE2_OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
 
 		negbin_out_dir=${trial_dir}/negbin

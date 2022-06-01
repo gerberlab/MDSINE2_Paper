@@ -113,9 +113,8 @@ if __name__ == "__main__":
     args = parse_arguments()
     study = md2.Study.load(args.study_file)
     top_otu_study = get_top_abundance_data(study, args.n_bugs)
-    savepath = Path(args.output_loc)
-    savepath.mkdir(parents=True, exist_ok=True)
+    save_path = Path(args.output_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    top_otu_study.save(savepath / "top_{}_otus.pkl".format(args.n_bugs))
-
+    top_otu_study.save(save_path)
     print("Saved study object for top {} OTUs".format(args.n_bugs))
