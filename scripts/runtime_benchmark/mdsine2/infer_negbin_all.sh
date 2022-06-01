@@ -36,4 +36,5 @@ for n_taxa in 10 25 50 100; do
 				--chain "${negbin_out_dir}/replicates/mcmc.pkl" \
 				--output-basepath "${negbin_out_dir}/replicates/posterior"
 		echo "[*] Finished negative-binomial visualization."
+	done
 done
