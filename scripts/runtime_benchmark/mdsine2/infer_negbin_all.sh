@@ -3,8 +3,8 @@ set -e
 source runtime_benchmark/settings.sh
 
 
-require_program mdsine2
-require_program date
+require_program "mdsine2 infer-negbin"
+require_program "date"
 
 for n_taxa in 10 25 50 100; do
 	for (( trial = 1; trial < ${MDSINE2_NUM_TRIALS}+1; trial++ )); do
