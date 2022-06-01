@@ -31,7 +31,7 @@ require_variable()
 	value=$2
 	if [ -z "$value" ]
 	then
-		echo "var \"var_name\" is empty"
+		echo "var \"$var_name\" is empty"
 		exit 1
 	fi
 }
