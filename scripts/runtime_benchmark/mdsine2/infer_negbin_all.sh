@@ -3,7 +3,7 @@ set -e
 source runtime_benchmark/settings.sh
 
 
-require_program "mdsine2 infer-negbin"
+require_program "mdsine2"
 require_program "date"
 
 for n_taxa in 10 25 50 100; do
@@ -18,13 +18,7 @@ for n_taxa in 10 25 50 100; do
 		echo "[*] Running negative-binomial inference (n_taxa=${n_taxa}, trial=${trial}; using seed=${seed})"
 		start_time=$(date +%s%N)  # nanoseconds
 
-		mdsine2 infer-negbin \
-				--input $dataset \
-				--seed 0 \
-				--burnin 2000 \
-				--n-samples 6000 \
-				--checkpoint 200 \
-				--basepath $negbin_out_dir
+		mdsine2 infer-negbin --input $dataset --seed 0 --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath $negbin_out_dir
 
 		end_time=$(date +%s%N)
 		elapsed_time=$(( $(($end_time-$start_time)) / 1000000 ))

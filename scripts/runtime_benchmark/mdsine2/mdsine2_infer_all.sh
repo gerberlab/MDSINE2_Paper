@@ -3,7 +3,7 @@ set -e
 source runtime_benchmark/settings.sh
 
 
-require_program "mdsine2 infer"
+require_program "mdsine2"
 require_program "date"
 
 for n_taxa in 10 25 50 100; do
