@@ -6,5 +6,6 @@ echo "[*] Using additional settings from ${_THIS_PATH}"
 
 export OUTPUT_DIR=${OUTPUT_DIR}/runtime_benchmark
 
+export MDSINE2_NUM_TRIALS=5
 export MDSINE2_OUTPUT_DIR=${OUTPUT_DIR}/mdsine2
 export MDSINE2_RUNTIMES=${MDSINE2_OUTPUT_DIR}/runtimes.txt
