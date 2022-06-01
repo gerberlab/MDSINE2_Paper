@@ -50,4 +50,5 @@ for n_taxa in 10 25 50 100; do
 				--chain $out_dir/mcmc.pkl \
 				--output-basepath $out_dir/posterior
 		echo "[*] Finished mdsine2 posterior visualization."
+	done
 done
