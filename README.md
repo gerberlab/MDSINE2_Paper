@@ -1,7 +1,8 @@
 # MDSINE2_figures
 
 
-All scripts should be run from the ```scripts``` directory.
+All scripts should be run from the ```scripts``` directory (to match relative pathing of 
+the root `settings.sh` environment file.)
 
 ## TODOs
 1. include runtime benchmarks.
