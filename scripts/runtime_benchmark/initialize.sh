@@ -18,6 +18,6 @@ for n_taxa in 10 25 50 100; do
 	python filter_replicates_like_other_dataset.py \
 			--replicate-dataset $replicate_study \
 			--like-other $target_dataset \
-			--output-basepath $target_replicate
+			--out-path $target_replicate
 done
 echo "[*] Done."
