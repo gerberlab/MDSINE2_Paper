@@ -14,6 +14,8 @@ for n_taxa in 10 25 50 100; do
 		negbin=${trial_dir}/negbin/replicates/mcmc.pkl
 
 		inference_out_dir=${trial_dir}/inference
+		mkdir -p $inference_out_dir
+
 		runtime_file=${inference_out_dir}/inference_runtime.txt
 
 		# ======= Generate and report seed

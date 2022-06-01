@@ -13,6 +13,8 @@ for n_taxa in 10 25 50 100; do
 		trial_dir=${MDSINE2_OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
 
 		negbin_out_dir=${trial_dir}/negbin
+		mkdir -p $negbin_out_dir
+
 		runtime_file=${negbin_out_dir}/negbin_runtime.txt
 		seed_file=${negbin_out_dir}/negbin_seed.txt
 		echo "${seed}" > $seed_file
