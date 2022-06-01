@@ -6,7 +6,7 @@ source runtime_benchmark/settings.sh
 require_program python
 
 cd runtime_benchmark/helpers
-study=${DATASET_DIR}/gibson_healthy_agg.pkl
+study=${DATASET_DIR}/preprocessed/gibson_healthy_agg.pkl
 
 echo "[*] Preparing dataset of 10 taxa..."
 python select_topk_bugs.py -f ${study} -n 10 -o ${DATASET_DIR}/trimmed_10/healthy.pkl
