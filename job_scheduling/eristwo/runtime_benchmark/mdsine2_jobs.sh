@@ -16,7 +16,7 @@ generate_lsf()
 	n_taxa=$1
 	trial=$2
 
-	inference_lsf_path="${lsf_subdir}/taxa_${n_taxa}_trial_${trial}"
+	inference_lsf_path="${lsf_subdir}/taxa_${n_taxa}_trial_${trial}.lsf"
 
 	echo "Creating ${inference_lsf_path}"
 	cat <<- EOFDOC > $inference_lsf_path
