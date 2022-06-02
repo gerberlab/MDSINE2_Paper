@@ -1,5 +1,6 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export PROJECT_DIR="/mnt/d/Projects/MDSINE2_figures"
+export PROJECT_DIR="/data/cctm/darpa_perturbation_mouse_study/sawal_test/mdsine2_methods/MDSINE2_figures"
+#"/Users/microbiome/Desktop/MDSINE2_figures"
 export DATASET_NAME="gibson"
 
 
@@ -19,23 +20,24 @@ export PLOTS_OUT_DIR="${OUTPUT_DIR}/plots"
 
 require_program()
 {
-	command -v ${1} >/dev/null 2>&1 || {
-		echo >&2 "I require ${1} but it's not installed.  Aborting.";
-		exit 1;
-	}
+    command -v ${1} >/dev/null 2>&1 || {
+        echo >&2 "I require ${1} but it's not installed.  Aborting.";
+        exit 1;
+    }
 }
 
 require_variable()
 {
-	var_name=$1
-	value=$2
-	if [ -z "$value" ]
-	then
-		echo "var \"$var_name\" is empty"
-		exit 1
-	fi
+    var_name=$1
+    value=$2
+    if [ -z "$value" ]
+    then
+        echo "var \"$var_name\" is empty"
+        exit 1
+    fi
 }
 
 export require_program
 export require_variable
+
 
