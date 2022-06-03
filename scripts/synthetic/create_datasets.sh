@@ -13,7 +13,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	-i ${GLV_PARAMS} \
 	-t ${TIME_POINTS} \
 	-n ${COHORT_SIZE} \
-	-o ${DATASET_DIR}/datasets/trial_${seed} \
+	-o ${DATASET_DIR}/data/trial_${seed} \
 	-s ${seed} \
 	--process_var ${PROCESS_VAR} \
 	-dt ${SIMULATION_DT} \

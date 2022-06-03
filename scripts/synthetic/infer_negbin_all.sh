@@ -9,7 +9,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	for noise_level in "low" "medium" "high"; do
 		seed=0
 
-		dataset=${DATASET_DIR}/trial_${trial}/subjset_${noise_level}.pkl
+		dataset=${DATASET_DIR}/data/trial_${trial}/subjset_${noise_level}.pkl
 		trial_dir=${OUTPUT_DIR}/trial_${trial}/${noise_level}_noise
 		negbin_out_dir=${trial_dir}/negbin
 		mkdir -p $negbin_out_dir
