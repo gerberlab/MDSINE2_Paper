@@ -27,6 +27,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 
 		# ======= Draw visualizations.
 		echo "[*] Drawing mdsine2 posterior visualization."
+		mkdir -p $out_dir/posterior
 		mdsine2 visualize-posterior \
 				--chain $inference_out_dir/mcmc.pkl \
 				--output-basepath $out_dir/posterior
