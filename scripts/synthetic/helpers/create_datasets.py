@@ -66,13 +66,15 @@ def make_synthetic(
     return syn
 
 
-def parse_glv_params(params_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str]]:
+def parse_glv_params(params_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], np.ndarray, np.ndarray]:
     params = np.load(str(params_path))
     growth = params['growth_rates']
     interactions = params['interactions']
+    initial_cond_mean = params['est_Y0_mean'] * np.ones(len(growth), dtype=float)
+    initial_cond_var = params['est_Y0_std'] * np.ones(len(growth), dtype=float)
     indicators = (interactions != 0.0)
     taxa_names = [f'TAXA_{i+1}' for i in range(len(growth))]
-    return growth, interactions, indicators, taxa_names
+    return growth, interactions, indicators, taxa_names, initial_cond_mean, initial_cond_var
 
 
 def parse_time_points(time_points_path: Path) -> np.ndarray:
@@ -86,7 +88,7 @@ def parse_time_points(time_points_path: Path) -> np.ndarray:
 
 def main():
     args = parse_args()
-    growth_rates, interactions, interaction_indicators, taxa_names = parse_glv_params(Path(args.input_glv_params))
+    growth_rates, interactions, interaction_indicators, taxa_names, initial_cond_mean, initial_cond_var = parse_glv_params(Path(args.input_glv_params))
     time_points = parse_time_points(args.time_points_file)
     seed = args.seed
 
@@ -103,7 +105,7 @@ def main():
     # Generate the trajectories.
     synthetic.generate_trajectories(
         dt=args.sim_dt,
-        init_dist=variables.Uniform(low=1e5, high=1e7),
+        init_dist=variables.Normal(initial_cond_mean, initial_cond_var),
         processvar=model.MultiplicativeGlobal(args.process_var)
     )
 
