@@ -70,8 +70,8 @@ def parse_glv_params(params_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndar
     params = np.load(str(params_path))
     growth = params['growth_rates']
     interactions = params['interactions']
-    initial_cond_mean = params['est_Y0_mean'] * np.ones(len(growth), dtype=float)
-    initial_cond_var = params['est_Y0_std'] * np.ones(len(growth), dtype=float)
+    initial_cond_mean = params['initial_mean'] * np.ones(len(growth), dtype=float)
+    initial_cond_var = params['initial_std'] * np.ones(len(growth), dtype=float)
     indicators = (interactions != 0.0)
     taxa_names = [f'TAXA_{i+1}' for i in range(len(growth))]
     return growth, interactions, indicators, taxa_names, initial_cond_mean, initial_cond_var
