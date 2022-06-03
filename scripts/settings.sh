@@ -1,5 +1,5 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export PROJECT_DIR="/mnt/d/Projects/MDSINE2_figures"
+export PROJECT_DIR="/mnt/f/MDSINE2_figures"
 
 
 # =================== DON'T MODIFY THESE (unless you really need to)
