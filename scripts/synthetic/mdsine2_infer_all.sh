@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source runtime_benchmark/settings.sh
+source synthetic/settings.sh
 
 
 for n_taxa in 10 25 50 100; do
