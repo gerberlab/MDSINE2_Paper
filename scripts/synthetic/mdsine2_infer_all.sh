@@ -12,7 +12,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 
 		# ======= Run inference (and compute runtime)
 		echo "[*] Running mdsine2 inference (trial=${trial}, noise level=${noise_level})"
-		mdsine2 infer \
+		python synthetic/helpers/inference.py \
 				--input $dataset \
 				--negbin ${NEGBIN_A0} ${NEGBIN_A1} \
 				--seed 0 \
