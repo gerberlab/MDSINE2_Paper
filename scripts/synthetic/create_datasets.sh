@@ -8,7 +8,7 @@ cd synthetic/helpers
 
 
 for (( seed = 0; seed < ${NUM_SEEDS}; seed++ )); do
-	python create_datsets.py \
+	python create_datasets.py \
 	-i ${GLV_PARAMS} \
 	-t ${TIME_POINTS} \
 	-n ${COHORT_SIZE} \
