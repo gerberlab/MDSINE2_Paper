@@ -79,9 +79,6 @@ def main():
 
     # 1) load dataset
     study = md2.Study.load(args.input)
-    if args.rename_study is not None:
-        if args.rename_study.lower() != 'none':
-            study.name = args.rename_study
     md2.seed(args.seed)
 
     # 2) Load the model parameters
