@@ -8,6 +8,7 @@ cd synthetic/helpers
 
 
 for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
+	seed=$trial
 	python create_datasets.py \
 	-i ${GLV_PARAMS} \
 	-t ${TIME_POINTS} \
