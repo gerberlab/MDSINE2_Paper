@@ -35,7 +35,7 @@ start_time=$(date +%s%N)  # nanoseconds
 mdsine2 infer \
 		--input $dataset \
 		--negbin $negbin \
-		--seed 0 \
+		--seed ${seed} \
 		--burnin 5000 \
 		--n-samples 15000 \
 		--checkpoint 1000 \
