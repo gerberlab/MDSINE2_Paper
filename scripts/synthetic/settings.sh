@@ -5,6 +5,8 @@ source ./settings.sh  # use parent settings (scripts/settings.sh)
 _THIS_PATH="${PROJECT_DIR}/scripts/synthetic/settings.sh"
 echo "[*] Using additional settings from ${_THIS_PATH}"
 
+export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/synthetic/logging.ini"
+
 export GLV_PARAMS=${DATASET_DIR}/glv.npz
 export TIME_POINTS=${DATASET_DIR}/time_points.txt
 
