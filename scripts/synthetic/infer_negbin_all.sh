@@ -4,29 +4,19 @@ source synthetic/settings.sh
 
 
 require_program "mdsine2"
-require_program "date"
 
 for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	for noise_level in "low" "medium" "high"; do
-		dataset=${DATASET_DIR}/trimmed_${n_taxa}/replicates.pkl
-		trial_dir=${MDSINE2_OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
+		seed=0
 
+		dataset=${DATASET_DIR}/trial_${trial}/subjset_${noise_level}.pkl
+		trial_dir=${OUTPUT_DIR}/trial_${trial}/${noise_level}_noise
 		negbin_out_dir=${trial_dir}/negbin
 		mkdir -p $negbin_out_dir
 
-		runtime_file=${negbin_out_dir}/negbin_runtime.txt
-		seed_file=${negbin_out_dir}/negbin_seed.txt
-		echo "${seed}" > $seed_file
-
-		echo "[*] Running negative-binomial inference (n_taxa=${n_taxa}, trial=${trial}; using seed=${seed})"
-		start_time=$(date +%s%N)  # nanoseconds
-
+		echo "[*] Running negative-binomial inference (trial=${trial}, noise level=${noise_level})"
 		mdsine2 infer-negbin --input $dataset --seed 0 --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath $negbin_out_dir
-
-		end_time=$(date +%s%N)
-		elapsed_time=$(( $(($end_time-$start_time)) / 1000000 ))
-		echo "[*] Finished negative-binomial inference. (${elapsed_time} ms)"
-		echo "${elapsed_time}" > $runtime_file
+		echo "[*] Finished negative-binomial inference."
 
 		echo "[*] Drawing negative-binomial visualization."
 		mdsine2 visualize-negbin \
