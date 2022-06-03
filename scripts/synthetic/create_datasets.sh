@@ -7,12 +7,12 @@ require_program python
 cd synthetic/helpers
 
 
-for (( seed = 0; seed < ${NUM_SEEDS}; seed++ )); do
+for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	python create_datasets.py \
 	-i ${GLV_PARAMS} \
 	-t ${TIME_POINTS} \
 	-n ${COHORT_SIZE} \
-	-o ${DATASET_DIR}/datasets/seed_${seed} \
+	-o ${DATASET_DIR}/datasets/trial_${seed} \
 	-s ${seed} \
 	--process_var ${PROCESS_VAR} \
 	-dt ${SIMULATION_DT} \
