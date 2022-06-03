@@ -30,7 +30,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 		mkdir -p $out_dir/posterior
 		mdsine2 visualize-posterior \
 				--chain $inference_out_dir/mcmc.pkl \
-				--output-basepath $out_dir/posterior
+				--output-basepath $inference_out_dir/posterior
 		echo "[*] Finished mdsine2 posterior visualization."
 	done
 done
