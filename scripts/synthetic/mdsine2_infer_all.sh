@@ -5,9 +5,9 @@ source synthetic/settings.sh
 
 for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	for noise_level in "low" "medium" "high"; do
-		dataset=${DATASET_DIR}/data/trial_${trial}/subjset_${noise_level}.pkl
-		trial_dir=${OUTPUT_DIR}/trial_${trial}/${noise_level}_noise
-		inference_out_dir=${trial_dir}/inference
+		dataset=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/subjset_${noise_level}.pkl
+		trial_output_dir=${OUTPUT_DIR}/trial_${trial}/${noise_level}_noise
+		inference_out_dir=${trial_output_dir}/inference
 		mkdir -p $inference_out_dir
 
 		# ======= Run inference (and compute runtime)
