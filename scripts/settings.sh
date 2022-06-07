@@ -32,6 +32,7 @@ export require_variable
 
 require_variable "DATASET_NAME" "${DATASET_NAME}"
 
+export CLV_DIR="${PROJECT_DIR}/submodules/clv_fork"
 export DATASET_DIR="${PROJECT_DIR}/datasets/${DATASET_NAME}"
 export PREPROCESS_DIR="${DATASET_DIR}/preprocessed"
 export OUTPUT_DIR="${DATASET_DIR}/output"

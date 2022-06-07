@@ -11,7 +11,7 @@ for read_depth in 1000 25000; do
 			mkdir -p $inference_out_dir
 
 			# ======= Run inference
-			echo "[*] Running mdsine2 inference (trial=${trial}, noise level=${noise_level})"
+			echo "[*] Running mdsine2 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 			python synthetic/helpers/inference.py \
 					--input $dataset \
 					--negbin ${NEGBIN_A0} ${NEGBIN_A1} \
