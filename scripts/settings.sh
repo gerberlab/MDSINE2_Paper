@@ -1,20 +1,10 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export PROJECT_DIR="/mnt/d/Projects/MDSINE2_figures"
-export DATASET_NAME="gibson"
+export PROJECT_DIR="/mnt/f/MDSINE2_figures"
 
 
 # =================== DON'T MODIFY THESE (unless you really need to)
 _THIS_PATH="${PROJECT_DIR}/scripts/settings.sh"  # the location of this file.
 echo "[*] Using environment settings from ${_THIS_PATH}."
-
-
-export DATASET_DIR="${PROJECT_DIR}/datasets/${DATASET_NAME}"
-export PREPROCESS_DIR="${DATASET_DIR}/preprocessed"
-
-# === outputs go here
-export OUTPUT_DIR="${DATASET_DIR}/output"
-export PHYLOGENY_OUT_DIR="${OUTPUT_DIR}/phylogeny"
-export PLOTS_OUT_DIR="${OUTPUT_DIR}/plots"
 
 
 require_program()
@@ -31,7 +21,7 @@ require_variable()
 	value=$2
 	if [ -z "$value" ]
 	then
-		echo "var \"$var_name\" is empty"
+		echo "Environment variable \"$var_name\" is empty"
 		exit 1
 	fi
 }
@@ -39,3 +29,11 @@ require_variable()
 export require_program
 export require_variable
 
+
+require_variable "DATASET_NAME" "${DATASET_NAME}"
+
+export DATASET_DIR="${PROJECT_DIR}/datasets/${DATASET_NAME}"
+export PREPROCESS_DIR="${DATASET_DIR}/preprocessed"
+export OUTPUT_DIR="${DATASET_DIR}/output"
+export PHYLOGENY_OUT_DIR="${OUTPUT_DIR}/phylogeny"
+export PLOTS_OUT_DIR="${OUTPUT_DIR}/plots"
