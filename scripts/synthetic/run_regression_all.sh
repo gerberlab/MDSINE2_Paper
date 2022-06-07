@@ -3,6 +3,16 @@ set -e
 source synthetic/settings.sh
 
 
+run_regression() {
+	model=$1
+	regression_type=$2
+	echo "[*] Running ${model}, ${regression_type} (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
+	out_dir=$intermediate_dir/$model/$regression_type
+	mkdir -p $out_dir
+	python ${CLV_DIR}/healthy_prediction_experiments.py -m $model -r $regression_type -o $out_dir -i $intermediate_dir
+}
+
+
 for read_depth in 1000 25000; do
 	for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 		for noise_level in "low" "medium" "high"; do
@@ -23,13 +33,3 @@ for read_depth in 1000 25000; do
 		done
 	done
 done
-
-
-run_regression() {
-	model=$1
-	regression_type=$2
-	echo "[*] Running ${model}, ${regression_type} (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
-	out_dir=$intermediate_dir/$model/$regression_type
-	mkdir -p $out_dir
-	python ${CLV_DIR}/healthy_prediction_experiments.py -m $model -r $regression_type -o $out_dir -i $intermediate_dir
-}
