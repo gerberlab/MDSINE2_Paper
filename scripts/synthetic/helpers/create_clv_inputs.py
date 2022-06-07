@@ -104,7 +104,7 @@ if __name__ == "__main__":
     for subj in study:
         counts = subj.matrix()["abs"].T
         times = subj.times
-        perturb_ids = np.zeros(times.shape)
+        perturb_ids = np.zeros(shape=(len(times), 1))
 
         assert len(times) == counts.shape[0]
         assert counts.shape[1] == len(taxa)
