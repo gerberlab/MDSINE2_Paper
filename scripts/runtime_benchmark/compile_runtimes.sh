@@ -30,4 +30,6 @@ for n_taxa in 10 25 50 100; do
 		add_entry "gLV-ra ridge" "glv-ra/ridge"
 		add_entry "lra" "lra/elastic-net"
 done
+
+echo "[*] Wrote results to ${csv_path}"
 echo "[*] Done."
