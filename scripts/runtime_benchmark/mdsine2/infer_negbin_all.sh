@@ -7,16 +7,14 @@ require_program "mdsine2"
 require_program "date"
 
 for n_taxa in 10 25 50 100; do
-	for (( trial = 1; trial < ${MDSINE2_NUM_TRIALS}+1; trial++ )); do
+	for (( trial = 1; trial < ${NUM_TRIALS}+1; trial++ )); do
 		seed=$((n_taxa * trial))
 		dataset=${DATASET_DIR}/trimmed_${n_taxa}/replicates.pkl
-		trial_dir=${MDSINE2_OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
-
-		negbin_out_dir=${trial_dir}/negbin
+		negbin_out_dir=${OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}/mdsine2_negbin
 		mkdir -p $negbin_out_dir
 
-		runtime_file=${negbin_out_dir}/negbin_runtime.txt
-		seed_file=${negbin_out_dir}/negbin_seed.txt
+		runtime_file=${negbin_out_dir}/runtime.txt
+		seed_file=${negbin_out_dir}/seed.txt
 		echo "${seed}" > $seed_file
 
 		echo "[*] Running negative-binomial inference (n_taxa=${n_taxa}, trial=${trial}; using seed=${seed})"
