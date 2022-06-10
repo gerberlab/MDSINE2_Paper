@@ -16,9 +16,7 @@ bash runtime_benchmark/initialize.sh
 
 ## 2. Run the code to estimate the parameters of the model 
 
--For gLV and gLV we use both elastic-net and ridge regression; for all other models we use elastic-net 
-
--The outputs are saved in ../datasets/gibson/outputs (relative to ```scripts``` directory)
+-For gLV and gLV we use both elastic-net and ridge regression; for all other models we use elastic-net
 
 ```
 bash runtime_benchmark/other_methods/run_clv.sh
