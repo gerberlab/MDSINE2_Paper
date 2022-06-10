@@ -4,6 +4,11 @@
 All scripts should be run from the ```scripts``` directory (to match relative pathing of 
 the root `settings.sh` environment file.)
 
+Pull this code via
+```bash
+git clone --recurse-submodules https://github.com/gibsonlab/MDSINE2_figures.git
+```
+
 ## TODOs
 1. include runtime benchmarks.
     - CLV
