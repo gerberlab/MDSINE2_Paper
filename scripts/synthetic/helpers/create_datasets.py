@@ -14,7 +14,7 @@ from mdsine2.names import STRNAMES
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input_glv_params', type=str, required=True,
-                        help='<Required> The path to a .npz file containing `growth_rates` and `interactions` arrays')
+                        help='<Required> The path to a .npz file containing `growth_rates`, `interactions` arrays')
     parser.add_argument('-t', '--time_points_file', type=str, required=True,
                         help='<Required> A path to a text file containing a list of time points to pull out gLV '
                              'measurements from.')
