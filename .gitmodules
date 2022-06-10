@@ -1,0 +1,3 @@
+[submodule "submodules/clv_fork"]
+	path = submodules/clv_fork
+	url = https://github.com/gibsonlab/clv_fork.git

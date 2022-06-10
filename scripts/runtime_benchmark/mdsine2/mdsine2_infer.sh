@@ -34,7 +34,7 @@ start_time=$(date +%s%N)  # nanoseconds
 mdsine2 infer \
 		--input $dataset \
 		--negbin $negbin \
-		--seed 0 \
+		--seed ${seed}
 		--burnin 5000 \
 		--n-samples 15000 \
 		--checkpoint 1000 \
@@ -50,7 +50,8 @@ echo "${elapsed_time}" > $runtime_file
 
 # ======= Draw visualizations.
 echo "[*] Drawing mdsine2 posterior visualization."
+mkdir -p $inference_out_dir/posterior
 mdsine2 visualize-posterior \
 		--chain $inference_out_dir/mcmc.pkl \
-		--output-basepath $out_dir/posterior
+		--output-basepath $inference_out_dir/posterior
 echo "[*] Finished mdsine2 posterior visualization."

@@ -1,4 +1,5 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
+export DATASET_NAME="gibson"
 source ./settings.sh  # use parent settings (scripts/settings.sh)
 
 _THIS_PATH="${PROJECT_DIR}/scripts/runtime_benchmark/settings.sh"
