@@ -10,8 +10,9 @@ study=${DATASET_DIR}/preprocessed/gibson_healthy_agg_taxa_filtered.pkl
 replicate_study=${DATASET_DIR}/preprocessed/gibson_replicates_agg_taxa.pkl
 
 for n_taxa in 10 25 50 100; do
-	echo "[*] Preparing dataset of ${n_taxa} taxa..."
 	target_dir=${DATASET_DIR}/trimmed_${n_taxa}
+
+	echo "[*] Preparing dataset of ${n_taxa} taxa... (target dir = ${target_dir})"
 	mkdir -p ${target_dir}
 
 	target_dataset=${target_dir}/dataset.pkl

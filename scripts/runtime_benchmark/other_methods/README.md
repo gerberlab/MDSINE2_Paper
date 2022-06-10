@@ -10,8 +10,6 @@ the root `settings.sh` environment file.)
 
 -The location of the source files are provided in the "settings.sh". Modify the variables to provide the right input data.
 
--The resulting files are saved in  "scripts/runtime_benchmark/other_methods/code_repo/data/gibson"
-
 ```
 bash runtime_benchmark/initialize.sh
 ```
