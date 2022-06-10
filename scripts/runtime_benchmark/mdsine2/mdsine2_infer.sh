@@ -15,17 +15,16 @@ require_variable "trial" $trial
 
 dataset=${DATASET_DIR}/trimmed_${n_taxa}/dataset.pkl
 
-trial_dir=${MDSINE2_OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
-negbin=${trial_dir}/negbin/replicates/mcmc.pkl
-
-inference_out_dir=${trial_dir}/inference
+trial_dir=${OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
+negbin_out_dir=${trial_dir}/mdsine2_negbin/replicates/mcmc.pkl
+inference_out_dir=${trial_dir}/mdsine2
 mkdir -p $inference_out_dir
 
-runtime_file=${inference_out_dir}/inference_runtime.txt
+runtime_file=${inference_out_dir}/runtime.txt
 
 # ======= Generate and report seed
 seed=$((n_taxa * trial + 1))
-seed_file=${inference_out_dir}/inference_seed.txt
+seed_file=${inference_out_dir}/seed.txt
 echo "${seed}" > $seed_file
 
 # ======= Run inference (and compute runtime)

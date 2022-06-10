@@ -7,32 +7,33 @@ require_program "mdsine2"
 require_program "date"
 
 n_taxa=$1
-model_name=$2
-regression_type=$3
+trial=$2
+model_name=$3
+regression_type=$4
 
 require_variable "n_taxa" $n_taxa
 require_variable "model_name" $model_name
 require_variable "regression_type" $regression_type
 
 
-input_dataset_dir="${OTHER_METHODS_DATA_DIR}/trimmed_${n_taxa}"
-output_dir="${OTHER_METHODS_OUTPUT_DIR}/${model_name}/taxa_top${n_taxa}"
-inference_out_dir="${output_dir}/inference"
-runtime_file="${inference_out_dir}/runtime.txt"
+input_dataset_dir="${REGRESSION_DATA_DIR}/trimmed_${n_taxa}"
+trial_dir="${OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}"
 
-mkdir -p $inference_out_dir
-echo "[*] Saving output to ${inference_out_dir}"
+output_dir="${trial_dir}/${model_name}/${regression_type}"
+runtime_file="${output_dir}/runtime.txt"
+
+mkdir -p $output_dir
+echo "[*] Saving output to ${output_dir}"
 
 echo "[*] Running model ${model_name} with ${regression_type} for top "\
 "${n_taxa} OTUs"
 start_time=$(date +%s%N)  # nanoseconds
 
-python ${OTHER_METHODS_CODE_DIR}/healthy_prediction_experiments.py \
+python ${REGRESSION_CODE_DIR}/healthy_prediction_experiments.py \
     -m "${model_name}" \
     -r "${regression_type}" \
-    -o "${inference_out_dir}" \
-    -i "${input_dataset_dir}" \
-    -t "${OTHER_METHODS_RUNTIMES}"
+    -o "${output_dir}" \
+    -i "${input_dataset_dir}"
 
 end_time=$(date +%s%N)
 elapsed_time=$(( $(($end_time-$start_time)) / 1000000 ))
