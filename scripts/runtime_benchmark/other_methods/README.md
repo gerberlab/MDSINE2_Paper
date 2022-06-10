@@ -13,7 +13,7 @@ the root `settings.sh` environment file.)
 -The resulting files are saved in  "scripts/runtime_benchmark/other_methods/code_repo/data/gibson"
 
 ```
-bash script/runtime_benchmark/initialize.sh
+bash runtime_benchmark/initialize.sh
 ```
 
 ## 2. Run the code to estimate the parameters of the model 
@@ -23,14 +23,14 @@ bash script/runtime_benchmark/initialize.sh
 -The outputs are saved in ../datasets/gibson/outputs (relative to ```scripts``` directory)
 
 ```
-bash script/runtime_benchmark/other_methods/run_clv.sh
+bash runtime_benchmark/other_methods/run_clv.sh
 ```
 ```
-bash script/runtime_benchmark/other_methods/run_glv.sh
+bash runtime_benchmark/other_methods/run_glv.sh
 ```
 ```
-bash script/runtime_benchmark/other_methods/run_glv_ra.sh
+bash runtime_benchmark/other_methods/run_glv_ra.sh
 ```
 ```
-bash script/runtime_benchmark/other_methods/run_lra.sh
+bash runtime_benchmark/other_methods/run_lra.sh
 ```
