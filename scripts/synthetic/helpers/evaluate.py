@@ -64,6 +64,8 @@ def mdsine_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
 
     # Extract cluster/taxa ordering (each taxa is its own cluster, but order might not be guaranteed)
     clustering = mcmc.graph[STRNAMES.CLUSTERING].get_trace_from_disk(section='posterior')
+
+    # TODO: permute matrix based on desired taxa ordering.
     exit(1)
 
     return interactions, growths, interaction_indicators
@@ -86,6 +88,15 @@ def regression_output(result_dir: Path, model_name: str, regression_type: str) -
     est_interactions = res.A
     est_growth = res.g
     return est_growth, est_interactions
+
+
+def regression_interaction_pvals(result_dir: Path, model_name: str, regression_type: str) -> np.ndarray:
+    """
+    Generator which yields growth/interaction params estimated through regression.
+    :param result_dir:
+    :return:
+    """
+    raise NotImplementedError()
 
 
 # ======================== Error metrics =======================
@@ -118,8 +129,8 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
 
         # MDSINE2 inference error eval
-        _, growths, _, clustering = mdsine_output(result_dir)
-        pred_growth = np.zeros(1)  # TODO: parse inferred growth rate matrix
+        _, growths, _ = mdsine_output(result_dir)
+        pred_growth = np.zeros(1)  # TODO: parse inferred growth rate matrix from samples
         _add_entry('MDSINE2', _error_metric(pred_growth, true_growth))
 
         # CLV inference error eval
@@ -153,7 +164,7 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
             _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_interaction, true_interactions))
 
         # MDSINE2 inference error eval
-        mcmc = mdsine_output(result_dir)
+        interactions, _, _ = mdsine_output(result_dir)
         pred_interaction = np.zeros(1)  # TODO: parse inferred growth rate matrix
         _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
 
@@ -177,27 +188,31 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         raise np.sum(pred & truth) / len(truth)
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
-        def _add_entry(_method: str, _fpr: float, _tpr: float):
-            df_entries.append({
-                'Method': _method,
-                'ReadDepth': read_depth,
-                'Trial': trial_num,
-                'NoiseLevel': noise_level,
-                'FPR': _fpr,
-                'TPR': _tpr
-            })
+        def _compute_roc_curve(_method: str, _pvalues: np.ndarray):
+            """
+            Computes a range of FPR/TPR pairs and adds them all to the dataframe.
+            :param _pvalues: An (N_taxa x N_taxa) matrix of p-values for each pair of interactions.
+            """
+            q = np.linspace(0, 1, 1000)
+            preds = np.expand_dims(_pvalues, axis=2) > np.expand_dims(q, axis=(0, 1))
+            for i in range(len(q)):
+                df_entries.append({
+                    'Method': _method,
+                    'ReadDepth': read_depth,
+                    'Trial': trial_num,
+                    'NoiseLevel': noise_level,
+                    'FPR': _false_positive_rate(preds[:, :, i], true_indicators),
+                    'TPR': _true_positive_rate(preds[:, :, i], true_indicators)
+                })
 
         def _add_regression_entry(_method: str, _regression_type: str):
-            raise NotImplementedError()
+            interaction_p_values = regression_interaction_pvals(result_dir, _method, _regression_type)  # (N x N)
+            _compute_roc_curve(f'{_method}-{_regression_type}', interaction_p_values)
 
         # MDSINE2 inference error eval
-        mcmc = mdsine_output(result_dir)
-        pred_indicators = np.zeros(1)  # TODO: parse inferred growth rate matrix
-        _add_entry(
-            'MDSINE2',
-            _false_positive_rate(pred_indicators, true_indicators),
-            _true_positive_rate(pred_indicators, true_indicators)
-        )
+        interactions, growths, interaction_indicators = mdsine_output(result_dir)
+        indicator_pvals = np.zeros(1)  # TODO: parse inferred interaction probability matrix
+        _compute_roc_curve('MDSINE2', indicator_pvals)
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -210,6 +225,13 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 
 
 def evaluate_holdout_trajectory_errors(true_growth: np.ndarray, true_interactions: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
+    """
+    Generate a new subject and use it as a "holdout" dataset.
+    :param true_growth:
+    :param true_interactions:
+    :param results_base_dir:
+    :return:
+    """
     raise NotImplementedError()
 
 
