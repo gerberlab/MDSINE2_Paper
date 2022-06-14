@@ -16,7 +16,7 @@ require_variable "trial" $trial
 dataset=${DATASET_DIR}/trimmed_${n_taxa}/dataset.pkl
 
 trial_dir=${OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
-negbin_out_dir=${trial_dir}/mdsine2_negbin/replicates/mcmc.pkl
+negbin=${trial_dir}/mdsine2_negbin/replicates/mcmc.pkl
 inference_out_dir=${trial_dir}/mdsine2
 mkdir -p $inference_out_dir
 
@@ -34,7 +34,7 @@ start_time=$(date +%s%N)  # nanoseconds
 mdsine2 infer \
 		--input $dataset \
 		--negbin $negbin \
-		--seed ${seed}
+		--seed ${seed} \
 		--burnin 5000 \
 		--n-samples 15000 \
 		--checkpoint 1000 \
