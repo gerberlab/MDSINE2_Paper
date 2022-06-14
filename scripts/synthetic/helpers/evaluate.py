@@ -1,10 +1,12 @@
 from typing import Tuple, Iterator
 from pathlib import Path
 import argparse
+import pickle
 
 import numpy as np
 import pandas as pd
 import mdsine2 as md2
+from mdsine2.names import STRNAMES
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,12 +52,21 @@ def noise_level_dirs(trial_dir: Path) -> Iterator[Tuple[str, Path]]:
 
 
 # ========================= Method output iterators =======================
-def mdsine_output(result_dir: Path) -> md2.BaseMCMC:
+def mdsine_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Generator which yields MDSINE2 study objects for each trial.
+    Parser which extracts glv params from the specified results directory.
     :return:
     """
-    return md2.BaseMCMC.load(str(result_dir / "mdsine2" / "TODOPATH.pkl"))
+    mcmc = md2.BaseMCMC.load(str(result_dir / "mdsine2" / "mcmc.pkl"))
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
+    growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
+    interaction_indicators = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR].get_trace_from_disk(section='posterior')
+
+    # Extract cluster/taxa ordering (each taxa is its own cluster, but order might not be guaranteed)
+    clustering = mcmc.graph[STRNAMES.CLUSTERING].get_trace_from_disk(section='posterior')
+    exit(1)
+
+    return interactions, growths, interaction_indicators
 
 
 def regression_output(result_dir: Path, model_name: str, regression_type: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -64,10 +75,16 @@ def regression_output(result_dir: Path, model_name: str, regression_type: str) -
     :param result_dir:
     :return:
     """
-    result_path = result_dir / model_name / regression_type / "TODOPATH.pkl"
-    # TODO
-    est_growth = None
-    est_interactions = None
+    result_dir = result_dir / model_name / regression_type
+    result_paths = list(result_dir.glob('*.pkl'))
+    if len(result_paths) == 0:
+        raise FileNotFoundError(f"Unable to locate any .pkl files in {result_dir}.")
+    result_path = result_paths[0]
+
+    with open(result_path, 'rb') as f:
+        res = pickle.load(f)
+    est_interactions = res.A
+    est_growth = res.g
     return est_growth, est_interactions
 
 
@@ -101,12 +118,11 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
 
         # MDSINE2 inference error eval
-        mcmc = mdsine_output(result_dir)
+        _, growths, _, clustering = mdsine_output(result_dir)
         pred_growth = np.zeros(1)  # TODO: parse inferred growth rate matrix
         _add_entry('MDSINE2', _error_metric(pred_growth, true_growth))
 
         # CLV inference error eval
-        _add_regression_entry("clv", "elastic_net")
         _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
@@ -142,7 +158,6 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
         _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
 
         # CLV inference error eval
-        _add_regression_entry("clv", "elastic_net")
         _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
@@ -185,7 +200,6 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         )
 
         # CLV inference error eval
-        _add_regression_entry("clv", "elastic_net")
         _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
