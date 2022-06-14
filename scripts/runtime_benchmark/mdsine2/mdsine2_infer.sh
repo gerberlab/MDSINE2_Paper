@@ -52,6 +52,6 @@ echo "${elapsed_time}" > $runtime_file
 echo "[*] Drawing mdsine2 posterior visualization."
 mkdir -p $inference_out_dir/posterior
 mdsine2 visualize-posterior \
-		--chain $inference_out_dir/mcmc.pkl \
+		--chain $inference_out_dir/healthy/mcmc.pkl \
 		--output-basepath $inference_out_dir/posterior
 echo "[*] Finished mdsine2 posterior visualization."
