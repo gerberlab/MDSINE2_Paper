@@ -133,6 +133,21 @@ def denoise(counts, t_pts, effects=None):
 
     return denoised_traj
 
+def reformat_U(U):
+
+    U_flat = np.concatenate([np.unique(u.flatten()).tolist() for u in U])
+    u_unique = np.sort(np.unique(U_flat))
+    u_unique = [u for u in u_unique if u!=0]
+    final_U = []
+    for u in U:
+        u_ = u.flatten()
+        new_u = np.zeros((u_.shape[0], len(u_unique)))
+        for i in range(len(u_unique)):
+            new_u[:,i] = np.where(u_== u_unique[i], u_unique[i], 0)
+        final_U.append(new_u)
+    return final_U
+
+
 if __name__ == "__main__":
     sample_id_to_subject_id = {}
     subject_id_time = {}
@@ -194,6 +209,7 @@ if __name__ == "__main__":
         U_healthy.append(u)
         T_healthy.append(t)
 
+    U_healthy = reformat_U(U_healthy)
     Y_healthy_denoised = denoise(Y_healthy, T_healthy, effects=U_healthy)
     savepath = Path(args.output_loc)
     pkl.dump(Y_healthy, open(savepath / "Y.pkl", "wb"))
