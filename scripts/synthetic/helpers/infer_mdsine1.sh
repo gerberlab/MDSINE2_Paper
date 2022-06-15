@@ -2,10 +2,9 @@
 set -e
 source synthetic/settings.sh
 
-alias matlab=$MATLAB
 echo "MATLAB DIR: ${MATLAB_DIR}"
 echo "MATLAB executable: ${MATLAB}"
-require_program matlab
+require_program ${MATLAB}
 
 read_depth=$1
 trial=$2
