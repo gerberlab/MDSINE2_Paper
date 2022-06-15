@@ -182,5 +182,6 @@ python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_o
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
+echo "MATLAB PATH: ${MATLAB}"
 "$MATLAB" -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
 cd -
