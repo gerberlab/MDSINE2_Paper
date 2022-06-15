@@ -236,6 +236,54 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 
     return pd.DataFrame(df_entries)
 
+def regression_forward_simulate(result_dir: Path, model_name: str, regression_type: str,
+    init_abundance:np.ndarray, times: np.ndarray, perturbation_info:np.ndarray=None):
+    """
+       forward simulates the trajectory using parameters inferred by the
+       regression model
+
+       init_abundance : N dimensional array containing the initial abundances
+       times : T dimensional array containing the observation times
+
+       @return
+       T x N array containing the predicted abundances
+    """
+    def grad_fn(A, g, B, u):
+        def fn(t, x):
+            if B is None or u is None:
+                return g + A.dot(x)
+            elif B is not None and u is not None:
+                return g + A.dot(x) + B.dot(u)
+
+        return fn
+
+    glv_loc = result_dir / "{}-{}-model.pkl".format(model_name, regression_type)
+
+    with open(loc + "/glv-ridge-model.pkl", "rb") as f:
+        glv = pickle.load(f)
+    x_pred = np.zeros((times.shape[0], init_abundance.shape[0]))
+    x_pred[0] = init_abundance
+    xt = init_abundance
+
+    A, B, g = glv.A, glv.B, glv.g
+
+    #no valid perturbation effects
+    if np.sum(B) == 0:
+        B = None
+
+    grad = ""
+    for t in range(1, times.shape[0]):
+        if perturbation_info is not None:
+            grad = grad_fn(A, g, B, perturbation_info[t-1])
+        else:
+            grad = grad_fn(A, g, None, None)
+        dt = times[t] - times[t-1]
+        ivp = solve_ivp(grad, (0,0+dt), xt, method="RK45")
+        xt = ivp.y[:,-1]
+        x_pred[t] = xt
+
+    return x_pred
+
 
 def evaluate_holdout_trajectory_errors(true_growth: np.ndarray, true_interactions: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
     """
