@@ -180,15 +180,12 @@ metadata="F:/${inference_out_dir#/mnt/f/}/metadata.txt"
 counts="F:/${inference_out_dir#/mnt/f/}/counts.txt"
 biomass="F:/${inference_out_dir#/mnt/f/}//biomass.txt"
 
-echo $metadata
-echo $counts
-echo $biomass
-#create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
-#
-#echo "[*] Formatting synthetic inputs..."
-#python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
-#
-#echo "[*] Running matlab implementation..."
-#cd $MDSINE1_DIR
-#${MATLAB} -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
-#cd -
+create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
+
+echo "[*] Formatting synthetic inputs..."
+python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
+
+echo "[*] Running matlab implementation..."
+cd $MDSINE1_DIR
+${MATLAB} -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
+cd -
