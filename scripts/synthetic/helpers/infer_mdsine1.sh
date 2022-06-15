@@ -171,21 +171,22 @@ mkdir -p $inference_out_dir
 
 seed=0
 mdsine_cfg=$inference_out_dir/mdsine.cfg
-metadata=$inference_out_dir/metadata.txt
-counts=$inference_out_dir/counts.txt
-biomass=$inference_out_dir/biomass.txt
 
 # ======= Run inference
 echo "[*] Running mdsine1 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 
 echo "[*] Generating configuration..."
-create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
+metadata=${inference_out_dir#/mnt/f/}/metadata.txt
+counts=$inference_out_dir/counts.txt
+biomass=$inference_out_dir/biomass.txt
 
-echo "[*] Formatting synthetic inputs..."
-python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
-
-echo "[*] Running matlab implementation..."
-cd $MDSINE1_DIR
-echo 'Running ${MATLAB} -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"'
-${MATLAB} -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
-cd -
+echo $metadata
+#create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
+#
+#echo "[*] Formatting synthetic inputs..."
+#python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
+#
+#echo "[*] Running matlab implementation..."
+#cd $MDSINE1_DIR
+#${MATLAB} -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
+#cd -
