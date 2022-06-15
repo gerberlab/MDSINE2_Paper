@@ -16,13 +16,19 @@ require_variable "trial" $trial
 require_variable "noise_level" $noise_level
 
 
+convert_to_windows() {
+	linux_path=$1
+	echo "F:/${linux_path#/mnt/f/}"
+}
+
+
 create_config() {
 	cfg_path=$1
 	seed=$2
-	out_path=$3
-	metadata_file=$4
-	counts_file=$5
-	biomass_file=$6
+	out_path=$(convert_to_windows $3)
+	metadata_file=$(convert_to_windows $4)
+	counts_file=$(convert_to_windows $5)
+	biomass_file=$(convert_to_windows $6)
 
 	cat <<- EOFDOC > $cfg_path
 [General]
@@ -176,10 +182,9 @@ mdsine_cfg=$inference_out_dir/mdsine.cfg
 echo "[*] Running mdsine1 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 
 echo "[*] Generating configuration..."
-metadata="F:/${inference_out_dir#/mnt/f/}/metadata.txt"
-counts="F:/${inference_out_dir#/mnt/f/}/counts.txt"
-biomass="F:/${inference_out_dir#/mnt/f/}/biomass.txt"
-
+metadata=${inference_out_dir}/metadata.txt
+counts=${inference_out_dir}/counts.txt
+biomass=${inference_out_dir}/biomass.txt
 create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
 
 echo "[*] Formatting synthetic inputs..."
