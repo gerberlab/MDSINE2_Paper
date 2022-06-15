@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import t as t_dist
-import matplotlib.pyplot as plt
+
 
 class Ridge():
     def __init__(self, X, T, r_A, r_B, r_g, U=None):

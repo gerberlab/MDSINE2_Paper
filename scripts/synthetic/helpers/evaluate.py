@@ -97,24 +97,17 @@ def regression_interaction_pvals(result_dir: Path, model_name: str, regression_t
     """
 
     pkl_file = result_dir / "{}-{}-model.pkl".format(model_name, regression_type)
-    #Need to export glv_code repo to Pythonpath to access the gLV object
     with open(pkl_file, "rb") as f:
-            glv = pickle.load(f)
+        glv: GeneralizedLotkaVolterra = pickle.load(f)
+
     U = glv.U
-    U_arr = np.vstack(U)
-    if np.sum(U_arr) == 0:
+    if np.sum(np.vstack(U)) == 0:
         U = None
 
     rd = Ridge(glv.X, glv.T, glv.r_A, glv.r_B, glv.r_g, U)
 
-    #interaction_coeffs[i, j] is the effect of bug i on bug j; the coefficients
-    #can also be obtained from glv object as glv.A.
-    #Note that glv.A = interaction_coeffs.T
-    interaction_coeffs, growth, perturbation_coeffs = rd.solve()
-
-    #p_interaction[i, j] p-value associated with the effect of bug i on bug j
+    """ p_interaction[i, j]: p-value associated with the effect of bug i on bug j """
     p_interaction, p_growth, p_perturbation = rd.significance_test()
-
     return p_interaction
 
 
@@ -234,10 +227,11 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         _compute_roc_curve('MDSINE2', indicator_pvals)
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
-        _add_regression_entry("glv", "elastic_net")
+        # Note: No obvious t-test implementation for elastic net regression.
+        # _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "elastic_net")
         _add_regression_entry("glv-ra", "ridge")
 
     return pd.DataFrame(df_entries)
