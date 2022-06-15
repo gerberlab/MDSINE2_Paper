@@ -176,6 +176,6 @@ echo "[*] Running mdsine1 inference (reads=${read_depth}, trial=${trial}, noise 
 create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
 python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
 
-#cd $MDSINE1_DIR
-#$MATLAB -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
-#cd -
+cd $MDSINE1_DIR
+$MATLAB -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
+cd -
