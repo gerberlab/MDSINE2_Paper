@@ -176,11 +176,13 @@ mdsine_cfg=$inference_out_dir/mdsine.cfg
 echo "[*] Running mdsine1 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 
 echo "[*] Generating configuration..."
-metadata=${inference_out_dir#/mnt/f/}/metadata.txt
-counts=$inference_out_dir/counts.txt
-biomass=$inference_out_dir/biomass.txt
+metadata="F:/${inference_out_dir#/mnt/f/}/metadata.txt"
+counts="F:/${inference_out_dir#/mnt/f/}/counts.txt"
+biomass="F:/${inference_out_dir#/mnt/f/}//biomass.txt"
 
 echo $metadata
+echo $counts
+echo $biomass
 #create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
 #
 #echo "[*] Formatting synthetic inputs..."
