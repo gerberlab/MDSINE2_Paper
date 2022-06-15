@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
+from regression_analyzer import Ridge
+from generalized_lotka_volterra import GeneralizedLotkaVolterra
 
 
 def parse_args() -> argparse.Namespace:
@@ -93,7 +95,20 @@ def regression_interaction_pvals(result_dir: Path, model_name: str, regression_t
     :param regression_type:
     :return:
     """
-    raise NotImplementedError()
+
+    pkl_file = result_dir / "{}-{}-model.pkl".format(model_name, regression_type)
+    with open(pkl_file, "rb") as f:
+        glv: GeneralizedLotkaVolterra = pickle.load(f)
+
+    U = glv.U
+    if np.sum(np.vstack(U)) == 0:
+        U = None
+
+    rd = Ridge(glv.X, glv.T, glv.r_A, glv.r_B, glv.r_g, U)
+
+    """ p_interaction[i, j]: p-value associated with the effect of bug i on bug j """
+    p_interaction, p_growth, p_perturbation = rd.significance_test()
+    return p_interaction
 
 
 # ======================== Error metrics =======================
@@ -212,10 +227,11 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         _compute_roc_curve('MDSINE2', indicator_pvals)
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
-        _add_regression_entry("glv", "elastic_net")
+        # Note: No obvious t-test implementation for elastic net regression.
+        # _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "elastic_net")
         _add_regression_entry("glv-ra", "ridge")
 
     return pd.DataFrame(df_entries)
