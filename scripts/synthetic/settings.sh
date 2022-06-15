@@ -22,5 +22,8 @@ export HIGH_NOISE_SCALE=0.2
 
 export OUTPUT_DIR="${DATASET_DIR}/output"
 export NUM_CORES=4
-export MATLAB="/mnt/c/Program\ Files/MATLAB/R2015b/bin/matlab.exe"
 export MDSINE1_DIR="/home/younhun/mdsine"
+
+export MATLAB_DIR="/mnt/c/Program\ Files/MATLAB/R2015b/bin/matlab.exe"
+export PATH=${PATH}:${MATLAB_DIR}
+alias matlab="matlab.exe"

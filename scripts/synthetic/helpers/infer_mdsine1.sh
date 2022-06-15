@@ -2,6 +2,9 @@
 set -e
 source synthetic/settings.sh
 
+
+require_program matlab
+
 read_depth=$1
 trial=$2
 noise_level=$3
@@ -182,6 +185,5 @@ python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_o
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
-echo "MATLAB PATH: ${MATLAB}"
-"$MATLAB" -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
+matlab -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
 cd -
