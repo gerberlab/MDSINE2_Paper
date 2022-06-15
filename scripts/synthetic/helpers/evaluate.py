@@ -158,7 +158,7 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
         def _add_regression_entry(_method: str, _regression_type: str):
             _, pred_interaction = regression_output(result_dir, _method, _regression_type)
-            _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_interaction, true_interactions))
+            _add_entry(f'{_method}-{_regression_type}', _error_metric(np.transpose(pred_interaction), true_interactions))
 
         # MDSINE2 inference error eval
         interactions, _, _ = mdsine_output(result_dir)
