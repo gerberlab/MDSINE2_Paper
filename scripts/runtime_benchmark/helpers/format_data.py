@@ -133,7 +133,7 @@ def denoise(counts, t_pts, effects=None):
 
     return denoised_traj
 
-def reformat_U(U):
+def format_U(U):
 
     U_flat = np.concatenate([np.unique(u.flatten()).tolist() for u in U])
     u_unique = np.sort(np.unique(U_flat))
@@ -143,7 +143,7 @@ def reformat_U(U):
         u_ = u.flatten()
         new_u = np.zeros((u_.shape[0], len(u_unique)))
         for i in range(len(u_unique)):
-            new_u[:,i] = np.where(u_== u_unique[i], u_unique[i], 0)
+            new_u[:,i] = np.where(u_== u_unique[i], 1, 0)
         final_U.append(new_u)
     return final_U
 
@@ -209,11 +209,12 @@ if __name__ == "__main__":
         U_healthy.append(u)
         T_healthy.append(t)
 
-    U_healthy = reformat_U(U_healthy)
-    Y_healthy_denoised = denoise(Y_healthy, T_healthy, effects=U_healthy)
+    U_healthy = format_U(U_healthy)
+    print("U:", U_healthy)
+    #Y_healthy_denoised = denoise(Y_healthy, T_healthy, effects=U_healthy)
     savepath = Path(args.output_loc)
     pkl.dump(Y_healthy, open(savepath / "Y.pkl", "wb"))
-    pkl.dump(Y_healthy_denoised, open(savepath / "Y_denoised.pkl", "wb"))
+    #pkl.dump(Y_healthy_denoised, open(savepath / "Y_denoised.pkl", "wb"))
     pkl.dump(U_healthy, open(savepath / "U.pkl", "wb"))
     pkl.dump(T_healthy, open(savepath/ "T.pkl", "wb"))
 
