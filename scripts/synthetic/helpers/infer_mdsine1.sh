@@ -2,9 +2,6 @@
 set -e
 source synthetic/settings.sh
 
-
-require_program "$MATLAB"
-
 read_depth=$1
 trial=$2
 noise_level=$3
