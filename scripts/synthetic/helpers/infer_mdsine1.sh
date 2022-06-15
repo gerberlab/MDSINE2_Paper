@@ -156,9 +156,9 @@ sample_step = 100
 
 [Post Processing]
 write_parameters = 1
-write_cytoscape = 1
-write_trajectories = 1
-write_stability_analysis = 1
+write_cytoscape = 0
+write_trajectories = 0
+write_stability_analysis = 0
 
 # 0 for don't perform. 1 for perform
 # keystone analysis is a subset of stability analysis,
