@@ -9,6 +9,7 @@ import mdsine2 as md2
 from mdsine2.names import STRNAMES
 from regression_analyzer import Ridge
 from generalized_lotka_volterra import GeneralizedLotkaVolterra
+from scipy.integrate import RK45, solve_ivp
 
 
 def parse_args() -> argparse.Namespace:
@@ -259,7 +260,7 @@ def regression_forward_simulate(result_dir: Path, model_name: str, regression_ty
 
     glv_loc = result_dir / "{}-{}-model.pkl".format(model_name, regression_type)
 
-    with open(loc + "/glv-ridge-model.pkl", "rb") as f:
+    with open(glv_loc, "rb") as f:
         glv = pickle.load(f)
     x_pred = np.zeros((times.shape[0], init_abundance.shape[0]))
     x_pred[0] = init_abundance
