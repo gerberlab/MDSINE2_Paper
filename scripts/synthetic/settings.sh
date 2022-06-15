@@ -24,6 +24,6 @@ export OUTPUT_DIR="${DATASET_DIR}/output"
 export NUM_CORES=4
 export MDSINE1_DIR="/home/younhun/mdsine"
 
-export MATLAB_DIR="/mnt/c/Program\ Files/MATLAB/R2015b/bin/matlab.exe"
+export MATLAB_DIR="/mnt/c/Program\ Files/MATLAB/R2015b/bin"
 export PATH=${PATH}:${MATLAB_DIR}
 export MATLAB="matlab.exe"
