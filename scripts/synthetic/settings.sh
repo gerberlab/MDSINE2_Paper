@@ -26,4 +26,4 @@ export MDSINE1_DIR="/home/younhun/mdsine"
 
 export MATLAB_DIR="/mnt/c/Program\ Files/MATLAB/R2015b/bin/matlab.exe"
 export PATH=${PATH}:${MATLAB_DIR}
-alias matlab="matlab.exe"
+export MATLAB="matlab.exe"

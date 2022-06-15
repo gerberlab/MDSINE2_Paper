@@ -2,7 +2,7 @@
 set -e
 source synthetic/settings.sh
 
-
+alias matlab=$MATLAB
 require_program matlab
 
 read_depth=$1
