@@ -42,7 +42,7 @@ def create_files(study: md2.Study, counts_path: Path, metadata_path: Path, bioma
                 'subjectID': subj_idx,
                 'measurementid': t,
                 'perturbid': 0,
-                'exptblock': 0
+                'exptblock': 1
             })
 
             biomass_df_entries.append({
