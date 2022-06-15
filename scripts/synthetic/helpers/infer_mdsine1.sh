@@ -100,7 +100,7 @@ N = 5
 mix_trajectories = 1
 
 # parallelized
-replicates = 5  # number of different shuffles for the cross fold validation
+replicates = 3  # number of different shuffles for the cross fold validation
 
 [Bayesian Lasso]
 numIters = 10000   # number of MCMC iterations
