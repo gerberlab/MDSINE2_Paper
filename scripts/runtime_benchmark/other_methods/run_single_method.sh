@@ -16,7 +16,7 @@ require_variable "model_name" $model_name
 require_variable "regression_type" $regression_type
 
 
-input_dataset_dir="${REGRESSION_DATA_DIR}/trimmed_${n_taxa}"
+input_dataset_dir="${DATASET_DIR}/trimmed_${n_taxa}"
 trial_dir="${OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}"
 
 output_dir="${trial_dir}/${model_name}/${regression_type}"
