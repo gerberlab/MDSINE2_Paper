@@ -186,5 +186,5 @@ python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_o
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
-matlab -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
+${MATLAB} -nosplash -nodesktop < mdsine.m -r "mdsine ${mdsine_cfg}; quit"
 cd -
