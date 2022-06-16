@@ -17,12 +17,21 @@ from generalized_lotka_volterra import GeneralizedLotkaVolterra
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--results_base_dir', type=str, required=True,
+                        help='<Required> The path to the output/ base directory containing the results of all '
+                             'inference runs.')
+    parser.add_argument('-o', '--output_dir', type=str, required=True,
+                        help='<Required> The desired path to which all evaluation metrics will be saved.')
     parser.add_argument('-g', '--ground_truth_params', type=str, required=True,
                         help='<Required> The path to a .npz file containing `growth_rates`, `interactions` arrays')
     parser.add_argument('-m', '--initial_cond_mean', type=float, required=True,
                         help='<Required> The mean of the initial condition distribution.')
     parser.add_argument('-s', '--initial_cond_std', type=float, required=True,
                         help='<Required> The standard deviation of the initial condition distribution.')
+
+    parser.add_argument('--subsample_fwsim', type=int, required=False, default=0.1,
+                        help='<Optional> Subsamples this fraction of poster samples from MDSINE(1 or 2).'
+                             'Used for forward simulation-based metrics only.')
     return parser.parse_args()
 
 
@@ -199,7 +208,12 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
         _add_regression_entry("glv-ra", "elastic_net")
         _add_regression_entry("glv-ra", "ridge")
 
-    return pd.DataFrame(df_entries)
+    df = pd.DataFrame(df_entries)
+    df['NoiseLevel'] = pd.Categorical(
+        df['NoiseLevel'],
+        categories=['low', 'medium', 'high']
+    )
+    return df
 
 
 def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
@@ -239,7 +253,12 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
         _add_regression_entry("glv-ra", "elastic_net")
         _add_regression_entry("glv-ra", "ridge")
 
-    return pd.DataFrame(df_entries)
+    df = pd.DataFrame(df_entries)
+    df['NoiseLevel'] = pd.Categorical(
+        df['NoiseLevel'],
+        categories=['low', 'medium', 'high']
+    )
+    return df
 
 
 def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
@@ -290,13 +309,19 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         # _add_regression_entry("glv-ra", "elastic_net")
         _add_regression_entry("glv-ra", "ridge")
 
-    return pd.DataFrame(df_entries)
+    df = pd.DataFrame(df_entries)
+    df['NoiseLevel'] = pd.Categorical(
+        df['NoiseLevel'],
+        categories=['low', 'medium', 'high']
+    )
+    return df
 
 
 def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                                        true_interactions: np.ndarray,
                                        init_rv: scipy.stats.rv_continuous,
-                                       results_base_dir: Path) -> pd.DataFrame:
+                                       results_base_dir: Path,
+                                       subsample_frac: float) -> pd.DataFrame:
     """
     Generate a new subject and use it as a "holdout" dataset.
     :param true_growth:
@@ -334,12 +359,15 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                 'Error': _err
             })
 
-        def _eval_mdsine(method: str, pred_interactions, pred_growths):
+        def _eval_mdsine(_method: str, _pred_interactions: np.ndarray, _pred_growths: np.ndarray):
+            subsample_idxs = np.arange(0, _pred_interactions.shape[0], int(subsample_frac * _pred_interactions))
             pred_traj = np.median(
-                posterior_forward_sims(pred_growths, pred_interactions, initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
+                posterior_forward_sims(_pred_growths[subsample_idxs, :],
+                                       _pred_interactions[subsample_idxs, :, :],
+                                       initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
                 axis=0
             )
-            _add_entry(method, _error_metric(pred_traj, true_traj))
+            _add_entry(_method, _error_metric(pred_traj, true_traj))
 
         def _eval_regression(_model_name: str, _regression_type: str):
             pkl_dir = result_dir / _model_name / _regression_type
@@ -363,7 +391,12 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         _eval_regression("glv", "ridge")
         _eval_regression("glv-ra", "elastic_net")
         _eval_regression("glv-ra", "ridge")
-    return pd.DataFrame(df_entries)
+    df = pd.DataFrame(df_entries)
+    df['NoiseLevel'] = pd.Categorical(
+        df['NoiseLevel'],
+        categories=['low', 'medium', 'high']
+    )
+    return df
 
 
 def regression_forward_simulate(glv_pkl_loc: Path,
@@ -503,7 +536,8 @@ def main():
     print(f"Wrote interaction topology errors.")
 
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions, init_dist, results_base_dir)
+    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions,
+                                                                   init_dist, results_base_dir, args.subsample_fwsim)
     holdout_trajectory_errors.to_csv(output_dir / "holdout_trajectory_errors.csv")
     print(f"Wrote heldout trajectory prediction errors.")
 
