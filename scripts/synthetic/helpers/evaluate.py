@@ -4,6 +4,7 @@ import argparse
 import pickle
 
 import numpy as np
+import h5py
 import pandas as pd
 import scipy.stats
 from scipy.integrate import solve_ivp
@@ -30,6 +31,7 @@ def result_dirs(results_base_dir: Path) -> Iterator[Tuple[int, int, str, Path]]:
     for read_depth, read_depth_dir in read_depth_dirs(results_base_dir):
         for trial_num, trial_dir in trial_dirs(read_depth_dir):
             for noise_level, noise_level_dir in noise_level_dirs(trial_dir):
+                print(f"Yielding (read_depth: {read_depth}, trial: {trial_num}, noise: {noise_level})")
                 yield read_depth, trial_num, noise_level, noise_level_dir
 
 
@@ -61,23 +63,48 @@ def noise_level_dirs(trial_dir: Path) -> Iterator[Tuple[str, Path]]:
 
 
 # ========================= Method output iterators =======================
-def mdsine_output(result_dir: Path) -> Tuple[md2.BaseMCMC, np.ndarray, np.ndarray, np.ndarray]:
+def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    :param result_dir:
+    :return: posterior mean interactions, posterior mean growth, posterior mean indicator.
+    """
+    with h5py.File(result_dir / "mdsine1" / "BVS.mat", 'r') as f:
+        theta_mean = np.array(f['Theta_select'])
+        theta_samples = f['Theta_samples_select'][0]
+
+        n_samples = len(theta_samples)
+        n_taxa = theta_mean.shape[1]
+
+        growths = np.empty(shape=(n_samples, n_taxa), dtype=float)
+        interactions = np.empty(shape=(n_samples, n_taxa, n_taxa), dtype=float)
+        indicator_probs = np.array(f['Theta_select_probs'])
+
+        for n in range(n_samples):
+            ref_n = theta_samples[n]
+            theta_n = np.array(f[ref_n])
+            growths[n] = theta_n[0, :]
+            interactions[n] = theta_n[1:, :]
+        return growths, interactions, indicator_probs
+
+
+def mdsine2_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Parser which extracts glv params from the specified results directory.
     :return:
     """
     mcmc = md2.BaseMCMC.load(str(result_dir / "mdsine2" / "mcmc.pkl"))
-
-    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section='posterior')
-    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
-    interactions[np.isnan(interactions)] = 0
-    self_interactions = -np.absolute(self_interactions)
-    for i in range(self_interactions.shape[1]):
-        interactions[:, i, i] = self_interactions[:, i]
-
     growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
     interaction_indicators = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR].get_trace_from_disk(section='posterior')
-    return mcmc, interactions, growths, interaction_indicators
+    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section='posterior')
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
+
+    self_interactions = -np.absolute(self_interactions)
+    interactions[np.isnan(interactions)] = 0
+    for interaction, indicator in zip(interactions, interaction_indicators):
+        interaction[indicator == 0] = 0.
+    for i in range(self_interactions.shape[1]):
+        interactions[:, i, i] = self_interactions[:, i]
+    return interactions, growths, interaction_indicators
 
 
 def regression_output(result_dir: Path, model_name: str, regression_type: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -156,9 +183,14 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
 
         # MDSINE2 inference error eval
-        _, _, growths, _ = mdsine_output(result_dir)
+        _, growths, _ = mdsine2_output(result_dir)
         pred_growth = np.median(growths, axis=0)
         _add_entry('MDSINE2', _error_metric(pred_growth, true_growth))
+
+        # MDSINE1 error
+        _, growths, _ = mdsine1_output(result_dir)
+        pred_growth = np.median(growths, axis=0)
+        _add_entry('MDSINE1', _error_metric(pred_growth, true_growth))
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -191,9 +223,14 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
             _add_entry(f'{_method}-{_regression_type}', _error_metric(np.transpose(pred_interaction), true_interactions))
 
         # MDSINE2 inference error eval
-        _, interactions, _, _ = mdsine_output(result_dir)
+        interactions, _, _ = mdsine2_output(result_dir)
         pred_interaction = np.median(interactions, axis=0)
         _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
+
+        # MDSINE1 error
+        interactions, _, _ = mdsine1_output(result_dir)
+        pred_interaction = np.median(interactions, axis=0)
+        _add_entry('MDSINE1', _error_metric(pred_interaction, true_interactions))
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -237,9 +274,13 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
             _compute_roc_curve(f'{_method}-{_regression_type}', interaction_p_values)
 
         # MDSINE2 inference error eval
-        _, _, _, interaction_indicators = mdsine_output(result_dir)
+        _, _, interaction_indicators = mdsine2_output(result_dir)
         indicator_pvals = np.mean(interaction_indicators, axis=0)
         _compute_roc_curve('MDSINE2', indicator_pvals)
+
+        # MDSINE1 inference error eval
+        _, _, indicator_probs = mdsine1_output(result_dir)
+        _compute_roc_curve('MDSINE1', indicator_probs)
 
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
@@ -309,8 +350,14 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             pred_traj = np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
             _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_traj, true_traj))
 
-        mcmc, pred_interactions, pred_growths, pred_interaction_indicators = mdsine_output(result_dir)
+        # MDSINE2 error
+        pred_interactions, pred_growths, _ = mdsine2_output(result_dir)
         _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
+
+        # MDSINE1 error
+        pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
+        _eval_mdsine('MDSINE1', pred_interactions, pred_growths)
+
         _eval_regression("lra", "elastic_net")
         _eval_regression("glv", "elastic_net")
         _eval_regression("glv", "ridge")
