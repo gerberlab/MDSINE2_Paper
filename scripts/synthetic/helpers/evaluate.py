@@ -6,7 +6,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import scipy.stats
-from scipy.integrate import RK45, solve_ivp
+from scipy.integrate import solve_ivp
 
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
@@ -67,9 +67,14 @@ def mdsine_output(result_dir: Path) -> Tuple[md2.BaseMCMC, np.ndarray, np.ndarra
     :return:
     """
     mcmc = md2.BaseMCMC.load(str(result_dir / "mdsine2" / "mcmc.pkl"))
-    print("[TODO] check if this contains self-interactions.")
-    print("[TODO] check for NaNs in the interaction matrix.")
-    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')  # TODO
+
+    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section='posterior')
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
+    interactions[np.isnan(interactions)] = 0
+    self_interactions = -np.absolute(self_interactions)
+    for i in range(self_interactions.shape[1]):
+        interactions[:, i, i] = self_interactions[:, i]
+
     growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
     interaction_indicators = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR].get_trace_from_disk(section='posterior')
     return mcmc, interactions, growths, interaction_indicators
@@ -246,52 +251,6 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 
     return pd.DataFrame(df_entries)
 
-def regression_forward_simulate(glv_pkl_loc: Path, model_name: str, regression_type: str,
-    init_abundance:np.ndarray, times: np.ndarray, perturbation_info:np.ndarray=None):
-    """
-       forward simulates the trajectory using parameters inferred by the
-       regression model
-
-       init_abundance : N dimensional array containing the initial abundances
-       times : T dimensional array containing the observation times
-
-       @return
-       T x N array containing the predicted abundances
-    """
-    def grad_fn(A, g, B, u):
-        def fn(t, x):
-            if B is None or u is None:
-                return g + A.dot(x)
-            elif B is not None and u is not None:
-                return g + A.dot(x) + B.dot(u)
-
-        return fn
-
-    with open(glv_pkl_loc, "rb") as f:
-        glv = pickle.load(f)
-    x_pred = np.zeros((times.shape[0], init_abundance.shape[0]))
-    x_pred[0] = init_abundance
-    xt = init_abundance
-
-    A, B, g = glv.A, glv.B, glv.g
-
-    #no valid perturbation effects
-    if np.sum(B) == 0:
-        B = None
-
-    grad = ""
-    for t in range(1, times.shape[0]):
-        if perturbation_info is not None:
-            grad = grad_fn(A, g, B, perturbation_info[t-1])
-        else:
-            grad = grad_fn(A, g, None, None)
-        dt = times[t] - times[t-1]
-        ivp = solve_ivp(grad, (0,0+dt), xt, method="RK45")
-        xt = ivp.y[:,-1]
-        x_pred[t] = xt
-
-    return x_pred
-
 
 def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                                        true_interactions: np.ndarray,
@@ -341,8 +300,14 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             )
             _add_entry(method, _error_metric(pred_traj, true_traj))
 
-        def _eval_regression(_method: str, _regression_type: str):
-            raise NotImplementedError()
+        def _eval_regression(_model_name: str, _regression_type: str):
+            pkl_dir = result_dir / _model_name / _regression_type
+            result_paths = list(pkl_dir.glob('*.pkl'))
+            if len(result_paths) == 0:
+                raise FileNotFoundError(f"Unable to locate any .pkl files in {result_dir}.")
+            pkl_path = result_paths[0]
+            pred_traj = np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
+            _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_traj, true_traj))
 
         mcmc, pred_interactions, pred_growths, pred_interaction_indicators = mdsine_output(result_dir)
         _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
@@ -352,6 +317,54 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         _eval_regression("glv-ra", "elastic_net")
         _eval_regression("glv-ra", "ridge")
     return pd.DataFrame(df_entries)
+
+
+def regression_forward_simulate(glv_pkl_loc: Path,
+                                init_abundance: np.ndarray,
+                                times: np.ndarray,
+                                perturbation_info: np.ndarray = None) -> np.ndarray:
+    """
+       forward simulates the trajectory using parameters inferred by the
+       regression model
+
+       init_abundance : N dimensional array containing the initial abundances
+       times : T dimensional array containing the observation times
+
+       @return
+       T x N array containing the predicted abundances
+    """
+    def grad_fn(A, g, B, u):
+        def fn(t, x):
+            if B is None or u is None:
+                return g + A.dot(x)
+            elif B is not None and u is not None:
+                return g + A.dot(x) + B.dot(u)
+
+        return fn
+
+    with open(glv_pkl_loc, "rb") as f:
+        glv = pickle.load(f)
+    x_pred = np.zeros((times.shape[0], init_abundance.shape[0]))
+    x_pred[0] = init_abundance
+    xt = init_abundance
+
+    A, B, g = glv.A, glv.B, glv.g
+
+    # no valid perturbation effects
+    if np.sum(B) == 0:
+        B = None
+
+    for t in range(1, times.shape[0]):
+        if perturbation_info is not None:
+            grad = grad_fn(A, g, B, perturbation_info[t-1])
+        else:
+            grad = grad_fn(A, g, None, None)
+        dt = times[t] - times[t-1]
+        ivp = solve_ivp(grad, (0,0+dt), xt, method="RK45")
+        xt = ivp.y[:,-1]
+        x_pred[t] = xt
+
+    return x_pred
 
 
 def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_max, sim_t, expected_t, target_time_idxs) -> np.ndarray:
@@ -364,7 +377,7 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
     :param sim_t:
     :param expected_t: The array of timepoints we expect to find. Used for validation after forward simulation.
     :param target_time_idxs: An array of indexes of timepoints to be extracted.
-    :return:
+    :return: M x N x T array of simulated trajs (M = # of MCMC samples, N = # of taxa, T = # timepoints)
     """
     fwsims = np.empty(
         shape=(growths.shape[0], growths.shape[-1], len(target_time_idxs)),
@@ -404,6 +417,8 @@ def forward_sim(growth,
         Maximum clip for forward sim
     sim_t : float
         Total number of days
+
+    :return: N x T array of simulated trajs (N = # of taxa, T = # timepoints)
     """
     dyn = md2.model.gLVDynamicsSingleClustering(growth=None, interactions=None,
                                                 perturbation_ends=[], perturbation_starts=[],
