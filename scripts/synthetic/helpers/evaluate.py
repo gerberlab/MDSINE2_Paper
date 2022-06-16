@@ -5,17 +5,23 @@ import pickle
 
 import numpy as np
 import pandas as pd
+import scipy.stats
+from scipy.integrate import RK45, solve_ivp
+
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
 from regression_analyzer import Ridge
 from generalized_lotka_volterra import GeneralizedLotkaVolterra
-from scipy.integrate import RK45, solve_ivp
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('-g', '--ground_truth_params', type=str, required=True,
                         help='<Required> The path to a .npz file containing `growth_rates`, `interactions` arrays')
+    parser.add_argument('-m', '--initial_cond_mean', type=float, required=True,
+                        help='<Required> The mean of the initial condition distribution.')
+    parser.add_argument('-s', '--initial_cond_std', type=float, required=True,
+                        help='<Required> The standard deviation of the initial condition distribution.')
     return parser.parse_args()
 
 
@@ -55,16 +61,18 @@ def noise_level_dirs(trial_dir: Path) -> Iterator[Tuple[str, Path]]:
 
 
 # ========================= Method output iterators =======================
-def mdsine_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def mdsine_output(result_dir: Path) -> Tuple[md2.BaseMCMC, np.ndarray, np.ndarray, np.ndarray]:
     """
     Parser which extracts glv params from the specified results directory.
     :return:
     """
     mcmc = md2.BaseMCMC.load(str(result_dir / "mdsine2" / "mcmc.pkl"))
-    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
+    print("[TODO] check if this contains self-interactions.")
+    print("[TODO] check for NaNs in the interaction matrix.")
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')  # TODO
     growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
     interaction_indicators = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR].get_trace_from_disk(section='posterior')
-    return interactions, growths, interaction_indicators
+    return mcmc, interactions, growths, interaction_indicators
 
 
 def regression_output(result_dir: Path, model_name: str, regression_type: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -88,6 +96,7 @@ def regression_output(result_dir: Path, model_name: str, regression_type: str) -
     return est_growth, est_interactions
 
 
+# noinspection PyPep8Naming
 def regression_interaction_pvals(result_dir: Path, model_name: str, regression_type: str) -> np.ndarray:
     """
     Generator which yields growth/interaction params estimated through regression.
@@ -142,7 +151,7 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
 
         # MDSINE2 inference error eval
-        _, growths, _ = mdsine_output(result_dir)
+        _, _, growths, _ = mdsine_output(result_dir)
         pred_growth = np.median(growths, axis=0)
         _add_entry('MDSINE2', _error_metric(pred_growth, true_growth))
 
@@ -174,10 +183,10 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
         def _add_regression_entry(_method: str, _regression_type: str):
             _, pred_interaction = regression_output(result_dir, _method, _regression_type)
-            _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_interaction, true_interactions))
+            _add_entry(f'{_method}-{_regression_type}', _error_metric(np.transpose(pred_interaction), true_interactions))
 
         # MDSINE2 inference error eval
-        interactions, _, _ = mdsine_output(result_dir)
+        _, interactions, _, _ = mdsine_output(result_dir)
         pred_interaction = np.median(interactions, axis=0)
         _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
 
@@ -223,7 +232,7 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
             _compute_roc_curve(f'{_method}-{_regression_type}', interaction_p_values)
 
         # MDSINE2 inference error eval
-        _, _, interaction_indicators = mdsine_output(result_dir)
+        _, _, _, interaction_indicators = mdsine_output(result_dir)
         indicator_pvals = np.mean(interaction_indicators, axis=0)
         _compute_roc_curve('MDSINE2', indicator_pvals)
 
@@ -237,7 +246,7 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 
     return pd.DataFrame(df_entries)
 
-def regression_forward_simulate(result_dir: Path, model_name: str, regression_type: str,
+def regression_forward_simulate(glv_pkl_loc: Path, model_name: str, regression_type: str,
     init_abundance:np.ndarray, times: np.ndarray, perturbation_info:np.ndarray=None):
     """
        forward simulates the trajectory using parameters inferred by the
@@ -258,9 +267,7 @@ def regression_forward_simulate(result_dir: Path, model_name: str, regression_ty
 
         return fn
 
-    glv_loc = result_dir / "{}-{}-model.pkl".format(model_name, regression_type)
-
-    with open(glv_loc, "rb") as f:
+    with open(glv_pkl_loc, "rb") as f:
         glv = pickle.load(f)
     x_pred = np.zeros((times.shape[0], init_abundance.shape[0]))
     x_pred[0] = init_abundance
@@ -286,25 +293,130 @@ def regression_forward_simulate(result_dir: Path, model_name: str, regression_ty
     return x_pred
 
 
-def evaluate_holdout_trajectory_errors(true_growth: np.ndarray, true_interactions: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
+def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
+                                       true_interactions: np.ndarray,
+                                       init_rv: scipy.stats.rv_continuous,
+                                       results_base_dir: Path) -> pd.DataFrame:
     """
     Generate a new subject and use it as a "holdout" dataset.
     :param true_growth:
     :param true_interactions:
+    :param init_rv: The (1-d) distribution from which the initial condition will be sampled (iid for each taxon)
     :param results_base_dir:
     :return:
     """
-    raise NotImplementedError()
+    def _error_metric(_pred_traj, _true_traj) -> float:
+        return np.sqrt(np.mean(np.square(_pred_traj - _true_traj)))
+
+    """ Simulation parameters """
+    sim_seed = 0
+    sim_dt = 0.01
+    sim_max = 1e20
+    sim_t = 20
+    t = np.arange(0., sim_t, sim_dt)
+    target_t_idx = np.arange(len(t) // 2, len(t), int(1 / sim_dt))
+    target_t = t[target_t_idx]
+
+    """ Extraction of errors/simulations """
+    df_entries = []
+    for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
+        sim_seed += 1
+        np.random.seed(sim_seed)
+        initial_cond = init_rv.rvs(size=len(true_growth))
+        true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
+
+        def _add_entry(_method: str, _err: float):
+            df_entries.append({
+                'Method': _method,
+                'ReadDepth': read_depth,
+                'Trial': trial_num,
+                'NoiseLevel': noise_level,
+                'Error': _err
+            })
+
+        def _eval_mdsine(method: str, pred_interactions, pred_growths):
+            pred_traj = np.median(
+                posterior_forward_sims(pred_growths, pred_interactions, initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
+                axis=0
+            )
+            _add_entry(method, _error_metric(pred_traj, true_traj))
+
+        def _eval_regression(_method: str, _regression_type: str):
+            raise NotImplementedError()
+
+        mcmc, pred_interactions, pred_growths, pred_interaction_indicators = mdsine_output(result_dir)
+        _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
+        _eval_regression("lra", "elastic_net")
+        _eval_regression("glv", "elastic_net")
+        _eval_regression("glv", "ridge")
+        _eval_regression("glv-ra", "elastic_net")
+        _eval_regression("glv-ra", "ridge")
+    return pd.DataFrame(df_entries)
 
 
-def parse_taxa_list(taxa_path: Path):
-    taxon = []
-    with open(taxa_path, 'r') as f:
-        for line in f:
-            line = line.rstrip()
-            if len(line) > 0:
-                taxon.append(line)
-    return taxon
+def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_max, sim_t, expected_t, target_time_idxs) -> np.ndarray:
+    """
+    :param growths:
+    :param interactions:
+    :param initial_conditions:
+    :param dt:
+    :param sim_max:
+    :param sim_t:
+    :param expected_t: The array of timepoints we expect to find. Used for validation after forward simulation.
+    :param target_time_idxs: An array of indexes of timepoints to be extracted.
+    :return:
+    """
+    fwsims = np.empty(
+        shape=(growths.shape[0], growths.shape[-1], len(target_time_idxs)),
+        dtype=float
+    )
+    for gibbs_idx in range(growths.shape[0]):
+        growth = growths[gibbs_idx]
+        interaction = interactions[gibbs_idx]
+        _x, _t = forward_sim(growth, interaction, initial_conditions, dt, sim_max, sim_t)
+        assert len(expected_t) == len(_t)
+
+        fwsims[gibbs_idx, :, :] = forward_sim[:, target_time_idxs]
+    return fwsims
+
+
+def forward_sim(growth,
+                interactions,
+                initial_conditions,
+                dt,
+                sim_max,
+                sim_t) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Forward simulate with the given dynamics. First start with the perturbation
+    off, then on, then off.
+
+    Parameters
+    ----------
+    growth : np.ndarray(n_gibbs, n_taxa)
+        Growth parameters
+    interactions : np.ndarray(n_gibbs, n_taxa, n_taxa)
+        Interaction parameters
+    initial_conditions : np.ndarray(n_taxa)
+        Initial conditions of the taxa
+    dt : float
+        Step size to forward simulate with
+    sim_max : float, None
+        Maximum clip for forward sim
+    sim_t : float
+        Total number of days
+    """
+    dyn = md2.model.gLVDynamicsSingleClustering(growth=None, interactions=None,
+                                                perturbation_ends=[], perturbation_starts=[],
+                                                start_day=0, sim_max=sim_max)
+    initial_conditions = initial_conditions.reshape(-1, 1)
+
+    dyn.growth = growth
+    dyn.interactions = interactions
+    dyn.perturbations = []
+
+    x = md2.integrate(dynamics=dyn, initial_conditions=initial_conditions,
+                      dt=dt, n_days=sim_t, subsample=False)
+    return x['X'], x['times']
 
 
 def main():
@@ -328,7 +440,8 @@ def main():
     topology_errors.to_csv(output_dir / "topology_errors.csv")
     print(f"Wrote interaction topology errors.")
 
-    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions, results_base_dir)
+    init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
+    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions, init_dist, results_base_dir)
     holdout_trajectory_errors.to_csv(output_dir / "holdout_trajectory_errors.csv")
     print(f"Wrote heldout trajectory prediction errors.")
 
