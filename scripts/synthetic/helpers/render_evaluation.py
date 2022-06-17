@@ -29,12 +29,11 @@ def load_df(df_path: Path) -> pd.DataFrame:
 
 def render_growth_rate_errors(df: pd.DataFrame, ax):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    sb.boxplot(
+    sb.barplot(
         data=df,
         x='x',
         y='Error',
         hue='Method',
-        showfliers=False,
         ax=ax
     )
     # sb.swarmplot(
@@ -50,12 +49,11 @@ def render_growth_rate_errors(df: pd.DataFrame, ax):
 
 def render_interaction_strength_errors(df: pd.DataFrame, ax):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    sb.boxplot(
+    sb.barplot(
         data=df,
         x='x',
         y='Error',
         hue='Method',
-        showfliers=False,
         ax=ax
     )
     # sb.swarmplot(
@@ -85,7 +83,7 @@ def render_topology_errors(df: pd.DataFrame, ax):
 
 
 def render_all(dataframe_dir: Path, output_path: Path):
-    fig, axes = plt.subplots(2, 2, figsize=(10, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
 
     render_growth_rate_errors(
         load_df(dataframe_dir / "growth_rate_errors.csv"),
