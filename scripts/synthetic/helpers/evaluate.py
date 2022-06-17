@@ -147,9 +147,13 @@ def regression_interaction_pvals(result_dir: Path, model_name: str, regression_t
     :param regression_type:
     :return:
     """
+    result_dir = result_dir / model_name / regression_type
+    result_paths = list(result_dir.glob('*.pkl'))
+    if len(result_paths) == 0:
+        raise FileNotFoundError(f"Unable to locate any .pkl files in {result_dir}.")
+    result_path = result_paths[0]
 
-    pkl_file = result_dir / "{}-{}-model.pkl".format(model_name, regression_type)
-    with open(pkl_file, "rb") as f:
+    with open(result_path[0], "rb") as f:
         glv: GeneralizedLotkaVolterra = pickle.load(f)
 
     U = glv.U
@@ -198,9 +202,9 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
         _add_entry('MDSINE2', _error_metric(pred_growth, true_growth))
 
         # MDSINE1 error
-        _, growths, _ = mdsine1_output(result_dir)
-        pred_growth = np.median(growths, axis=0)
-        _add_entry('MDSINE1', _error_metric(pred_growth, true_growth))
+        #_, growths, _ = mdsine1_output(result_dir)
+        #pred_growth = np.median(growths, axis=0)
+        #_add_entry('MDSINE1', _error_metric(pred_growth, true_growth))
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -243,9 +247,9 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
         _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
 
         # MDSINE1 error
-        interactions, _, _ = mdsine1_output(result_dir)
-        pred_interaction = np.median(interactions, axis=0)
-        _add_entry('MDSINE1', _error_metric(pred_interaction, true_interactions))
+        #interactions, _, _ = mdsine1_output(result_dir)
+        #pred_interaction = np.median(interactions, axis=0)
+        #_add_entry('MDSINE1', _error_metric(pred_interaction, true_interactions))
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -266,10 +270,10 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
     df_entries = []
 
     def _false_positive_rate(pred, truth) -> float:
-        return np.sum(pred & np.logical_not(truth)) / len(truth)
+        return np.sum(pred & np.logical_not(truth)) / truth.size()
 
     def _true_positive_rate(pred, truth) -> float:
-        raise np.sum(pred & truth) / len(truth)
+        raise np.sum(pred & truth) / truth.size()
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         def _compute_roc_curve(_method: str, _pvalues: np.ndarray):
@@ -299,8 +303,8 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         _compute_roc_curve('MDSINE2', indicator_pvals)
 
         # MDSINE1 inference error eval
-        _, _, indicator_probs = mdsine1_output(result_dir)
-        _compute_roc_curve('MDSINE1', indicator_probs)
+        #_, _, indicator_probs = mdsine1_output(result_dir)
+        #_compute_roc_curve('MDSINE1', indicator_probs)
 
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
@@ -350,6 +354,7 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         np.random.seed(sim_seed)
         initial_cond = init_rv.rvs(size=len(true_growth))
         true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
+        true_traj = true_traj[:, target_t_idx]
 
         def _add_entry(_method: str, _err: float):
             df_entries.append({
@@ -361,7 +366,7 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             })
 
         def _eval_mdsine(_method: str, _pred_interactions: np.ndarray, _pred_growths: np.ndarray):
-            subsample_idxs = np.arange(0, _pred_interactions.shape[0], int(subsample_frac * _pred_interactions))
+            subsample_idxs = np.arange(0, _pred_interactions.shape[0], int(subsample_frac * _pred_interactions.shape[0]))
             pred_traj = np.median(
                 posterior_forward_sims(_pred_growths[subsample_idxs, :],
                                        _pred_interactions[subsample_idxs, :, :],
@@ -384,8 +389,8 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
 
         # MDSINE1 error
-        pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
-        _eval_mdsine('MDSINE1', pred_interactions, pred_growths)
+        #pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
+        #_eval_mdsine('MDSINE1', pred_interactions, pred_growths)
 
         _eval_regression("lra", "elastic_net")
         _eval_regression("glv", "elastic_net")
@@ -468,9 +473,9 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
         growth = growths[gibbs_idx]
         interaction = interactions[gibbs_idx]
         _x, _t = forward_sim(growth, interaction, initial_conditions, dt, sim_max, sim_t)
-        assert len(expected_t) == len(_t)
+        assert len(expected_t) <= len(_t)
 
-        fwsims[gibbs_idx, :, :] = forward_sim[:, target_time_idxs]
+        fwsims[gibbs_idx, :, :] = _x[:, target_time_idxs]
     return fwsims
 
 
