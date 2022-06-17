@@ -198,8 +198,8 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
 
         # MDSINE2 inference error eval
         _, growths, _ = mdsine2_output(result_dir)
-        pred_growth = np.median(growths, axis=0)
-        _add_entry('MDSINE2', _error_metric(pred_growth, true_growth))
+        errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
+        _add_entry('MDSINE2', float(np.median(errors)))
 
         # MDSINE1 error
         #_, growths, _ = mdsine1_output(result_dir)
@@ -243,8 +243,10 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
         # MDSINE2 inference error eval
         interactions, _, _ = mdsine2_output(result_dir)
-        pred_interaction = np.median(interactions, axis=0)
-        _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
+        errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
+        _add_entry('MDSINE2', float(np.median(errors)))
+        # pred_interaction = np.median(interactions, axis=0)
+        # _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
 
         # MDSINE1 error
         #interactions, _, _ = mdsine1_output(result_dir)
