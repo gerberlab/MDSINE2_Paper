@@ -153,7 +153,7 @@ def regression_interaction_pvals(result_dir: Path, model_name: str, regression_t
         raise FileNotFoundError(f"Unable to locate any .pkl files in {result_dir}.")
     result_path = result_paths[0]
 
-    with open(result_path[0], "rb") as f:
+    with open(result_path, "rb") as f:
         glv: GeneralizedLotkaVolterra = pickle.load(f)
 
     U = glv.U
