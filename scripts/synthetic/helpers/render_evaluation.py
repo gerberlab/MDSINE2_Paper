@@ -28,14 +28,14 @@ def render_growth_rate_errors(df: pd.DataFrame, ax):
         showfliers=False,
         ax=ax
     )
-    sb.swarmplot(
-        data=df,
-        x='x',
-        y='Error',
-        hue='Method',
-        dodge=True,
-        ax=ax
-    )
+    # sb.swarmplot(
+    #     data=df,
+    #     x='x',
+    #     y='Error',
+    #     hue='Method',
+    #     dodge=True,
+    #     ax=ax
+    # )
     ax.set_ylabel('RMSE')
 
 
@@ -50,14 +50,14 @@ def render_interaction_strength_errors(df: pd.DataFrame, ax):
         showfliers=False,
         ax=ax
     )
-    sb.swarmplot(
-        data=df,
-        x='x',
-        y='Error',
-        hue='Method',
-        dodge=True,
-        ax=ax
-    )
+    # sb.swarmplot(
+    #     data=df,
+    #     x='x',
+    #     y='Error',
+    #     hue='Method',
+    #     dodge=True,
+    #     ax=ax
+    # )
     ax.set_ylabel('RMSE')
 
 
