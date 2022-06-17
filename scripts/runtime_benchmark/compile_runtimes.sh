@@ -13,8 +13,14 @@ add_entry() {
 	subdir=$2
 
 	trial_dir=${OUTPUT_DIR}/taxa_top_${n_taxa}/trial_${trial}
-	elapsed_time=$(cat ${trial_dir}/${subdir}/runtime.txt)
-	echo "${methodname},${n_taxa},${trial},${elapsed_time}" >> $csv_path
+	runtime_file=${trial_dir}/${subdir}/runtime.txt
+
+	if [[ -f $runtime_file ]]; then
+		elapsed_time=$(cat ${runtime_file})
+		echo "${methodname},${n_taxa},${trial},${elapsed_time}" >> $csv_path
+	else
+		echo "Couldn't find ${runtime_file}."
+	fi
 }
 
 
@@ -29,6 +35,7 @@ for n_taxa in 10 25 50 100; do
 		add_entry "gLV-ra elastic-net" "glv-ra/elastic-net"
 		add_entry "gLV-ra ridge" "glv-ra/ridge"
 		add_entry "lra" "lra/elastic-net"
+	done
 done
 
 echo "[*] Wrote results to ${csv_path}"
