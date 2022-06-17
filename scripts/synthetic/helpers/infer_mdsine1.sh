@@ -65,7 +65,7 @@ biomass_file = ${biomass_file}
 cores = ${NUM_CORES}
 
 [Preprocessing]
-minMedCount = 10   # minimum median of counts (across all subjects and time-points)
+minMedCount = 1   # minimum median of counts (across all subjects and time-points)
 numReplicates = 3   # number of replicates for biomass data
 useSplines = 1
 
