@@ -93,7 +93,7 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
             theta_n = np.array(f[ref_n])
             growths[n] = theta_n[0, :]
             interactions[n] = theta_n[1:, :]
-        return growths, interactions, indicator_probs
+        return interactions, growths, indicator_probs
 
 
 def mdsine2_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
