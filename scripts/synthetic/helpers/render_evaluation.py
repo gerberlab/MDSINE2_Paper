@@ -17,8 +17,17 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def render_growth_rate_errors(df: pd.DataFrame, ax):
+def load_df(df_path: Path) -> pd.DataFrame:
+    df = pd.read_csv(df_path)
+    df['NoiseLevel'] = pd.Categorical(
+        df['NoiseLevel'],
+        categories=['low', 'medium', 'high']
+    )
     df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
+    return df
+
+
+def render_growth_rate_errors(df: pd.DataFrame, ax):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.boxplot(
         data=df,
@@ -40,7 +49,6 @@ def render_growth_rate_errors(df: pd.DataFrame, ax):
 
 
 def render_interaction_strength_errors(df: pd.DataFrame, ax):
-    df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.boxplot(
         data=df,
@@ -71,7 +79,6 @@ def render_topology_errors(df: pd.DataFrame, ax):
             x=fpr,
         )
 
-    df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc)
     print(area_df)
@@ -81,15 +88,15 @@ def render_all(dataframe_dir: Path, output_path: Path):
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 
     render_growth_rate_errors(
-        pd.read_csv(dataframe_dir / "growth_rate_errors.csv"),
+        load_df(dataframe_dir / "growth_rate_errors.csv"),
         axes[0, 0]
     )
     render_interaction_strength_errors(
-        pd.read_csv(dataframe_dir / "interaction_strength_errors.csv"),
+        load_df(dataframe_dir / "interaction_strength_errors.csv"),
         axes[1, 0]
     )
     render_topology_errors(
-        pd.read_csv(dataframe_dir / "topology_errors.csv"),
+        load_df(dataframe_dir / "topology_errors.csv"),
         axes[1, 1]
     )
 
