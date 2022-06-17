@@ -91,6 +91,7 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
         for n in range(n_samples):
             ref_n = theta_samples[n]
             theta_n = np.array(f[ref_n])
+            print(theta_n.shape)
             growths[n] = theta_n[0, :]
             interactions[n] = theta_n[1:, :]
         return interactions, growths, indicator_probs
