@@ -118,6 +118,7 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
     for noise_level_name, noise_level in noise_levels.items():
+        print(f"Simulating noise level {noise_level_name}: {noise_level}")
         # Simulate noise.
         study = synthetic.simulateMeasurementNoise(
             a0=args.negbin_a0,
