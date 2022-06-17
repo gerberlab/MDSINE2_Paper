@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
 
 def render_growth_rate_errors(df: pd.DataFrame, ax):
     df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
-    df['x'] = df['ReadDepth'].astype(str) + ' reads, ' + df['NoiseLevel'].astype(str) + ' noise'
+    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.boxplot(
         data=df,
         x='x',
@@ -41,7 +41,7 @@ def render_growth_rate_errors(df: pd.DataFrame, ax):
 
 def render_interaction_strength_errors(df: pd.DataFrame, ax):
     df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
-    df['x'] = df['ReadDepth'].astype(str) + ' reads, ' + df['NoiseLevel'].astype(str) + ' noise'
+    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.boxplot(
         data=df,
         x='x',
@@ -72,7 +72,7 @@ def render_topology_errors(df: pd.DataFrame, ax):
         )
 
     df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
-    df['x'] = df['ReadDepth'].astype(str) + ' reads, ' + df['NoiseLevel'].astype(str) + ' noise'
+    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc)
     print(area_df)
 
