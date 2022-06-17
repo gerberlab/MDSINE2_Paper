@@ -29,12 +29,13 @@ for n_taxa in 10 25 50 100; do
 		echo "Handling n_taxa: ${n_taxa}, trial: ${trial}"
 		add_entry "MDSINE2(Negbin)" "mdsine2_negbin"
 		add_entry "MDSINE2" "mdsine2"
+		add_entry "MDSINE2 (No clusters)" "mdsine2_nocluster"
 		add_entry "cLV elastic-net" "clv/elastic-net"
 		add_entry "gLV elastic-net" "glv/elastic-net"
 		add_entry "gLV ridge" "glv/ridge"
 		add_entry "gLV-ra elastic-net" "glv-ra/elastic-net"
 		add_entry "gLV-ra ridge" "glv-ra/ridge"
-		add_entry "lra" "lra/elastic-net"
+		add_entry "lra elastic-net" "lra/elastic-net"
 	done
 done
 
