@@ -89,7 +89,7 @@ def render_all(dataframe_dir: Path, output_path: Path):
         axes[1, 0]
     )
     render_topology_errors(
-        pd.read_csv(dataframe_dir / "topology_errors"),
+        pd.read_csv(dataframe_dir / "topology_errors.csv"),
         axes[1, 1]
     )
 
