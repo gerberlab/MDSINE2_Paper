@@ -210,7 +210,7 @@ if __name__ == "__main__":
         T_healthy.append(t)
 
     U_healthy = format_U(U_healthy)
-    print("U:", U_healthy)
+    print("Skipping denoising step.")
     #Y_healthy_denoised = denoise(Y_healthy, T_healthy, effects=U_healthy)
     savepath = Path(args.output_loc)
     pkl.dump(Y_healthy, open(savepath / "Y.pkl", "wb"))

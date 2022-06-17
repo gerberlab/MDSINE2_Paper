@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source settings.sh
+source runtime_benchmark/settings.sh
 
 
 require_program "mdsine2"
