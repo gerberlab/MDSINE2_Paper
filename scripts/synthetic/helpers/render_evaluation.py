@@ -1,6 +1,7 @@
 from pathlib import Path
 import argparse
 
+import scipy.integrate
 import matplotlib.pyplot as plt
 import seaborn as sb
 import pandas as pd
@@ -60,6 +61,22 @@ def render_interaction_strength_errors(df: pd.DataFrame, ax):
     ax.set_ylabel('RMSE')
 
 
+def render_topology_errors(df: pd.DataFrame, ax):
+    def auroc(_df):
+        _df = _df.sort_values('FPR', ascending=True)
+        fpr = _df['FPR']
+        tpr = _df['TPR']
+        return scipy.integrate.trapz(
+            y=tpr,
+            x=fpr,
+        )
+
+    df = df.sort_values(['ReadDepth', 'NoiseLevel'], ascending=[True, True])
+    df['x'] = df['ReadDepth'].astype(str) + ' reads, ' + df['NoiseLevel'].astype(str) + ' noise'
+    area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc)
+    print(area_df)
+
+
 def render_all(dataframe_dir: Path, output_path: Path):
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 
@@ -67,9 +84,13 @@ def render_all(dataframe_dir: Path, output_path: Path):
         pd.read_csv(dataframe_dir / "growth_rate_errors.csv"),
         axes[0, 0]
     )
-    render_growth_rate_errors(
+    render_interaction_strength_errors(
         pd.read_csv(dataframe_dir / "interaction_strength_errors.csv"),
         axes[1, 0]
+    )
+    render_topology_errors(
+        pd.read_csv(dataframe_dir / "topology_errors"),
+        axes[1, 1]
     )
 
     plt.savefig(output_path)

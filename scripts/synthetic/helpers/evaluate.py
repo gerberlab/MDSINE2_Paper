@@ -270,10 +270,10 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
     df_entries = []
 
     def _false_positive_rate(pred, truth) -> float:
-        return np.sum(pred & np.logical_not(truth)) / truth.size
+        return np.sum(pred & np.logical_not(truth)) / (truth.size - np.sum(truth))
 
     def _true_positive_rate(pred, truth) -> float:
-        return np.sum(pred & truth) / truth.size
+        return np.sum(pred & truth) / np.sum(truth)
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         def _compute_roc_curve(_method: str, _pvalues: np.ndarray):
