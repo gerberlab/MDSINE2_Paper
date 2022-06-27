@@ -119,8 +119,11 @@ def main():
         trajs = synthetic._data[subj]  # (n_taxa) x (n_times)
         for taxa_traj in trajs:
             ax.plot(synthetic.times, taxa_traj, marker='o')
-        plt.savefig(out_dir / f'{subj}.pdf')
+
+        traj_plot_path = out_dir / f'{subj}.pdf'
+        plt.savefig(traj_plot_path)
         plt.close(fig)
+        print(f"Saved trajectories to {traj_plot_path}")
 
     # Simulate noise levels.
     noise_levels = {
