@@ -107,7 +107,7 @@ def main():
     synthetic.set_timepoints(time_points)
 
     # Generate the trajectories.
-    synthetic.generate_trajectories(
+    raw_trajs = synthetic.generate_trajectories(
         dt=args.sim_dt,
         init_dist=variables.Normal(initial_cond_mean, initial_cond_std),
         processvar=model.MultiplicativeGlobal(args.process_var)
@@ -116,9 +116,10 @@ def main():
     # Plot the trajectories.
     for subj in synthetic.subjs:
         fig, ax = plt.subplots(figsize=(10, 8))
-        trajs = synthetic._data[subj]  # (n_taxa) x (n_times)
+        trajs = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
+        times = raw_trajs[subj]['times']
         for taxa_traj in trajs:
-            ax.plot(synthetic.times, taxa_traj, marker='o')
+            ax.plot(times, taxa_traj, marker='o')
 
         traj_plot_path = out_dir / f'{subj}.pdf'
         plt.savefig(traj_plot_path)
