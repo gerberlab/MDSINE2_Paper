@@ -119,7 +119,7 @@ def main():
         trajs = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
         times = raw_trajs[subj]['times']
         for taxa_traj in trajs:
-            ax.plot(times, taxa_traj, marker='o')
+            ax.plot(times, taxa_traj, marker=None)
 
         traj_plot_path = out_dir / f'{subj}.pdf'
         plt.savefig(traj_plot_path)
