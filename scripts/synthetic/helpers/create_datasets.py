@@ -92,6 +92,9 @@ def main():
     time_points = parse_time_points(args.time_points_file)
     seed = args.seed
 
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(exist_ok=True, parents=True)
+
     taxa = TaxaSet()
     for taxa_name in taxa_names:
         taxa.add_taxon(taxa_name)
@@ -109,14 +112,22 @@ def main():
         processvar=model.MultiplicativeGlobal(args.process_var)
     )
 
+    # Plot the trajectories.
+    for subj in synthetic.subjs:
+        fig, ax = plt.subplots(figsize=(10, 8))
+        trajs = synthetic._data[subj]  # (n_taxa) x (n_times)
+        for taxa_traj in trajs:
+            ax.plot(synthetic.times, taxa_traj, marker='o')
+        plt.savefig(out_dir / f'{subj}.pdf')
+        plt.close(fig)
+
+    # Simulate noise levels.
     noise_levels = {
         'low': args.low_noise,
         'medium': args.medium_noise,
         'high': args.high_noise
     }
 
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(exist_ok=True, parents=True)
     for noise_level_name, noise_level in noise_levels.items():
         print(f"Simulating noise level {noise_level_name}: {noise_level}")
         # Simulate noise.
