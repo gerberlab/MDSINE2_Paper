@@ -6,6 +6,7 @@ from typing import Tuple, List
 from pathlib import Path
 import argparse
 
+import matplotlib.pyplot as plt
 import numpy as np
 from mdsine2 import *
 from mdsine2.names import STRNAMES
