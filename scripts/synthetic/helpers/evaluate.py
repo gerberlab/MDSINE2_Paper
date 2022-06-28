@@ -272,7 +272,10 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
     df_entries = []
 
     def _false_positive_rate(pred, truth) -> float:
-        return np.sum(pred & np.logical_not(truth)) / (truth.size - np.sum(truth))
+        return 1 - _true_negative_rate(pred, truth)
+
+    def _true_negative_rate(pred, truth) -> float:
+        return np.sum(~pred & ~truth) / np.sum(~truth)
 
     def _true_positive_rate(pred, truth) -> float:
         return np.sum(pred & truth) / np.sum(truth)
