@@ -85,7 +85,7 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
             x=fpr,
         )
 
-    area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc).reset_index()
+    area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
     print(type(area_df))
     print(area_df)
 
