@@ -371,7 +371,6 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                 'NoiseLevel': noise_level,
                 'Error': _err
             })
-            print(f'{_method}: {_err}')
 
         def _eval_mdsine(_method: str, _pred_interactions: np.ndarray, _pred_growths: np.ndarray):
             subsample_idxs = np.arange(0, _pred_interactions.shape[0], int(subsample_frac * _pred_interactions.shape[0]))
@@ -484,6 +483,7 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
         assert len(expected_t) <= len(_t)
 
         fwsims[gibbs_idx, :, :] = _x[:, target_time_idxs]
+    print(np.median(fwsims, axis=0))
     return fwsims
 
 
