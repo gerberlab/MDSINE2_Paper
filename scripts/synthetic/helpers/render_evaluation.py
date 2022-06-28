@@ -87,6 +87,7 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
 
     area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc).reset_index()
     print(type(area_df))
+    print(area_df)
 
     area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(
