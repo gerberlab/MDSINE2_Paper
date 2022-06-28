@@ -104,17 +104,13 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     def auroc(_df):
         _df = _df.sort_values('FPR', ascending=True)
         fpr = np.concatenate([[0.], _df['FPR'].to_numpy(), [1.]])
-        print(fpr)
         tpr = np.concatenate([[0.], _df['TPR'].to_numpy(), [1.]])
-        print(tpr)
         return scipy.integrate.trapz(
             y=tpr,
             x=fpr,
         )
 
     area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
-    print(type(area_df))
-    print(area_df)
 
     area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(

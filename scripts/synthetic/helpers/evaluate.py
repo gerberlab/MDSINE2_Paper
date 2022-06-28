@@ -483,7 +483,10 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
         assert len(expected_t) <= len(_t)
 
         fwsims[gibbs_idx, :, :] = _x[:, target_time_idxs]
-    print(np.median(fwsims, axis=0))
+
+    print(
+        np.sum(np.isnan(fwsims), axis=0)
+    )
     return fwsims
 
 
