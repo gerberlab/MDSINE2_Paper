@@ -1,6 +1,7 @@
 from pathlib import Path
 import argparse
 
+import numpy as np
 import scipy.integrate
 import matplotlib.pyplot as plt
 import seaborn as sb
@@ -102,8 +103,8 @@ def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2):
 def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     def auroc(_df):
         _df = _df.sort_values('FPR', ascending=True)
-        fpr = _df['FPR']
-        tpr = _df['TPR']
+        fpr = np.concatenate([[0.], _df['FPR'].to_numpy(), [1.]])
+        tpr = np.concatenate([[0.], _df['TPR'].to_numpy(), [1.]])
         return scipy.integrate.trapz(
             y=tpr,
             x=fpr,
