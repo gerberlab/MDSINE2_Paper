@@ -48,6 +48,8 @@ def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     ax2.set_ylabel(None)
     ax1.set_xlabel(None)
     ax2.set_xlabel(None)
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
     text_ax.text(x=0.5, y=0.5, s='Growth Rates', fontsize=14, horizontalalignment='center', verticalalignment='center')
     text_ax.axis('off')
 
@@ -72,6 +74,8 @@ def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     ax2.set_ylabel(None)
     ax1.set_xlabel(None)
     ax2.set_xlabel(None)
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
     text_ax.text(x=0.5, y=0.5, s='Interaction Strengths', fontsize=14, horizontalalignment='center', verticalalignment='center')
     text_ax.axis('off')
 
