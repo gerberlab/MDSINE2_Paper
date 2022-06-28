@@ -281,14 +281,16 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         return np.sum(pred & truth) / np.sum(truth)
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
-        def _compute_roc_curve(_method: str, _pvalues: np.ndarray):
+        def _compute_roc_curve(_method: str, _p: np.ndarray, _q: np.ndarray, use_greater_than: bool):
             """
             Computes a range of FPR/TPR pairs and adds them all to the dataframe.
-            :param _pvalues: An (N_taxa x N_taxa) matrix of p-values for each pair of interactions.
+            :param _p: An (N_taxa x N_taxa) matrix of p-values for each pair of interactions.
             """
-            q = np.linspace(0, 1, 1000)
-            preds = np.expand_dims(_pvalues, axis=2) > np.expand_dims(q, axis=(0, 1))
-            for i in range(len(q)):
+            if use_greater_than:
+                preds = np.expand_dims(_p, axis=2) > np.expand_dims(_q, axis=(0, 1))
+            else:
+                preds = np.expand_dims(_p, axis=2) < np.expand_dims(_q, axis=(0, 1))
+            for i in range(len(_q)):
                 df_entries.append({
                     'Method': _method,
                     'ReadDepth': read_depth,
@@ -300,12 +302,12 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 
         def _add_regression_entry(_method: str, _regression_type: str):
             interaction_p_values = regression_interaction_pvals(result_dir, _method, _regression_type)  # (N x N)
-            _compute_roc_curve(f'{_method}-{_regression_type}', interaction_p_values)
+            _compute_roc_curve(f'{_method}-{_regression_type}', np.log(interaction_p_values), np.linspace(-100., 0., 1000), use_greater_than=False)
 
         # MDSINE2 inference error eval
         _, _, interaction_indicators = mdsine2_output(result_dir)
         indicator_pvals = np.mean(interaction_indicators, axis=0)
-        _compute_roc_curve('MDSINE2', indicator_pvals)
+        _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0., 1., 1000), use_greater_than=True)
 
         # MDSINE1 inference error eval
         #_, _, indicator_probs = mdsine1_output(result_dir)
