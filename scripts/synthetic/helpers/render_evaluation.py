@@ -75,6 +75,30 @@ def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     text_ax.axis('off')
 
 
+def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2):
+    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
+    sb.barplot(
+        data=df.loc[df['ReadDepth'] == 1000],
+        x='x',
+        y='Error',
+        hue='Method',
+        ax=ax1
+    )
+    sb.barplot(
+        data=df.loc[df['ReadDepth'] == 25000],
+        x='x',
+        y='Error',
+        hue='Method',
+        ax=ax2
+    )
+    ax1.set_ylabel('RMSE')
+    ax2.set_ylabel(None)
+    ax1.set_xlabel(None)
+    ax2.set_xlabel(None)
+    text_ax.text(x=0.5, y=0.5, s='Holdout trajectory', fontsize=14, horizontalalignment='center', verticalalignment='center')
+    text_ax.axis('off')
+
+
 def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     def auroc(_df):
         _df = _df.sort_values('FPR', ascending=True)
@@ -126,10 +150,19 @@ def render_all(dataframe_dir: Path, output_path: Path):
         ax2=ax2
     )
 
-    ax0 = fig.add_subplot(spec[2, :2])
-    ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
+    ax0 = fig.add_subplot(spec[0, 2:])
+    ax1, ax2 = fig.add_subplot(spec[1, 2]), fig.add_subplot(spec[1, 3])
     render_interaction_strength_errors(
         load_df(dataframe_dir / "interaction_strength_errors.csv"),
+        text_ax=ax0,
+        ax1=ax1,
+        ax2=ax2
+    )
+
+    ax0 = fig.add_subplot(spec[2, :2])
+    ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
+    render_holdout_trajectory_errors(
+        load_df(dataframe_dir / 'holdout_trajectory_errors.csv'),
         text_ax=ax0,
         ax1=ax1,
         ax2=ax2
