@@ -85,15 +85,30 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
             x=fpr,
         )
 
-    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc)
-    print(area_df)
+    area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc).reset_index()
+    print(type(area_df))
+
+    area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
+    sb.barplot(
+        data=area_df.loc[area_df['ReadDepth'] == 1000],
+        x='x',
+        y='Error',
+        hue='Method',
+        ax=ax1
+    )
+    sb.barplot(
+        data=area_df.loc[area_df['ReadDepth'] == 25000],
+        x='x',
+        y='Error',
+        hue='Method',
+        ax=ax2
+    )
 
     ax1.set_ylabel('AUROC')
     ax2.set_ylabel(None)
     ax1.set_xlabel(None)
     ax2.set_xlabel(None)
-    text_ax.text(x=0.5, y=0.5, s='Topology Errors', fontsize=14, horizontalalignment='center', verticalalignment='center')
+    text_ax.text(x=0.5, y=0.5, s='Network Structure', fontsize=14, horizontalalignment='center', verticalalignment='center')
     text_ax.axis('off')
 
 
@@ -119,8 +134,8 @@ def render_all(dataframe_dir: Path, output_path: Path):
         ax2=ax2
     )
 
-    ax0 = fig.add_subplot(spec[0, 2:])
-    ax1, ax2 = fig.add_subplot(spec[1, 2]), fig.add_subplot(spec[1, 3])
+    ax0 = fig.add_subplot(spec[2, 2:])
+    ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
     render_topology_errors(
         load_df(dataframe_dir / "topology_errors.csv"),
         text_ax=ax0,
