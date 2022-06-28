@@ -75,7 +75,7 @@ def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     text_ax.axis('off')
 
 
-def render_topology_errors(df: pd.DataFrame, ax):
+def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     def auroc(_df):
         _df = _df.sort_values('FPR', ascending=True)
         fpr = _df['FPR']
@@ -88,6 +88,13 @@ def render_topology_errors(df: pd.DataFrame, ax):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     area_df = df.groupby(['Method', 'ReadDepth', 'NoiseLevel']).apply(auroc)
     print(area_df)
+
+    ax1.set_ylabel('AUROC')
+    ax2.set_ylabel(None)
+    ax1.set_xlabel(None)
+    ax2.set_xlabel(None)
+    text_ax.text(x=0.5, y=0.5, s='Topology Errors', fontsize=14, horizontalalignment='center', verticalalignment='center')
+    text_ax.axis('off')
 
 
 def render_all(dataframe_dir: Path, output_path: Path):
@@ -111,10 +118,15 @@ def render_all(dataframe_dir: Path, output_path: Path):
         ax1=ax1,
         ax2=ax2
     )
-    # render_topology_errors(
-    #     load_df(dataframe_dir / "topology_errors.csv"),
-    #     axes[1, 1]
-    # )
+
+    ax0 = fig.add_subplot(spec[0, 2:])
+    ax1, ax2 = fig.add_subplot(spec[1, 2]), fig.add_subplot(spec[1, 3])
+    render_topology_errors(
+        load_df(dataframe_dir / "topology_errors.csv"),
+        text_ax=ax0,
+        ax1=ax1,
+        ax2=ax2
+    )
 
     plt.savefig(output_path)
 
