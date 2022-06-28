@@ -27,44 +27,44 @@ def load_df(df_path: Path) -> pd.DataFrame:
     return df
 
 
-def render_growth_rate_errors(df: pd.DataFrame, ax):
+def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(
-        data=df,
+        data=df.loc[df['ReadDepth'] == 1000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax
+        ax=ax1
     )
-    # sb.swarmplot(
-    #     data=df,
-    #     x='x',
-    #     y='Error',
-    #     hue='Method',
-    #     dodge=True,
-    #     ax=ax
-    # )
-    ax.set_ylabel('RMSE')
-
-
-def render_interaction_strength_errors(df: pd.DataFrame, ax):
-    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(
-        data=df,
+        data=df.loc[df['ReadDepth'] == 25000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax
+        ax=ax2
     )
-    # sb.swarmplot(
-    #     data=df,
-    #     x='x',
-    #     y='Error',
-    #     hue='Method',
-    #     dodge=True,
-    #     ax=ax
-    # )
-    ax.set_ylabel('RMSE')
+    ax1.set_ylabel('RMSE')
+    text_ax.text(x=0.5, y=0.5, s='Growth Rates', fontsize=14)
+
+
+def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2):
+    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
+    sb.barplot(
+        data=df.loc[df['ReadDepth'] == 1000],
+        x='x',
+        y='Error',
+        hue='Method',
+        ax=ax1
+    )
+    sb.barplot(
+        data=df.loc[df['ReadDepth'] == 25000],
+        x='x',
+        y='Error',
+        hue='Method',
+        ax=ax2
+    )
+    ax1.set_ylabel('RMSE')
+    text_ax.text(x=0.5, y=0.5, s='Interaction Strengths', fontsize=14)
 
 
 def render_topology_errors(df: pd.DataFrame, ax):
@@ -83,20 +83,30 @@ def render_topology_errors(df: pd.DataFrame, ax):
 
 
 def render_all(dataframe_dir: Path, output_path: Path):
-    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+    fig = plt.figure(figsize=(16, 10), constrained_layout=True)
+    spec = fig.add_gridspec(ncols=4, nrows=4, height_ratios=[1, 10, 1, 10], width_ratios=[1, 1, 1, 1])
 
+    ax0 = fig.add_subplot(spec[0, :2])
+    ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
     render_growth_rate_errors(
         load_df(dataframe_dir / "growth_rate_errors.csv"),
-        axes[0, 0]
+        text_ax=ax0,
+        ax1=ax1,
+        ax2=ax2
     )
+
+    ax0 = fig.add_subplot(spec[2, :2])
+    ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
     render_interaction_strength_errors(
         load_df(dataframe_dir / "interaction_strength_errors.csv"),
-        axes[1, 0]
+        text_ax=ax0,
+        ax1=ax1,
+        ax2=ax2
     )
-    render_topology_errors(
-        load_df(dataframe_dir / "topology_errors.csv"),
-        axes[1, 1]
-    )
+    # render_topology_errors(
+    #     load_df(dataframe_dir / "topology_errors.csv"),
+    #     axes[1, 1]
+    # )
 
     plt.savefig(output_path)
 
