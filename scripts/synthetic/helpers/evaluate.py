@@ -291,13 +291,16 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
             else:
                 preds = np.expand_dims(_p, axis=2) < np.expand_dims(_q, axis=(0, 1))
             for i in range(len(_q)):
+                preds_i = preds[:, :, i]
+                np.fill_diagonal(true_indicators, 0)
+                np.fill_diagonal(preds_i, 0)
                 df_entries.append({
                     'Method': _method,
                     'ReadDepth': read_depth,
                     'Trial': trial_num,
                     'NoiseLevel': noise_level,
-                    'FPR': _false_positive_rate(preds[:, :, i], true_indicators),
-                    'TPR': _true_positive_rate(preds[:, :, i], true_indicators)
+                    'FPR': _false_positive_rate(preds_i, true_indicators),
+                    'TPR': _true_positive_rate(preds_i, true_indicators)
                 })
 
         def _add_regression_entry(_method: str, _regression_type: str):
