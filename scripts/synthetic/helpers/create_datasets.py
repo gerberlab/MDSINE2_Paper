@@ -103,7 +103,8 @@ def simulate_reads_dmd(synth: Synthetic, study_name: str, alpha_scale: float, nu
         total_mass = np.sum(synth._data[subj.name], axis=0)  # length T
         for tidx, t in enumerate(subj.times):
             # Make the reads
-            alpha = alpha_scale * total_mass[tidx]
+            rel_abund = synth._data[subj.name][:, tidx] / total_mass[tidx]
+            alpha = alpha_scale * rel_abund
             subj.reads[t] = dirichlet_multinomial(alpha, num_reads)
 
             # Make biomass
