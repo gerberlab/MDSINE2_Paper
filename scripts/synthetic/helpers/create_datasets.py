@@ -8,6 +8,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from mdsine2 import *
 from mdsine2.names import STRNAMES
 
@@ -29,8 +30,9 @@ def parse_args() -> argparse.Namespace:
     # Optional parameters
     parser.add_argument('-p', '--process_var', type=float, required=False, default=0.01)
     parser.add_argument('-dt', '--sim_dt', type=float, required=False, default=0.01)
-    parser.add_argument('-a0', '--negbin_a0', type=float, required=False, default=1e-10)
-    parser.add_argument('-a1', '--negbin_a1', type=float, required=False, default=0.05)
+    parser.add_argument('-a', '--dmd_alpha_scale', type=float, required=False, default=286,
+                        help='DMD dispersion parameter estimated from mean estimates at all time-points from '
+                             'C. diff data (Default: 286, carry-over from MDSINE1)')
     parser.add_argument('-r', '--read_depth', type=int, required=False, default=50000)
     parser.add_argument('--low_noise', type=float, required=False, default=0.01)
     parser.add_argument('--medium_noise', type=float, required=False, default=0.1)
@@ -87,6 +89,36 @@ def parse_time_points(time_points_path: Path) -> np.ndarray:
     return np.array(time_points, dtype=float)
 
 
+def simulate_reads_dmd(synth: Synthetic, study_name: str, alpha_scale: float, num_reads: int, qpcr_noise_scale: float) -> Study:
+    # Make the study object
+    study = Study(taxa=synth.taxa, name=study_name)
+    for subjname in synth.subjs:
+        study.add_subject(name=subjname)
+
+    # Add times for each subject
+    for subj in study:
+        subj.times = synth.times
+
+    for subj in study:
+        total_mass = np.sum(synth._data[subj.name], axis=0)  # length T
+        for tidx, t in enumerate(subj.times):
+            # Make the reads
+            alpha = alpha_scale * total_mass[tidx]
+            subj.reads[t] = dirichlet_multinomial(alpha, num_reads)
+
+            # Make biomass
+            triplicates = np.exp(
+                np.log(total_mass[tidx]) +
+                qpcr_noise_scale * pylab.random.normal.sample(size=3)
+            )
+            subj.qpcr[t] = pylab.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+    return study
+
+
+def dirichlet_multinomial(alpha: np.ndarray, n: int) -> np.ndarray:
+    return np.random.multinomial(n, np.random.dirichlet(alpha))
+
+
 def main():
     args = parse_args()
     growth_rates, interactions, interaction_indicators, taxa_names, initial_cond_mean, initial_cond_std = parse_glv_params(Path(args.input_glv_params))
@@ -103,7 +135,7 @@ def main():
     synthetic = make_synthetic('cdiff_mdsine_bvs', taxa, growth_rates, interactions, interaction_indicators, seed=seed)
 
     # Make subject names
-    synthetic.set_subjects([f'subj_{i}' for i in range(args.num_subjects)])
+    synthetic.set_subjects([f'subj_{i}' for i in range(args.num_subjects)] + ['holdout'])
     synthetic.set_timepoints(time_points)
 
     # Generate the trajectories.
@@ -135,14 +167,28 @@ def main():
 
     for noise_level_name, noise_level in noise_levels.items():
         print(f"Simulating noise level {noise_level_name}: {noise_level}")
-        # Simulate noise.
-        study = synthetic.simulateMeasurementNoise(
-            a0=args.negbin_a0,
-            a1=args.negbin_a1,
-            qpcr_noise_scale=noise_level,
-            approx_read_depth=args.read_depth,
-            name=f'cdiff-semisynth-noise-{noise_level_name}'
+
+        # ======== Simulate noise using DMD to test robustness.
+        study = simulate_reads_dmd(
+            synth=synthetic,
+            study_name=f'simulated-{noise_level_name}',
+            alpha_scale=args.dmd_alpha_scale,
+            num_reads=args.read_depth,
+            qpcr_noise_scale=noise_level
         )
+
+        # ======== Simulate using NegBin noise model.
+        # study = synthetic.simulateMeasurementNoise(
+        #     a0=args.negbin_a0,
+        #     a1=args.negbin_a1,
+        #     qpcr_noise_scale=noise_level,
+        #     approx_read_depth=args.read_depth,
+        #     name=f'simulated-{noise_level_name}'
+        # )
+
+        # Save to disk.
+        holdout_study = study.pop_subject('holdout', name=f'holdout-{noise_level_name}')
+        holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
         study.save(str(out_dir / f'subjset_{noise_level_name}.pkl'))
 
 

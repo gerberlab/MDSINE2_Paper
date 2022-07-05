@@ -18,8 +18,6 @@ for read_depth in 1000 25000; do
 		-s ${seed} \
 		--process_var ${PROCESS_VAR} \
 		-dt ${SIMULATION_DT} \
-		-a0 ${NEGBIN_A0} \
-		-a1 ${NEGBIN_A1} \
 		--read_depth $read_depth \
 		--low_noise ${LOW_NOISE_SCALE} \
 		--medium_noise ${MEDIUM_NOISE_SCALE} \
