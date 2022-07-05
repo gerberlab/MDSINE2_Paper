@@ -170,7 +170,6 @@ EOFDOC
 
 
 dataset=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/subjset_${noise_level}.pkl
-replicates=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/replicate_${noise_level}.pkl
 trial_output_dir=${OUTPUT_DIR}/reads_${read_depth}/trial_${trial}/${noise_level}_noise
 inference_out_dir=${trial_output_dir}/mdsine1
 mkdir -p $inference_out_dir
@@ -189,7 +188,7 @@ biomass=${inference_out_dir}/biomass.txt
 create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
 
 echo "[*] Formatting synthetic inputs..."
-python synthetic/helpers/create_mdsine1_inputs.py -i ${replicates} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
+python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
