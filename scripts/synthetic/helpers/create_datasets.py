@@ -24,6 +24,10 @@ def parse_args() -> argparse.Namespace:
                         help='<Required> The number of subjecs to simulate to lump into a single cohort.')
     parser.add_argument('-o', '--out_dir', type=str, required=True,
                         help='<Required> The directory to output the sampled subject to.')
+    parser.add_argument('-q', '--num_qpcr_subjects', type=int, required=True,
+                        help='<Required> The number of qPCR subjects (replicates) to sample.')
+    parser.add_argument('-q', '--num_qpcr_triplicates', type=int, required=True,
+                        help='<Required> The number of qPCR triplicates to sample.')
     parser.add_argument('-s', '--seed', type=int, required=True,
                         help='<Required> The seed to use for random sampling.')
 
@@ -116,6 +120,43 @@ def simulate_reads_dmd(synth: Synthetic, study_name: str, alpha_scale: float, nu
     return study
 
 
+def simulate_replicates(taxa: TaxaSet,
+                        study_name: str,
+                        num_subjects: int,
+                        num_replicates: int,
+                        conc_dist: Variable,
+                        alpha_scale: float,
+                        num_reads: int,
+                        qpcr_noise_scale: float) -> Study:
+    # Make the study object
+    study = Study(taxa=taxa, name=study_name)
+    for ridx in range(num_subjects):
+        study.add_subject(name=f'replicate-{ridx}')
+
+    # Add times for each subject
+    times = np.arange(0., num_replicates, 1.0)
+    for subj in study:
+        subj.times = times
+
+    for subj in study:
+        conc = conc_dist.sample(size=len(taxa))
+        total_mass = np.sum(conc)
+        rel_mass = conc / total_mass
+
+        for tidx, t in enumerate(subj.times):
+            # Make the reads
+            alpha = alpha_scale * rel_mass
+            subj.reads[t] = dirichlet_multinomial(alpha, num_reads)
+
+            # Make biomass
+            triplicates = np.exp(
+                np.log(total_mass) +
+                qpcr_noise_scale * pylab.random.normal.sample(size=3)
+            )
+            subj.qpcr[t] = pylab.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+    return study
+
+
 def dirichlet_multinomial(alpha: np.ndarray, n: int) -> np.ndarray:
     return np.random.multinomial(n, np.random.dirichlet(alpha))
 
@@ -179,6 +220,17 @@ def main():
         )
         study.perturbations = []
 
+        replicate_study = simulate_replicates(
+            taxa=taxa,
+            study_name=f'replicate-{noise_level_name}',
+            num_subjects=args.num_qpcr_subjects,
+            num_replicates=args.num_qpcr_triplicates,
+            conc_dist=variables.Normal(initial_cond_mean, initial_cond_std),
+            alpha_scale=args.dmd_alpha_scale,
+            num_reads=args.read_depth,
+            qpcr_noise_scale=noise_level
+        )
+
         # ======== Simulate using NegBin noise model.
         # study = synthetic.simulateMeasurementNoise(
         #     a0=args.negbin_a0,
@@ -194,7 +246,13 @@ def main():
         holdout_study.perturbations = None
 
         holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
+        print("Generated heldout subjset.")
+
         study.save(str(out_dir / f'subjset_{noise_level_name}.pkl'))
+        print("Generated main subjset.")
+
+        replicate_study.save(str(out_dir / f'replicate_{noise_level_name}.pkl'))
+        print("Generated qPCR replicates for NegBin fitting.")
 
 
 if __name__ == "__main__":
