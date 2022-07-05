@@ -177,6 +177,7 @@ def main():
             num_reads=args.read_depth,
             qpcr_noise_scale=noise_level
         )
+        study.perturbations = []
 
         # ======== Simulate using NegBin noise model.
         # study = synthetic.simulateMeasurementNoise(
