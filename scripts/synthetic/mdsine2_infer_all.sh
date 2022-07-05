@@ -22,7 +22,7 @@ for read_depth in 1000 25000; do
 			echo "[*] Running non-clustered mdsine2 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 			python synthetic/helpers/inference.py \
 					--input $dataset \
-					--negbin ${negbin_out_dir}/replicates/mcmc.pkl \
+					--negbin ${negbin_out_dir}/replicate-${noise_level}/mcmc.pkl \
 					--seed 0 \
 					--burnin 5000 \
 					--n-samples 15000 \
