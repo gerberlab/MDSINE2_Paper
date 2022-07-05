@@ -190,6 +190,9 @@ def main():
 
         # Save to disk.
         holdout_study = study.pop_subject('holdout', name=f'holdout-{noise_level_name}')
+        study.perturbations = None
+        holdout_study.perturbations = None
+
         holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
         study.save(str(out_dir / f'subjset_{noise_level_name}.pkl'))
 
