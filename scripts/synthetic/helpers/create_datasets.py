@@ -166,7 +166,7 @@ def main():
     }
 
     for noise_level_name, noise_level in noise_levels.items():
-        print(f"Simulating noise level {noise_level_name}: {noise_level}")
+        print(f"Simulating noise level {noise_level_name}: {noise_level} using DMD model.")
 
         # ======== Simulate noise using DMD to test robustness.
         study = simulate_reads_dmd(
