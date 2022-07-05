@@ -16,6 +16,8 @@ for read_depth in 1000 25000; do
 		-n ${COHORT_SIZE} \
 		-o ${DATASET_DIR}/data/reads_${read_depth}/trial_${trial} \
 		-s ${seed} \
+		--num_qpcr_subjects ${QPCR_SUBJECTS} \
+		--num_qpcr_triplicates ${QPCR_TRIPLICATES} \
 		--process_var ${PROCESS_VAR} \
 		-dt ${SIMULATION_DT} \
 		--read_depth $read_depth \

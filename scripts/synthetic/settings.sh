@@ -18,6 +18,9 @@ export LOW_NOISE_SCALE=0.01
 export MEDIUM_NOISE_SCALE=0.15
 export HIGH_NOISE_SCALE=0.3
 
+export QPCR_SUBJECTS=3
+export QPCR_TRIPLICATES=6
+
 export OUTPUT_DIR="${DATASET_DIR}/output"
 export NUM_CORES=1
 export MDSINE1_DIR="/home/younhun/mdsine"

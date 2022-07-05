@@ -24,9 +24,9 @@ def parse_args() -> argparse.Namespace:
                         help='<Required> The number of subjecs to simulate to lump into a single cohort.')
     parser.add_argument('-o', '--out_dir', type=str, required=True,
                         help='<Required> The directory to output the sampled subject to.')
-    parser.add_argument('-q', '--num_qpcr_subjects', type=int, required=True,
+    parser.add_argument('-qs', '--num_qpcr_subjects', type=int, required=True,
                         help='<Required> The number of qPCR subjects (replicates) to sample.')
-    parser.add_argument('-q', '--num_qpcr_triplicates', type=int, required=True,
+    parser.add_argument('-qt', '--num_qpcr_triplicates', type=int, required=True,
                         help='<Required> The number of qPCR triplicates to sample.')
     parser.add_argument('-s', '--seed', type=int, required=True,
                         help='<Required> The seed to use for random sampling.')
