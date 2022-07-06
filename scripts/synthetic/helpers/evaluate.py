@@ -96,7 +96,8 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
 
         growths = np.zeros(shape=(n_samples, n_taxa), dtype=float)
         interactions = np.zeros(shape=(n_samples, n_taxa, n_taxa), dtype=float)
-        indicator_probs = np.array(f['Theta_select_probs'])
+        indicator_probs = np.zeros(shape=(n_taxa, n_taxa))
+        indicator_probs[np.ix_(filtered_indices, filtered_indices)] = np.array(f['Theta_select_probs'])
 
         for n in range(n_samples):
             ref_n = theta_samples[n]
