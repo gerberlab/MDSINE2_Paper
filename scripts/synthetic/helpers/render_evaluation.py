@@ -28,21 +28,25 @@ def load_df(df_path: Path) -> pd.DataFrame:
     return df
 
 
-def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2):
+def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(
         data=df.loc[df['ReadDepth'] == 1000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax1
+        ax=ax1,
+        hue_order=order,
+        palette=palette
     )
     sb.barplot(
         data=df.loc[df['ReadDepth'] == 25000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax2
+        ax=ax2,
+        hue_order=order,
+        palette=palette
     )
     ax1.set_ylabel('RMSE')
     ax2.set_ylabel(None)
@@ -54,21 +58,25 @@ def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     text_ax.axis('off')
 
 
-def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2):
+def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(
         data=df.loc[df['ReadDepth'] == 1000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax1
+        ax=ax1,
+        hue_order=order,
+        palette=palette
     )
     sb.barplot(
         data=df.loc[df['ReadDepth'] == 25000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax2
+        ax=ax2,
+        hue_order=order,
+        palette=palette
     )
     ax1.set_ylabel('RMSE')
     ax2.set_ylabel(None)
@@ -80,21 +88,25 @@ def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     text_ax.axis('off')
 
 
-def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2):
+def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     sb.barplot(
         data=df.loc[df['ReadDepth'] == 1000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax1
+        ax=ax1,
+        hue_order=order,
+        palette=palette
     )
     sb.barplot(
         data=df.loc[df['ReadDepth'] == 25000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax2
+        ax=ax2,
+        hue_order=order,
+        palette=palette
     )
     ax1.set_ylabel('RMSE')
     ax2.set_ylabel(None)
@@ -104,7 +116,7 @@ def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2):
     text_ax.axis('off')
 
 
-def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
+def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     def auroc(_df):
         _df = _df.sort_values('FPR', ascending=True)
         fpr = np.concatenate([[0.], _df['FPR'].to_numpy(), [1.]])
@@ -122,14 +134,18 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
         x='x',
         y='Error',
         hue='Method',
-        ax=ax1
+        ax=ax1,
+        hue_order=order,
+        palette=palette
     )
     sb.barplot(
         data=area_df.loc[area_df['ReadDepth'] == 25000],
         x='x',
         y='Error',
         hue='Method',
-        ax=ax2
+        ax=ax2,
+        hue_order=order,
+        palette=palette
     )
 
     ax1.set_ylabel('AUROC')
@@ -141,6 +157,10 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2):
 
 
 def render_all(dataframe_dir: Path, output_path: Path):
+    default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    palette = {method: c for method, c in zip(method_order, default_colors)}
+
     fig = plt.figure(figsize=(16, 10), constrained_layout=True)
     spec = fig.add_gridspec(ncols=4, nrows=4, height_ratios=[1, 10, 1, 10], width_ratios=[1, 1, 1, 1])
 
@@ -150,7 +170,9 @@ def render_all(dataframe_dir: Path, output_path: Path):
         load_df(dataframe_dir / "growth_rate_errors.csv"),
         text_ax=ax0,
         ax1=ax1,
-        ax2=ax2
+        ax2=ax2,
+        order=method_order,
+        palette=palette
     )
 
     ax0 = fig.add_subplot(spec[0, 2:])
@@ -159,7 +181,9 @@ def render_all(dataframe_dir: Path, output_path: Path):
         load_df(dataframe_dir / "interaction_strength_errors.csv"),
         text_ax=ax0,
         ax1=ax1,
-        ax2=ax2
+        ax2=ax2,
+        order=method_order,
+        palette=palette
     )
 
     ax0 = fig.add_subplot(spec[2, :2])
@@ -168,7 +192,9 @@ def render_all(dataframe_dir: Path, output_path: Path):
         load_df(dataframe_dir / 'holdout_trajectory_errors.csv'),
         text_ax=ax0,
         ax1=ax1,
-        ax2=ax2
+        ax2=ax2,
+        order=method_order,
+        palette=palette
     )
 
     ax0 = fig.add_subplot(spec[2, 2:])
@@ -177,7 +203,9 @@ def render_all(dataframe_dir: Path, output_path: Path):
         load_df(dataframe_dir / "topology_errors.csv"),
         text_ax=ax0,
         ax1=ax1,
-        ax2=ax2
+        ax2=ax2,
+        order=method_order,
+        palette=palette
     )
 
     plt.savefig(output_path)
