@@ -202,9 +202,9 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
         _add_entry('MDSINE2', float(np.median(errors)))
 
         # MDSINE1 error
-        #_, growths, _ = mdsine1_output(result_dir)
-        #pred_growth = np.median(growths, axis=0)
-        #_add_entry('MDSINE1', _error_metric(pred_growth, true_growth))
+        _, growths, _ = mdsine1_output(result_dir)
+        errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
+        _add_entry('MDSINE1', float(np.median(errors)))
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
