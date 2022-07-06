@@ -17,9 +17,9 @@ mdsine2 filter \
     --outfile $filtered_study \
     --dtype rel \
     --threshold 0.0001 \
-    --min-num-consecutive 5 \
+    --min-num-consecutive 3 \
     --min-num-subjects 1 \
-    --colonization-time 5
+    --colonization-time 3
 
 
 for n_taxa in 10 25 50 100 200; do
