@@ -261,9 +261,9 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
         # _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
 
         # MDSINE1 error
-        #interactions, _, _ = mdsine1_output(result_dir)
-        #pred_interaction = np.median(interactions, axis=0)
-        #_add_entry('MDSINE1', _error_metric(pred_interaction, true_interactions))
+        interactions, _, _ = mdsine1_output(result_dir)
+        errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
+        _add_entry('MDSINE1', float(np.median(errors)))
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -325,8 +325,8 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0., 1., 1000), use_greater_than=True)
 
         # MDSINE1 inference error eval
-        #_, _, indicator_probs = mdsine1_output(result_dir)
-        #_compute_roc_curve('MDSINE1', indicator_probs)
+        _, _, indicator_probs = mdsine1_output(result_dir)
+        _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(0., 1., 1000), use_greater_than=True)
 
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
@@ -499,9 +499,9 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
 
         fwsims[gibbs_idx, :, :] = _x[:, target_time_idxs]
 
-    print(
-        np.sum(np.isnan(fwsims), axis=0)
-    )
+    # print(
+    #     np.sum(np.isnan(fwsims), axis=0)
+    # )
     return fwsims
 
 
