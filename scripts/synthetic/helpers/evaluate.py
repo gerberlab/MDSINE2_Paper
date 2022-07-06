@@ -81,8 +81,18 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
         theta_mean = np.array(f['Theta_select'])
         theta_samples = f['Theta_samples_select'][0]
 
+        all_species = [
+            ''.join(chr(x) for x in f[ref])
+            for ref in f['species_names'][0]
+        ]
+        filtered_species = [
+            ''.join(chr(x) for x in f[ref])
+            for ref in f['species_names_filtered_total'][0]
+        ]
+        filtered_indices = [all_species.index(sp) for sp in filtered_species]
+
         n_samples = len(theta_samples)
-        n_taxa = theta_mean.shape[1]
+        n_taxa = len(all_species)
 
         growths = np.empty(shape=(n_samples, n_taxa), dtype=float)
         interactions = np.empty(shape=(n_samples, n_taxa, n_taxa), dtype=float)
@@ -91,9 +101,10 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
         for n in range(n_samples):
             ref_n = theta_samples[n]
             theta_n = np.array(f[ref_n])
-            print(theta_n.shape)
-            growths[n] = theta_n[0, :]
-            interactions[n] = theta_n[1:, :]
+
+            growths[n, filtered_indices] = theta_n[0, :]
+            interaction_slice = interactions[n]
+            interaction_slice[np.ix_(filtered_indices, filtered_indices)] = theta_n[1:, :]
         return interactions, growths, indicator_probs
 
 
