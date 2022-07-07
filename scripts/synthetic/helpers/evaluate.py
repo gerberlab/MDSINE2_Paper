@@ -205,18 +205,27 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             })
 
         def _add_regression_entry(_method: str, _regression_type: str):
-            pred_growth, _ = regression_output(result_dir, _method, _regression_type)
-            _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
+            try:
+                pred_growth, _ = regression_output(result_dir, _method, _regression_type)
+                _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
+            except FileNotFoundError:
+                pass
 
         # MDSINE2 inference error eval
-        _, growths, _ = mdsine2_output(result_dir)
-        errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
-        _add_entry('MDSINE2', float(np.median(errors)))
+        try:
+            _, growths, _ = mdsine2_output(result_dir)
+            errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
+            _add_entry('MDSINE2', float(np.median(errors)))
+        except FileNotFoundError:
+            pass
 
         # MDSINE1 error
-        _, growths, _ = mdsine1_output(result_dir)
-        errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
-        _add_entry('MDSINE1', float(np.median(errors)))
+        try:
+            _, growths, _ = mdsine1_output(result_dir)
+            errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
+            _add_entry('MDSINE1', float(np.median(errors)))
+        except FileNotFoundError:
+            pass
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -250,20 +259,29 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
             })
 
         def _add_regression_entry(_method: str, _regression_type: str):
-            _, pred_interaction = regression_output(result_dir, _method, _regression_type)
-            _add_entry(f'{_method}-{_regression_type}', _error_metric(np.transpose(pred_interaction), true_interactions))
+            try:
+                _, pred_interaction = regression_output(result_dir, _method, _regression_type)
+                _add_entry(f'{_method}-{_regression_type}', _error_metric(np.transpose(pred_interaction), true_interactions))
+            except FileNotFoundError:
+                pass
 
         # MDSINE2 inference error eval
-        interactions, _, _ = mdsine2_output(result_dir)
-        errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
-        _add_entry('MDSINE2', float(np.median(errors)))
-        # pred_interaction = np.median(interactions, axis=0)
-        # _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
+        try:
+            interactions, _, _ = mdsine2_output(result_dir)
+            errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
+            _add_entry('MDSINE2', float(np.median(errors)))
+            # pred_interaction = np.median(interactions, axis=0)
+            # _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
+        except FileNotFoundError:
+            pass
 
         # MDSINE1 error
-        interactions, _, _ = mdsine1_output(result_dir)
-        errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
-        _add_entry('MDSINE1', float(np.median(errors)))
+        try:
+            interactions, _, _ = mdsine1_output(result_dir)
+            errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
+            _add_entry('MDSINE1', float(np.median(errors)))
+        except FileNotFoundError:
+            pass
 
         # CLV inference error eval
         _add_regression_entry("lra", "elastic_net")
@@ -316,17 +334,26 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
                 })
 
         def _add_regression_entry(_method: str, _regression_type: str):
-            interaction_p_values = regression_interaction_pvals(result_dir, _method, _regression_type)  # (N x N)
-            _compute_roc_curve(f'{_method}-{_regression_type}', np.log(interaction_p_values), np.linspace(-100., 0., 1000), use_greater_than=False)
+            try:
+                interaction_p_values = regression_interaction_pvals(result_dir, _method, _regression_type)  # (N x N)
+                _compute_roc_curve(f'{_method}-{_regression_type}', np.log(interaction_p_values), np.linspace(-100., 0., 1000), use_greater_than=False)
+            except FileNotFoundError:
+                pass
 
         # MDSINE2 inference error eval
-        _, _, interaction_indicators = mdsine2_output(result_dir)
-        indicator_pvals = np.mean(interaction_indicators, axis=0)
-        _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0., 1., 1000), use_greater_than=True)
+        try:
+            _, _, interaction_indicators = mdsine2_output(result_dir)
+            indicator_pvals = np.mean(interaction_indicators, axis=0)
+            _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0., 1., 1000), use_greater_than=True)
+        except FileNotFoundError:
+            pass
 
         # MDSINE1 inference error eval
-        _, _, indicator_probs = mdsine1_output(result_dir)
-        _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(0., 1., 1000), use_greater_than=True)
+        try:
+            _, _, indicator_probs = mdsine1_output(result_dir)
+            _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(0., 1., 1000), use_greater_than=True)
+        except FileNotFoundError:
+            pass
 
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
@@ -401,14 +428,17 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             pkl_dir = result_dir / _model_name / _regression_type
             result_paths = list(pkl_dir.glob('*.pkl'))
             if len(result_paths) == 0:
-                raise FileNotFoundError(f"Unable to locate any .pkl files in {result_dir}.")
+                print(f"Unable to locate any .pkl files in {result_dir}.")
             pkl_path = result_paths[0]
             pred_traj = np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
             _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_traj, true_traj))
 
         # MDSINE2 error
-        pred_interactions, pred_growths, _ = mdsine2_output(result_dir)
-        _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
+        try:
+            pred_interactions, pred_growths, _ = mdsine2_output(result_dir)
+            _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
+        except FileNotFoundError:
+            pass
 
         # MDSINE1 error
         #pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
