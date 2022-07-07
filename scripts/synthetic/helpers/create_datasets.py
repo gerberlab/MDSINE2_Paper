@@ -226,7 +226,9 @@ def main():
     synthetic.set_timepoints(time_points)
 
     # Generate the trajectories.
-    raw_trajs = synthetic.generate_trajectories(
+    raw_trajs = simulate_trajectories(
+        synth=synthetic,
+        taxa=taxa,
         dt=args.sim_dt,
         init_dist=variables.Normal(initial_cond_mean, initial_cond_std),
         processvar=model.MultiplicativeGlobal(args.process_var),
