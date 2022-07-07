@@ -316,6 +316,7 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         return np.sum(not_pred & not_truth) / np.sum(not_truth)
 
     def _true_positive_rate(pred, truth) -> float:
+        # Don't count diagonal entries.
         np.fill_diagonal(truth, False)
         return np.sum(pred & truth) / np.sum(truth)
 
