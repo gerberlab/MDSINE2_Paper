@@ -158,7 +158,10 @@ def simulate_replicates(taxa: TaxaSet,
 
 
 def dirichlet_multinomial(alpha: np.ndarray, n: int) -> np.ndarray:
-    return np.random.multinomial(n, np.random.dirichlet(alpha))
+    support = alpha[alpha > 0]
+    x = np.zeros(len(alpha), dtype=int)
+    x[alpha > 0] = np.random.multinomial(n, np.random.dirichlet(support))
+    return x
 
 
 def simulate_trajectories(synth: Synthetic,
