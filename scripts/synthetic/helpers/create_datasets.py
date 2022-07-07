@@ -169,51 +169,52 @@ def simulate_trajectories(synth: Synthetic,
                           taxa: TaxaSet,
                           initial_min_value: float,
                           dt: float,
-                          processvar: model.MultiplicativeGlobal):
+                          processvar: model.MultiplicativeGlobal,
+                          intervene_day: float = 0.0):
     raw_trajs = {}
 
     for subj in synth.subjs:
         print('Forward simulating {}'.format(subj))
         init_abund = init_dist.sample(size=len(taxa))
+        init_abund[init_abund < initial_min_value] = initial_min_value
 
-        total_n_days = synth.times[-1]
-        d = pylab.integrate(
-            dynamics=synth.model,
-            initial_conditions=init_abund.reshape(-1, 1),
-            dt=dt,
-            n_days=total_n_days + dt,
-            processvar=processvar,
-            subsample=False
-        )
+        if intervene_day == 0:
+            total_n_days = synth.times[-1]
+            d = pylab.integrate(
+                dynamics=synth.model,
+                initial_conditions=init_abund.reshape(-1, 1),
+                dt=dt,
+                n_days=total_n_days + dt,
+                processvar=processvar,
+                subsample=False
+            )
+        else:
+            pathogen_abund = init_abund[0]
+            init_abund[0] = 0.0
 
+            synth.model.perturbation_ends = None
+            synth.model.perturbation_starts = None
+            synth.model.perturbations = None
 
-        # init_abund[init_abund < initial_min_value] = initial_min_value
-        # pathogen_abund = init_abund[-1]
-        # pathogen_day = 0.0
-        # init_abund[-1] = 0.0
-        #
-        # synth.model.perturbation_ends = None
-        # synth.model.perturbation_starts = None
-        # synth.model.perturbations = None
-        #
-        # total_n_days = synth.times[-1]
-        # print(f"Simulating first piece (day {pathogen_day}): {init_abund}")
-        # d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund.reshape(-1, 1),
-        #                         dt=dt, n_days=pathogen_day, processvar=processvar,
-        #                         subsample=False)
-        #
-        # new_abund = d_pre['X'][:, -1]
-        # new_abund[-1] = pathogen_abund
-        # print(f"Simulating second piece: {new_abund}")
-        # d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund.reshape(-1, 1),
-        #                          dt=dt, n_days=total_n_days - pathogen_day + dt, processvar=processvar,
-        #                          subsample=False)
-        # # Merge the two results
-        # d = {
-        #     'X': np.concatenate([d_pre['X'], d_post['X']], axis=1),
-        #     'times': np.concatenate([d_pre['times'], d_post['times'] + pathogen_day], axis=0)
-        # }
+            total_n_days = synth.times[-1]
+            print(f"Simulating first piece (day {intervene_day}): {init_abund}")
+            d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund.reshape(-1, 1),
+                                    dt=dt, n_days=intervene_day, processvar=processvar,
+                                    subsample=False)
 
+            new_abund = d_pre['X'][:, -1]
+            new_abund[0] = pathogen_abund
+            print(f"Simulating second piece: {new_abund}")
+            d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund.reshape(-1, 1),
+                                     dt=dt, n_days=total_n_days - intervene_day + dt, processvar=processvar,
+                                     subsample=False)
+            # Merge the two results
+            d = {
+                'X': np.concatenate([d_pre['X'], d_post['X']], axis=1),
+                'times': np.concatenate([d_pre['times'], d_post['times'] + intervene_day], axis=0)
+            }
+
+        # Save the trajectories
         steps_per_day = int(np.ceil(total_n_days / dt) / total_n_days)
         idxs = [int(steps_per_day * t) for t in synth.times]
         X = d['X']
