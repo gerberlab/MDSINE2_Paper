@@ -178,7 +178,7 @@ def simulate_trajectories(synth: Synthetic,
 
         init_abund[init_abund < initial_min_value] = initial_min_value
         pathogen_abund = init_abund[-1]
-        pathogen_day = 10.0
+        pathogen_day = 0.0
         init_abund[-1] = 0.0
 
         synth.model.perturbation_ends = None
