@@ -309,9 +309,14 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         return 1 - _true_negative_rate(pred, truth)
 
     def _true_negative_rate(pred, truth) -> float:
-        return np.sum(~pred & ~truth) / np.sum(~truth)
+        not_pred = np.logical_not(pred)
+        not_truth = np.logical_not(truth)
+        # don't count diagonal entries.
+        np.fill_diagonal(not_truth, False)
+        return np.sum(not_pred & not_truth) / np.sum(not_truth)
 
     def _true_positive_rate(pred, truth) -> float:
+        np.fill_diagonal(truth, False)
         return np.sum(pred & truth) / np.sum(truth)
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
@@ -326,8 +331,6 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
                 preds = np.expand_dims(_p, axis=2) < np.expand_dims(_q, axis=(0, 1))
             for i in range(len(_q)):
                 preds_i = preds[:, :, i]
-                np.fill_diagonal(true_indicators, 0)
-                np.fill_diagonal(preds_i, 0)
                 df_entries.append({
                     'Method': _method,
                     'ReadDepth': read_depth,
