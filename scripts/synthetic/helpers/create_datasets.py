@@ -230,13 +230,18 @@ def main():
     synthetic.set_subjects([f'subj_{i}' for i in range(args.num_subjects)] + ['holdout'])
     synthetic.set_timepoints(time_points)
 
+    if args.process_var > 0:
+        process_var = model.MultiplicativeGlobal(args.process_var)
+    else:
+        process_var = None
+
     # Generate the trajectories.
     raw_trajs = simulate_trajectories(
         synth=synthetic,
         taxa=taxa,
         dt=args.sim_dt,
         init_dist=variables.Normal(initial_cond_mean, initial_cond_std),
-        processvar=model.MultiplicativeGlobal(args.process_var),
+        processvar=process_var,
         initial_min_value=100.0
     )
 
