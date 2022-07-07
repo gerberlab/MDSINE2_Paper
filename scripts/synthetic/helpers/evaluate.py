@@ -77,7 +77,11 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
     :param result_dir:
     :return: posterior mean interactions, posterior mean growth, posterior mean indicator.
     """
-    with h5py.File(result_dir / "mdsine1" / "BVS.mat", 'r') as f:
+    mat_file = result_dir / "mdsine1" / "BVS.mat"
+    if not mat_file.exists():
+        raise FileNotFoundError(str(mat_file))
+
+    with h5py.File(mat_file, 'r') as f:
         theta_mean = np.array(f['Theta_select'])
         theta_samples = f['Theta_samples_select'][0]
 
