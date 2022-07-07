@@ -247,6 +247,7 @@ def main():
         times = raw_trajs[subj]['times']
         for taxa_traj in trajs:
             ax.plot(times, taxa_traj, marker=None)
+        ax.set_yscale('log')
 
         traj_plot_path = out_dir / f'{subj}.pdf'
         plt.savefig(traj_plot_path)
