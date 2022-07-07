@@ -433,6 +433,7 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             result_paths = list(pkl_dir.glob('*.pkl'))
             if len(result_paths) == 0:
                 print(f"Unable to locate any .pkl files in {result_dir}.")
+                return
             pkl_path = result_paths[0]
             pred_traj = np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
             _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_traj, true_traj))
