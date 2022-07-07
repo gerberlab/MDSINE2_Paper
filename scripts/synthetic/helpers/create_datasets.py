@@ -171,7 +171,7 @@ def simulate_trajectories(synth: Synthetic,
 
     for subj in synth.subjs:
         print('Forward simulating {}'.format(subj))
-        init_abund = init_dist.sample(size=len(taxa)).reshape(-1, 1)
+        init_abund = init_dist.sample(size=len(taxa))
 
         init_abund[init_abund < initial_min_value] = initial_min_value
         pathogen_abund = init_abund[-1]
@@ -183,13 +183,13 @@ def simulate_trajectories(synth: Synthetic,
         synth.model.perturbations = None
 
         total_n_days = synth.times[-1]
-        d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund,
+        d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund.reshape(-1, 1),
                                 dt=dt, n_days=pathogen_day, processvar=processvar,
                                 subsample=False)
 
         new_abund = d_pre['X'][:, -1]
         new_abund[-1] = pathogen_abund
-        d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund,
+        d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund.reshape(-1, 1),
                                  dt=dt, n_days=total_n_days - pathogen_day + dt, processvar=processvar,
                                  subsample=False)
         # Merge the two results
