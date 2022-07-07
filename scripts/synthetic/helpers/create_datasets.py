@@ -161,6 +161,51 @@ def dirichlet_multinomial(alpha: np.ndarray, n: int) -> np.ndarray:
     return np.random.multinomial(n, np.random.dirichlet(alpha))
 
 
+def simulate_trajectories(synth: Synthetic,
+                          init_dist: Variable,
+                          taxa: TaxaSet,
+                          initial_min_value: float,
+                          dt: float,
+                          processvar: model.MultiplicativeGlobal):
+    raw_trajs = {}
+
+    for subj in synth.subjs:
+        print('Forward simulating {}'.format(subj))
+        init_abund = init_dist.sample(size=len(taxa)).reshape(-1, 1)
+
+        init_abund[init_abund < initial_min_value] = initial_min_value
+        pathogen_abund = init_abund[-1]
+        pathogen_day = 10.0
+        init_abund[-1] = 0.0
+
+        synth.model.perturbation_ends = None
+        synth.model.perturbation_starts = None
+        synth.model.perturbations = None
+
+        total_n_days = synth.times[-1]
+        d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund,
+                                dt=dt, n_days=pathogen_day, processvar=processvar,
+                                subsample=False)
+
+        new_abund = d_pre['X'][:, -1]
+        new_abund[-1] = pathogen_abund
+        d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund,
+                                 dt=dt, n_days=total_n_days - pathogen_day + dt, processvar=processvar,
+                                 subsample=False)
+        # Merge the two results
+        d = {
+            'X': np.concatenate([d_pre['X'], d_post['X']], axis=1),
+            'times': np.concatenate([d_pre['times'], d_post['times'] + pathogen_day], axis=0)
+        }
+
+        steps_per_day = int(np.ceil(total_n_days / dt) / total_n_days)
+        idxs = [int(steps_per_day * t) for t in synth.times]
+        X = d['X']
+        synth._data[subj] = X[:, idxs]
+        raw_trajs[subj] = d
+    return raw_trajs
+
+
 def main():
     args = parse_args()
     growth_rates, interactions, interaction_indicators, taxa_names, initial_cond_mean, initial_cond_std = parse_glv_params(Path(args.input_glv_params))
@@ -184,7 +229,8 @@ def main():
     raw_trajs = synthetic.generate_trajectories(
         dt=args.sim_dt,
         init_dist=variables.Normal(initial_cond_mean, initial_cond_std),
-        processvar=model.MultiplicativeGlobal(args.process_var)
+        processvar=model.MultiplicativeGlobal(args.process_var),
+        initial_min_value=100.0
     )
 
     # Plot the trajectories.
