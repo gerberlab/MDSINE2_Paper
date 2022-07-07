@@ -10,8 +10,8 @@ export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/synthetic/logging.ini"
 export GLV_PARAMS=${DATASET_DIR}/glv.npz
 export TIME_POINTS=${DATASET_DIR}/time_points.txt
 
-export NUM_SAMPLE_TRIALS=5
-export COHORT_SIZE=5
+export NUM_SAMPLE_TRIALS=10
+export COHORT_SIZE=10
 export PROCESS_VAR=0.01
 export SIMULATION_DT=0.01
 export LOW_NOISE_SCALE=0.01
