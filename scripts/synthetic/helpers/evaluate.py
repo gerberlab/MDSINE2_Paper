@@ -312,13 +312,15 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         not_pred = np.logical_not(pred)
         not_truth = np.logical_not(truth)
         # don't count diagonal entries.
-        np.fill_diagonal(not_truth, False)
-        return np.sum(not_pred & not_truth) / np.sum(not_truth)
+        return _count(not_pred & not_truth) / _count(not_truth)
 
     def _true_positive_rate(pred, truth) -> float:
         # Don't count diagonal entries.
-        np.fill_diagonal(truth, False)
-        return np.sum(pred & truth) / np.sum(truth)
+        return _count(pred & truth) / _count(truth)
+
+    def _count(b) -> int:
+        off_diag = (np.eye(b.shape[0]) == 0)
+        return int(np.sum(b & off_diag))
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         def _compute_roc_curve(_method: str, _p: np.ndarray, _q: np.ndarray, use_greater_than: bool):
