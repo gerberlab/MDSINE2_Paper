@@ -88,7 +88,7 @@ k = 30
 # default (-3, 2, 15) spans 0.001 to 100 in 15 total points.
 min = -3
 max = 2
-N = 5
+N = 15
 
 
 # By default (=1), the k fold validation will break up each subject's
@@ -144,8 +144,8 @@ numInitEstimate = 1.50E+02   # number of iterations to do normal estimate during
 v_prop = 2.50E-01   # variance parameter for initial normal estimates during burnin
 
 [Simulation]
-start_time = 30
-end_time = 56
+start_time = 0
+end_time = 30
 time_step = 0.1
 thin_rate = 1
 assume_stiff = 1
@@ -188,7 +188,13 @@ biomass=${inference_out_dir}/biomass.txt
 create_config $mdsine_cfg $seed $inference_out_dir $metadata $counts $biomass
 
 echo "[*] Formatting synthetic inputs..."
-python synthetic/helpers/create_mdsine1_inputs.py -i ${dataset} -o ${inference_out_dir} -m metadata.txt -c counts.txt -b biomass.txt
+python synthetic/helpers/create_mdsine1_inputs.py \
+-i ${dataset} \
+-o ${inference_out_dir} \
+-m metadata.txt \
+-c counts.txt \
+-b biomass.txt \
+-t timepoint 11
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
