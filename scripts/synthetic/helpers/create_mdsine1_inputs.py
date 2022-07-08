@@ -29,7 +29,7 @@ def create_files(study: md2.Study, counts_path: Path, metadata_path: Path, bioma
     biomass_df_entries = []
     sample_ids = []
 
-    with open(metadata_path, "rt") as metadata_file:
+    with open(metadata_path, "wt") as metadata_file:
         print("sampleID\tisIncluded\tsubjectID\tmeasurementid\tperturbid\texptblock\tintv", file=metadata_file)
         metadata_line_idx = 1
         for subj_idx, subj in enumerate(study):
