@@ -41,9 +41,9 @@ def create_files(study: md2.Study, counts_path: Path, metadata_path: Path, bioma
                 })
                 sample_ids.append(sample_id)
 
-                metadata_file.write(f"{sample_id},1,{subj_idx},{t},0,1")
+                metadata_file.write(f"{sample_id}\t1\t{subj_idx}\t{t}\t0\t1\t")
                 if metadata_line_idx <= len(study.taxa):
-                    metadata_file.write("n{}".format(intervene_time_idxs[metadata_line_idx - 1]))
+                    metadata_file.write("{}".format(intervene_time_idxs[metadata_line_idx - 1]))
                 metadata_file.write("\n")
                 metadata_line_idx += 1
 
