@@ -252,7 +252,7 @@ def main():
         synth=synthetic,
         taxa=taxa,
         dt=args.sim_dt,
-        init_dist=variables.Normal(initial_cond_mean, initial_cond_std),
+        init_dist=variables.Normal(initial_cond_mean, np.power(initial_cond_std, 2)),
         processvar=process_var,
         initial_min_value=100.0
     )
