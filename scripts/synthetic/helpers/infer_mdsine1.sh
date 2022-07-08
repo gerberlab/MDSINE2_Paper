@@ -194,7 +194,7 @@ python synthetic/helpers/create_mdsine1_inputs.py \
 -m metadata.txt \
 -c counts.txt \
 -b biomass.txt \
--t 0
+-t 11
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
