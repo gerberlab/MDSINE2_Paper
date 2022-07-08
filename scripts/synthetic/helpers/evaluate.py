@@ -354,14 +354,14 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         try:
             _, _, interaction_indicators = mdsine2_output(result_dir)
             indicator_pvals = np.mean(interaction_indicators, axis=0)
-            _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0., 1., 1000), use_greater_than=True)
+            _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(-1e-4, 1 + 1e-4, 1000), use_greater_than=True)
         except FileNotFoundError:
             pass
 
         # MDSINE1 inference error eval
         try:
             _, _, indicator_probs = mdsine1_output(result_dir)
-            _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(0., 1., 1000), use_greater_than=True)
+            _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(-1e-4, 1 + 1e-4, 1000), use_greater_than=True)
         except FileNotFoundError:
             pass
 
