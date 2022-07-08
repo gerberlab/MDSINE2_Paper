@@ -9,7 +9,7 @@ run_regression() {
 	echo "[*] Running ${model}, ${regression_type} (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 	out_dir=$intermediate_dir/$model/$regression_type
 	mkdir -p $out_dir
-	python ${CLV_DIR}/healthy_prediction_experiments.py -m $model -r $regression_type -o $out_dir -i $intermediate_dir
+	python ${CLV_DIR}/healthy_prediction_experiments.py -m $model -r $regression_type -o $out_dir -i $intermediate_dir --limit_of_detection 1.0
 }
 
 
