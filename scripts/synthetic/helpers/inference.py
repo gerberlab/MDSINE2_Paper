@@ -79,6 +79,8 @@ def main():
 
     # 1) load dataset
     study = md2.Study.load(args.input)
+    if len(study.perturbations) == 0:
+        study.perturbations = None
     md2.seed(args.seed)
 
     # 2) Load the model parameters
