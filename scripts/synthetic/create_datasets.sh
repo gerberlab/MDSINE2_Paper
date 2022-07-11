@@ -14,7 +14,7 @@ for read_depth in 1000 25000; do
 		-i ${GLV_PARAMS} \
 		-t ${TIME_POINTS} \
 		-n ${COHORT_SIZE} \
-		-o ${DATASET_DIR}/data/reads_${read_depth}/trial_${trial} \
+		-o ${DATASET_DIR}/data/trial_${trial} \
 		-s ${seed} \
 		--num_qpcr_subjects ${QPCR_SUBJECTS} \
 		--num_qpcr_triplicates ${QPCR_TRIPLICATES} \
