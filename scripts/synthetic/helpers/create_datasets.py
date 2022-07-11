@@ -320,10 +320,13 @@ def main():
             # holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
             # print("Generated heldout subjset.")
 
-            study.save(str(out_dir / f'reads_{read_depth}' / f'noise_{noise_level_name}' / f'subjset.pkl'))
+            pkl_dir = out_dir / f'reads_{read_depth}' / f'noise_{noise_level_name}'
+            pkl_dir.mkdir(exist_ok=True, parents=True)
+
+            study.save(str(pkl_dir / f'subjset.pkl'))
             print("Generated main subjset.")
 
-            replicate_study.save(str(out_dir / f'reads_{read_depth}' / f'noise_{noise_level_name}' / f'replicate.pkl'))
+            replicate_study.save(str(pkl_dir / f'replicate.pkl'))
             print("Generated qPCR replicates for NegBin fitting.")
 
 
