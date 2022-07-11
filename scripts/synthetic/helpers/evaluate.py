@@ -176,7 +176,7 @@ def regression_interaction_pvals(result_dir: Path, model_name: str, regression_t
     if np.sum(np.vstack(U)) == 0:
         U = None
 
-    rd = Ridge(glv.X, glv.T, glv.r_A, glv.r_B, glv.r_g, U)
+    rd = Ridge(glv.X, glv.T, glv.r_A, glv.r_B, glv.r_g, U, glv.scale)
 
     """ p_interaction[i, j]: p-value associated with the effect of bug i on bug j """
     p_interaction, p_growth, p_perturbation = rd.significance_test()
@@ -473,7 +473,7 @@ def regression_forward_simulate(glv_pkl_loc: Path,
                                 times: np.ndarray,
                                 perturbation_info: np.ndarray = None) -> np.ndarray:
     """
-       forward simulates the trajectory using parameters inferred by the
+       forward simulates the gLV model using parameters inferred by the
        regression model
 
        init_abundance : N dimensional array containing the initial abundances
@@ -484,10 +484,11 @@ def regression_forward_simulate(glv_pkl_loc: Path,
     """
     def grad_fn(A, g, B, u):
         def fn(t, x):
+            #for gLV we use log concetrations
             if B is None or u is None:
-                return g + A.dot(x)
+                return g + A.dot(np.exp(x))
             elif B is not None and u is not None:
-                return g + A.dot(x) + B.dot(u)
+                return g + A.dot(np.exp(x)) + B.dot(u)
 
         return fn
 
@@ -495,7 +496,7 @@ def regression_forward_simulate(glv_pkl_loc: Path,
         glv = pickle.load(f)
     x_pred = np.zeros((times.shape[0], init_abundance.shape[0]))
     x_pred[0] = init_abundance
-    xt = init_abundance
+    xt = np.log(init_abundance)
 
     A, B, g = glv.A, glv.B, glv.g
 
@@ -511,7 +512,7 @@ def regression_forward_simulate(glv_pkl_loc: Path,
         dt = times[t] - times[t-1]
         ivp = solve_ivp(grad, (0,0+dt), xt, method="RK45")
         xt = ivp.y[:,-1]
-        x_pred[t] = xt
+        x_pred[t] = np.exp(xt)
 
     return x_pred
 
