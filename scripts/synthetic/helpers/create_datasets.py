@@ -291,7 +291,6 @@ def main():
                 num_reads=read_depth,
                 qpcr_noise_scale=noise_level
             )
-            study.perturbations = []
 
             replicate_study = simulate_replicates(
                 taxa=taxa,
