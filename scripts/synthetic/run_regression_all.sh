@@ -16,7 +16,7 @@ run_regression() {
 for read_depth in 1000 25000; do
 	for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 		for noise_level in "low" "medium" "high"; do
-			dataset_file=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/subjset_${noise_level}.pkl
+			dataset_file=${DATASET_DIR}/data/trial_${trial}/reads_${read_depth}/noise_${noise_level}/subjset.pkl
 			intermediate_dir=${OUTPUT_DIR}/reads_${read_depth}/trial_${trial}/${noise_level}_noise
 			mkdir -p $intermediate_dir
 

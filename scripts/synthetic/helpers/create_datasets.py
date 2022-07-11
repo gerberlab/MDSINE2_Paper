@@ -239,7 +239,7 @@ def main():
     synthetic = make_synthetic('cdiff_mdsine_bvs', taxa, growth_rates, interactions, interaction_indicators, seed=seed)
 
     # Make subject names
-    synthetic.set_subjects([f'subj_{i}' for i in range(args.num_subjects)] + ['holdout'])
+    synthetic.set_subjects([f'subj_{i}' for i in range(args.num_subjects)])
     synthetic.set_timepoints(time_points)
 
     if args.process_var > 0:
@@ -279,52 +279,52 @@ def main():
         'high': args.high_noise
     }
 
-    for noise_level_name, noise_level in noise_levels.items():
-        print(f"Simulating QPcr noise level {noise_level_name}: {noise_level}, and reads noise model `DMD`.")
+    for read_depth in [1000, 25000]:
+        for noise_level_name, noise_level in noise_levels.items():
+            print(f"Simulating QPcr noise level {noise_level_name}: {noise_level}, and reads noise model `DMD`.")
 
-        # ======== Simulate noise using DMD to test robustness.
-        study = simulate_reads_dmd(
-            synth=synthetic,
-            study_name=f'simulated-{noise_level_name}',
-            alpha_scale=args.dmd_alpha_scale,
-            num_reads=args.read_depth,
-            qpcr_noise_scale=noise_level
-        )
-        study.perturbations = []
+            # ======== Simulate noise using DMD to test robustness.
+            study = simulate_reads_dmd(
+                synth=synthetic,
+                study_name=f'simulated-{noise_level_name}',
+                alpha_scale=args.dmd_alpha_scale,
+                num_reads=read_depth,
+                qpcr_noise_scale=noise_level
+            )
+            study.perturbations = []
 
-        replicate_study = simulate_replicates(
-            taxa=taxa,
-            study_name=f'replicate-{noise_level_name}',
-            num_subjects=args.num_qpcr_subjects,
-            num_replicates=args.num_qpcr_triplicates,
-            conc_dist=variables.Normal(initial_cond_mean, initial_cond_std),
-            alpha_scale=args.dmd_alpha_scale,
-            num_reads=args.read_depth,
-            qpcr_noise_scale=noise_level
-        )
+            replicate_study = simulate_replicates(
+                taxa=taxa,
+                study_name=f'replicate-{noise_level_name}',
+                num_subjects=args.num_qpcr_subjects,
+                num_replicates=args.num_qpcr_triplicates,
+                conc_dist=variables.Normal(initial_cond_mean, initial_cond_std),
+                alpha_scale=args.dmd_alpha_scale,
+                num_reads=read_depth,
+                qpcr_noise_scale=noise_level
+            )
 
-        # ======== Simulate using NegBin noise model.
-        # study = synthetic.simulateMeasurementNoise(
-        #     a0=args.negbin_a0,
-        #     a1=args.negbin_a1,
-        #     qpcr_noise_scale=noise_level,
-        #     approx_read_depth=args.read_depth,
-        #     name=f'simulated-{noise_level_name}'
-        # )
+            # ======== Simulate using NegBin noise model.
+            # study = synthetic.simulateMeasurementNoise(
+            #     a0=args.negbin_a0,
+            #     a1=args.negbin_a1,
+            #     qpcr_noise_scale=noise_level,
+            #     approx_read_depth=args.read_depth,
+            #     name=f'simulated-{noise_level_name}'
+            # )
 
-        # Save to disk.
-        holdout_study = study.pop_subject('holdout', name=f'holdout-{noise_level_name}')
-        study.perturbations = None
-        holdout_study.perturbations = None
+            # ======== Pull out heldout subject.
+            # holdout_study = study.pop_subject('holdout', name=f'holdout-{noise_level_name}')
+            # study.perturbations = None
+            # holdout_study.perturbations = None
+            # holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
+            # print("Generated heldout subjset.")
 
-        holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
-        print("Generated heldout subjset.")
+            study.save(str(out_dir / f'reads_{read_depth}' / f'noise_{noise_level_name}' / f'subjset.pkl'))
+            print("Generated main subjset.")
 
-        study.save(str(out_dir / f'subjset_{noise_level_name}.pkl'))
-        print("Generated main subjset.")
-
-        replicate_study.save(str(out_dir / f'replicate_{noise_level_name}.pkl'))
-        print("Generated qPCR replicates for NegBin fitting.")
+            replicate_study.save(str(out_dir / f'reads_{read_depth}' / f'noise_{noise_level_name}' / f'replicate.pkl'))
+            print("Generated qPCR replicates for NegBin fitting.")
 
 
 if __name__ == "__main__":

@@ -6,8 +6,8 @@ for read_depth in 1000 25000; do
 	for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 		for noise_level in "low" "medium" "high"; do
 			negbin_seed=123
-			dataset=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/subjset_${noise_level}.pkl
-			replicates=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/replicate_${noise_level}.pkl
+			dataset=${DATASET_DIR}/data/trial_${trial}/reads_${read_depth}/noise_${noise_level}/subjset.pkl
+			replicates=${DATASET_DIR}/data/trial_${trial}/reads_${read_depth}/noise_${noise_level}/replicate.pkl
 			trial_output_dir=${OUTPUT_DIR}/reads_${read_depth}/trial_${trial}/${noise_level}_noise
 
 			negbin_out_dir=${trial_output_dir}/mdsine2_negbin

@@ -169,7 +169,7 @@ EOFDOC
 }
 
 
-dataset=${DATASET_DIR}/data/reads_${read_depth}/trial_${trial}/subjset_${noise_level}.pkl
+dataset=${DATASET_DIR}/data/trial_${trial}/reads_${read_depth}/noise_${noise_level}/subjset.pkl
 trial_output_dir=${OUTPUT_DIR}/reads_${read_depth}/trial_${trial}/${noise_level}_noise
 inference_out_dir=${trial_output_dir}/mdsine1
 mkdir -p $inference_out_dir
