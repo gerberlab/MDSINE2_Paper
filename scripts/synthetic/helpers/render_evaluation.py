@@ -121,6 +121,7 @@ def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2, order,
 
 def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     def auroc(_df):
+        _df = _df[['FPR', 'TPR']].groupby('FPR').max().reset_index()
         _df = _df.sort_values('FPR', ascending=True)
         fpr = np.concatenate([[0.], _df['FPR'].to_numpy(), [1.]])
         tpr = np.concatenate([[0.], _df['TPR'].to_numpy(), [1.]])
