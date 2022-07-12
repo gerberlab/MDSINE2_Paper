@@ -31,6 +31,7 @@ def load_df(df_path: Path) -> pd.DataFrame:
 def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     section = df.loc[df['ReadDepth'] == 1000]
+    print(section)
     if section.shape[0] > 0:
         sb.barplot(
             data=section,
