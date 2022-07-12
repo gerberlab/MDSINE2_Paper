@@ -278,11 +278,6 @@ def main():
         'high': args.high_noise
     }
 
-    # Extract timepoint indices for replicate creation.
-    target_days = [15.0, 20.0, 25.0]
-    example_traj = raw_trajs[next(iter(raw_trajs))]
-    example_times: Dict[float, int] = {t: i for i, t in enumerate(example_traj['times'])}
-
     # Sample the data.
     for read_depth in [1000, 25000]:
         for noise_level_name, noise_level in noise_levels.items():
@@ -300,7 +295,7 @@ def main():
             replicate_study = simulate_replicates(
                 synth=synthetic,
                 subj_idx=0,
-                subj_timepoints=[example_times[t] for t in target_days],
+                subj_timepoints=[13, 19, 25],
                 num_replicates=args.num_qpcr_triplicates,
                 taxa=taxa,
                 study_name=f'replicate-{noise_level_name}',
