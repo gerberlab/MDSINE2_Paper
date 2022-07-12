@@ -30,24 +30,28 @@ def load_df(df_path: Path) -> pd.DataFrame:
 
 def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    sb.barplot(
-        data=df.loc[df['ReadDepth'] == 1000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax1,
-        hue_order=order,
-        palette=palette
-    )
-    sb.barplot(
-        data=df.loc[df['ReadDepth'] == 25000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax2,
-        hue_order=order,
-        palette=palette
-    )
+    section = df.loc[df['ReadDepth'] == 1000]
+    if section.shape[0] > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax1,
+            hue_order=order,
+            palette=palette
+        )
+    section = df.loc[df['ReadDepth'] == 25000]
+    if section > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax2,
+            hue_order=order,
+            palette=palette
+        )
     ax1.set_ylabel('RMSE')
     ax2.set_ylabel(None)
     ax1.set_xlabel(None)
@@ -61,24 +65,28 @@ def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palett
 
 def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    sb.barplot(
-        data=df.loc[df['ReadDepth'] == 1000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax1,
-        hue_order=order,
-        palette=palette
-    )
-    sb.barplot(
-        data=df.loc[df['ReadDepth'] == 25000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax2,
-        hue_order=order,
-        palette=palette
-    )
+    section = df.loc[df['ReadDepth'] == 1000]
+    if section.shape[0] > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax1,
+            hue_order=order,
+            palette=palette
+        )
+    section = df.loc[df['ReadDepth'] == 25000]
+    if section > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax2,
+            hue_order=order,
+            palette=palette
+        )
     ax1.set_ylabel('RMSE')
     ax2.set_ylabel(None)
     ax1.set_xlabel(None)
@@ -92,24 +100,28 @@ def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2, orde
 
 def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    sb.barplot(
-        data=df.loc[df['ReadDepth'] == 1000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax1,
-        hue_order=order,
-        palette=palette
-    )
-    sb.barplot(
-        data=df.loc[df['ReadDepth'] == 25000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax2,
-        hue_order=order,
-        palette=palette
-    )
+    section = df.loc[df['ReadDepth'] == 1000]
+    if section.shape[0] > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax1,
+            hue_order=order,
+            palette=palette
+        )
+    section = df.loc[df['ReadDepth'] == 25000]
+    if section > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax2,
+            hue_order=order,
+            palette=palette
+        )
     ax1.set_ylabel('RMSE')
     ax2.set_ylabel(None)
     ax1.set_xlabel(None)
@@ -134,24 +146,28 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     print(area_df)
 
     area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
-    sb.barplot(
-        data=area_df.loc[area_df['ReadDepth'] == 1000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax1,
-        hue_order=order,
-        palette=palette
-    )
-    sb.barplot(
-        data=area_df.loc[area_df['ReadDepth'] == 25000],
-        x='x',
-        y='Error',
-        hue='Method',
-        ax=ax2,
-        hue_order=order,
-        palette=palette
-    )
+    section = df.loc[df['ReadDepth'] == 1000]
+    if section.shape[0] > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax1,
+            hue_order=order,
+            palette=palette
+        )
+    section = df.loc[df['ReadDepth'] == 25000]
+    if section > 0:
+        sb.barplot(
+            data=section,
+            x='x',
+            y='Error',
+            hue='Method',
+            ax=ax2,
+            hue_order=order,
+            palette=palette
+        )
 
     ax1.set_ylabel('AUROC')
     ax2.set_ylabel(None)
