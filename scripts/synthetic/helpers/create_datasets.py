@@ -2,7 +2,7 @@
 Python script for generating semisynthetic samples for a given seed + noise level.
 Takes as input MDSINE1's BVS sample matrix file
 """
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from pathlib import Path
 import argparse
 
@@ -24,8 +24,6 @@ def parse_args() -> argparse.Namespace:
                         help='<Required> The number of subjecs to simulate to lump into a single cohort.')
     parser.add_argument('-o', '--out_dir', type=str, required=True,
                         help='<Required> The directory to output the sampled subject to.')
-    parser.add_argument('-qs', '--num_qpcr_subjects', type=int, required=True,
-                        help='<Required> The number of qPCR subjects (replicates) to sample.')
     parser.add_argument('-qt', '--num_qpcr_triplicates', type=int, required=True,
                         help='<Required> The number of qPCR triplicates to sample.')
     parser.add_argument('-s', '--seed', type=int, required=True,
@@ -120,41 +118,42 @@ def simulate_reads_dmd(synth: Synthetic, study_name: str, alpha_scale: float, nu
     return study
 
 
-def simulate_replicates(taxa: TaxaSet,
-                        study_name: str,
-                        num_subjects: int,
+def simulate_replicates(synth: Synthetic,
+                        subj_idx: int,
+                        subj_timepoints: List[int],  # indices
                         num_replicates: int,
-                        conc_dist: Variable,
+                        taxa: TaxaSet,
+                        study_name: str,
                         alpha_scale: float,
                         num_reads: int,
                         qpcr_noise_scale: float) -> Study:
     # Make the study object
-    study = Study(taxa=taxa, name=study_name)
-    for ridx in range(num_subjects):
-        study.add_subject(name=f'replicate-{ridx}')
+    replicate_study = Study(taxa=taxa, name=study_name)
+    for t in subj_timepoints:
+        replicate_study.add_subject(name=f'M{subj_idx}-T{t}')
 
     # Add times for each subject
-    times = np.arange(0., num_replicates, 1.0)
-    for subj in study:
-        subj.times = times
+    replicate_times = np.arange(0., num_replicates, 1.0)
+    for replicate_subj in replicate_study:
+        replicate_subj.times = replicate_times
 
-    for subj in study:
-        conc = conc_dist.sample(size=len(taxa))
+    for replicate_subj, subj_t in zip(replicate_study, subj_timepoints):
+        # Extract timepoint abundances
+        conc = synth._data[synth.subjs[subj_idx]][:, subj_t]
         total_mass = np.sum(conc)
         rel_mass = conc / total_mass
-
-        for tidx, t in enumerate(subj.times):
+        for repl_t in replicate_times:
             # Make the reads
             alpha = alpha_scale * rel_mass
-            subj.reads[t] = dirichlet_multinomial(alpha, num_reads)
+            replicate_subj.reads[repl_t] = dirichlet_multinomial(alpha, num_reads)
 
             # Make biomass
             triplicates = np.exp(
                 np.log(total_mass) +
                 qpcr_noise_scale * pylab.random.normal.sample(size=3)
             )
-            subj.qpcr[t] = pylab.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
-    return study
+            replicate_subj.qpcr[repl_t] = pylab.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+    return replicate_study
 
 
 def dirichlet_multinomial(alpha: np.ndarray, n: int) -> np.ndarray:
@@ -279,6 +278,12 @@ def main():
         'high': args.high_noise
     }
 
+    # Extract timepoint indices for replicate creation.
+    target_days = [15.0, 20.0, 25.0]
+    example_traj = next(iter(raw_trajs))
+    example_times: Dict[float, int] = {t: i for i, t in enumerate(example_traj['times'])}
+
+    # Sample the data.
     for read_depth in [1000, 25000]:
         for noise_level_name, noise_level in noise_levels.items():
             print(f"Simulating QPcr noise level {noise_level_name}: {noise_level}, and reads noise model `DMD`.")
@@ -293,11 +298,12 @@ def main():
             )
 
             replicate_study = simulate_replicates(
+                synth=synthetic,
+                subj_idx=0,
+                subj_timepoints=[example_times[t] for t in target_days],
+                num_replicates=args.num_qpcr_triplicates,
                 taxa=taxa,
                 study_name=f'replicate-{noise_level_name}',
-                num_subjects=args.num_qpcr_subjects,
-                num_replicates=args.num_qpcr_triplicates,
-                conc_dist=variables.Normal(initial_cond_mean, initial_cond_std),
                 alpha_scale=args.dmd_alpha_scale,
                 num_reads=read_depth,
                 qpcr_noise_scale=noise_level
