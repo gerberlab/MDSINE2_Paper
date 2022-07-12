@@ -146,7 +146,7 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
     print(area_df)
 
     area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
-    section = df.loc[df['ReadDepth'] == 1000]
+    section = area_df.loc[area_df['ReadDepth'] == 1000]
     if section.shape[0] > 0:
         sb.barplot(
             data=section,
@@ -157,7 +157,7 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
             hue_order=order,
             palette=palette
         )
-    section = df.loc[df['ReadDepth'] == 25000]
+    section = area_df.loc[area_df['ReadDepth'] == 25000]
     if section.shape[0] > 0:
         sb.barplot(
             data=section,
