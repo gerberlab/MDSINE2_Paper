@@ -2,7 +2,7 @@
 Python script for generating semisynthetic samples for a given seed + noise level.
 Takes as input MDSINE1's BVS sample matrix file
 """
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 from pathlib import Path
 import argparse
 
@@ -254,7 +254,7 @@ def main():
         init_dist=variables.Normal(initial_cond_mean, np.power(initial_cond_std, 2)),
         processvar=process_var,
         initial_min_value=100.0,
-        intervene_day=0.0
+        intervene_day=10.0
     )
 
     # Plot the trajectories.
