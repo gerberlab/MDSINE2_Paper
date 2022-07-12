@@ -110,7 +110,7 @@ def mdsine1_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
             growths[n, filtered_indices] = theta_n[0, :]
             interaction_slice = interactions[n]
             interaction_slice[np.ix_(filtered_indices, filtered_indices)] = theta_n[1:, :]
-        return interactions, growths, indicator_probs
+        return np.transpose(interactions, [0, 2, 1]), growths, indicator_probs.T
 
 
 def mdsine2_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
