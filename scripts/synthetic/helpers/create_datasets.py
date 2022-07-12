@@ -280,7 +280,7 @@ def main():
 
     # Extract timepoint indices for replicate creation.
     target_days = [15.0, 20.0, 25.0]
-    example_traj = next(iter(raw_trajs))
+    example_traj = raw_trajs[next(iter(raw_trajs))]
     example_times: Dict[float, int] = {t: i for i, t in enumerate(example_traj['times'])}
 
     # Sample the data.
