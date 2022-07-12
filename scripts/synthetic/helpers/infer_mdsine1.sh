@@ -114,7 +114,7 @@ gpA_lambda_interact = 1.00E-09   # first gamma prior hyperparameter for lambda_i
 numIters = 25000   # number of MCMC iterations
 numBurnin = 2500   # number of burnin iterations
 data_std_init = 1.00E+05   # initial value for data std
-interact_beta_a = 0.5     #  182/0.9  strong/weak priors. 0.5 agnostic
+interact_beta_a = 90     #  L * (L-1) strong/weak priors. 0.5 agnostic
 interact_beta_b = 0.5     #  0.5/0.1
 # following unused for numPerturb = 0
 # perturb_beta_a = 0.5
@@ -194,7 +194,7 @@ python synthetic/helpers/create_mdsine1_inputs.py \
 -m metadata.txt \
 -c counts.txt \
 -b biomass.txt \
--t 0
+-t 11
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
