@@ -17,6 +17,7 @@ for read_depth in 1000 25000; do
 			# ======= Fit NegBin qPCR model
 			echo "[*] Fitting Negative binomial model."
 			mdsine2 infer-negbin --input ${replicates} --seed ${negbin_seed} --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath $negbin_out_dir
+			mdsine2 visualize-negbin --chain "${negbin_out_dir}/replicate-${noise_level}/mcmc.pkl" --output-basepath "${negbin_out_dir}/replicate-${noise_level}"
 
 			# ======= Run inference
 			echo "[*] Running non-clustered mdsine2 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
