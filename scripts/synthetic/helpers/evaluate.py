@@ -250,7 +250,11 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
     df_entries = []
 
     def _error_metric(pred, truth) -> float:
-        return np.sqrt(np.mean(np.square(pred - truth)))
+        assert pred.shape[0] == pred.shape[1]  # Square matrix
+        np.fill_diagonal(pred, 0)
+        np.fill_diagonal(truth, 0)
+        num_entries = pred.shape[0] * (pred.shape[0] - 1)
+        return np.sqrt((1 / num_entries) * np.sum(np.square(pred - truth)))
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         def _add_entry(_method: str, _err: float):
