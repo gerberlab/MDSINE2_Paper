@@ -42,7 +42,7 @@ def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palett
             palette=palette
         )
     section = df.loc[df['ReadDepth'] == 25000]
-    if section > 0:
+    if section.shape[0] > 0:
         sb.barplot(
             data=section,
             x='x',
@@ -77,7 +77,7 @@ def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2, orde
             palette=palette
         )
     section = df.loc[df['ReadDepth'] == 25000]
-    if section > 0:
+    if section.shape[0] > 0:
         sb.barplot(
             data=section,
             x='x',
@@ -112,7 +112,7 @@ def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2, order,
             palette=palette
         )
     section = df.loc[df['ReadDepth'] == 25000]
-    if section > 0:
+    if section.shape[0] > 0:
         sb.barplot(
             data=section,
             x='x',
@@ -158,7 +158,7 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
             palette=palette
         )
     section = df.loc[df['ReadDepth'] == 25000]
-    if section > 0:
+    if section.shape[0] > 0:
         sb.barplot(
             data=section,
             x='x',
