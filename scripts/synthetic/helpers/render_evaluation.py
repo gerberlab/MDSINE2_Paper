@@ -181,6 +181,7 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
 def render_all(dataframe_dir: Path, output_path: Path):
     default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-ridge', 'glv-ra-ridge']
     palette = {method: c for method, c in zip(method_order, default_colors)}
 
     fig = plt.figure(figsize=(16, 10), constrained_layout=True)
@@ -226,7 +227,7 @@ def render_all(dataframe_dir: Path, output_path: Path):
         text_ax=ax0,
         ax1=ax1,
         ax2=ax2,
-        order=method_order,
+        order=topology_method_order,
         palette=palette
     )
 
