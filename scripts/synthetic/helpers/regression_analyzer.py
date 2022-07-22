@@ -3,9 +3,9 @@ from scipy.stats import t as t_dist
 
 
 class Ridge():
-    def __init__(self, X, T, r_A, r_B, r_g, U=None):
+    def __init__(self, X, T, r_A, r_B, r_g, U=None, scale=1):
         """
-           ([np.array]) X : a list of T(total time) by N dimensional abundance
+           ([np.array]) X : a list of T(total time) by N dimensional (log)abundance
                             matrix
            ([np.array]) U : a list of T(total time) by P dimensional perturbation
                             matrix; optional
@@ -24,6 +24,12 @@ class Ridge():
         self.r_g = r_g
         self.regularizers = self.make_regularizer_list()
         self.XU = []
+        self.scale = scale
+
+        #the interaction, perturbation, and growth parameters 
+        self.A = None 
+        self.B = None 
+        self.g = None
 
         try:
             if self.U is not None:
@@ -101,6 +107,10 @@ class Ridge():
         if self.U is not None:
             B = theta[x_dim+1:, :]
 
+        self.A = A 
+        self.B = B 
+        self.g = g
+
         return A, g, B
 
     def map_t_to_p(self, t_values, deg_freedom):
@@ -113,6 +123,15 @@ class Ridge():
         p_values = 2 * (1 - dist.cdf(np.abs(t_values)))
 
         return p_values
+
+
+    def get_params(self):
+        """return the interaction, growth and perturbation coefficients 
+           computed by ridge regression
+        """
+
+        return self.A * self.scale, g, self.B
+
 
     def compute_hat_matrix(self):
         """
