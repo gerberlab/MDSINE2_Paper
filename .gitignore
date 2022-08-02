@@ -8,3 +8,5 @@ __pycache__
 *.lsf
 *.pkl
 .Rproj.user
+./sequence_analysis/tmp/
+./sequence_analysis/raw_reads/
