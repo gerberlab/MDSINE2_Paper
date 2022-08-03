@@ -17,7 +17,6 @@ silva_train_path <- './taxa/silva/silva_nr99_v138.1_train_set.fa.gz'
 silva_species_path <- './taxa/silva/silva_species_assignment_v138.1.fa.gz'
 
 
-
 dir.create(temp_path)
 dir.create(output_path)
 
