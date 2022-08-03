@@ -77,7 +77,7 @@ for (i in 1:dim(seqtab.nochim)[2]) {
 }
 # Write a fasta of our final ASV seqs:
 asv_fasta <- c(rbind(asv_headers, asv_seqs))
-write(asv_fasta,  file.path(output_path, "sequeunces.fa"))
+write(asv_fasta,  file.path(output_path, "sequences.fa"))
 
 
 asv_headers <- sub(">", "", asv_headers)
@@ -98,5 +98,3 @@ taxa_silva <- assignTaxonomy(seqtab.nochim, silva_train_path, multithread=TRUE)
 taxa_silva <- addSpecies(taxa_silva, silva_species_path, allowMultiple=2)
 taxa_silva <- cbind(rownames(taxa_silva), taxa_silva)
 write.table(taxa_silva, file.path(output_path, "silva_species.tsv"), sep="\t", col.names=NA)
-
-
