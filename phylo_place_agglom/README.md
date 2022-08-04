@@ -12,8 +12,6 @@ conda install -c bioconda pplacer #on Mac: brew install brewsci/bio/pplacer
 ```
 
 
-
-
 Place ASVs on pre-aligned RDP high quality 16S reads
 
 ```bash
