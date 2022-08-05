@@ -12,6 +12,8 @@ conda install -c bioconda pplacer #on Mac: brew install brewsci/bio/pplacer
 ```
 
 
+
+
 Place ASVs on pre-aligned RDP high quality 16S reads
 
 ```bash
@@ -22,6 +24,12 @@ python scripts/place_seqs.py \
     --query-reads ../sequence_analysis/output/sequences.fa \
     --output-folder output_ASVs \
     --temp-folder tmp_ASVs/
+```
+
+Create alignment file for ASVs
+
+```bash
+python scripts/sto_to_fasta.py -i output_ASVs/placed_sequences_on_v4_region.sto -o aligned_asvs/aligned_asvs.fa
 ```
 
 Agglomerate ASVs
