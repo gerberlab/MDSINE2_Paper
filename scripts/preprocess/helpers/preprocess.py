@@ -116,17 +116,11 @@ if __name__ == '__main__':
 
     # 3) compute consensus sequences
     if args.sequences is not None:
-        # put original sequences in study
-        try:
-            orig = md2.dataset.load_gibson(dset=dset, as_df=False, species_assignment='both',
-                max_n_species=args.max_n_species)
-        except:
-            logger.warning('Trouble connect to the internet, loading them locally')
-            orig = md2.dataset.load_gibson(dset=dset,
-                                           as_df=False,
-                                           species_assignment='both',
-                                           load_local=args.dataset_dir,
-                max_n_species=args.max_n_species)
+        orig = md2.dataset.load_gibson(dset=dset,
+                                        as_df=False,
+                                        species_assignment='both',
+                                        load_local=args.dataset_dir,
+                                        max_n_species=args.max_n_species)
 
         for taxon in study.taxa:
             if md2.isotu(taxon):
