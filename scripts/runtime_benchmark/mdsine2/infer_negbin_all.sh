@@ -6,7 +6,7 @@ source runtime_benchmark/settings.sh
 require_program "mdsine2"
 require_program "date"
 
-for n_taxa in 10 25 50 100; do
+for n_taxa in 10 25 50 100 125 150 175 200; do
 	for (( trial = 1; trial < ${NUM_TRIALS}+1; trial++ )); do
 		seed=$((n_taxa * trial))
 		dataset=${DATASET_DIR}/trimmed_${n_taxa}/replicates.pkl
