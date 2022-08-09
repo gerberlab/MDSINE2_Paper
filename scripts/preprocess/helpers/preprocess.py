@@ -26,9 +26,52 @@ can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 import argparse
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
+from mdsine2 import Study
+
 import mdsine2 as md2
 from mdsine2.logger import logger
 import os
+
+
+def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str) -> Study:
+    # 1) Load the dataset
+    study = md2.dataset.load_gibson(dset=dataset_name,
+                                    as_df=False,
+                                    species_assignment='both',
+                                    load_local=dataset_dir,
+                                    max_n_species=max_n_species)
+
+    # 2) Set the sequences for each taxon
+    #    Remove all taxa that are not contained in that file
+    #    Remove the gaps
+    if sequence_file is not None:
+        logger.info('Replacing sequences with the file {}'.format(sequence_file))
+        seqs = SeqIO.to_dict(SeqIO.parse(sequence_file, format='fasta'))
+        to_delete = []
+        for taxon in study.taxa:
+            if taxon.name not in seqs:
+                to_delete.append(taxon.name)
+        for name in to_delete:
+            logger.info('Deleting {} because it was not in {}'.format(
+                name, sequence_file))
+        study.pop_taxa(to_delete)
+
+        M = []
+        for taxon in study.taxa:
+            seq = list(str(seqs[taxon.name].seq))
+            M.append(seq)
+        M = np.asarray(M)
+        gaps = M == '-'
+        n_gaps = np.sum(gaps, axis=0)
+        idxs = np.where(n_gaps == 0)[0]
+        logger.info('There are {} positions where there are no gaps out of {}. Setting those ' \
+            'to the sequences'.format(len(idxs), M.shape[1]))
+        M = M[:, idxs]
+        for i,taxon in enumerate(study.taxa):
+            taxon.sequence = ''.join(M[i])
+
+    return study
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage=__doc__)
@@ -57,42 +100,7 @@ if __name__ == '__main__':
     os.makedirs(args.basepath, exist_ok=True)
 
     dset = args.dataset_name
-
-    # 1) Load the dataset
-    study = md2.dataset.load_gibson(dset=dset,
-                                    as_df=False,
-                                    species_assignment='both',
-                                    load_local=args.dataset_dir,
-                                    max_n_species=args.max_n_species)
-
-    # 2) Set the sequences for each taxon
-    #    Remove all taxa that are not contained in that file
-    #    Remove the gaps
-    if args.sequences is not None:
-        logger.info('Replacing sequences with the file {}'.format(args.sequences))
-        seqs = SeqIO.to_dict(SeqIO.parse(args.sequences, format='fasta'))
-        to_delete = []
-        for taxon in study.taxa:
-            if taxon.name not in seqs:
-                to_delete.append(taxon.name)
-        for name in to_delete:
-            logger.info('Deleting {} because it was not in {}'.format(
-                name, args.sequences))
-        study.pop_taxa(to_delete)
-
-        M = []
-        for taxon in study.taxa:
-            seq = list(str(seqs[taxon.name].seq))
-            M.append(seq)
-        M = np.asarray(M)
-        gaps = M == '-'
-        n_gaps = np.sum(gaps, axis=0)
-        idxs = np.where(n_gaps == 0)[0]
-        logger.info('There are {} positions where there are no gaps out of {}. Setting those ' \
-            'to the sequences'.format(len(idxs), M.shape[1]))
-        M = M[:, idxs]
-        for i,taxon in enumerate(study.taxa):
-            taxon.sequence = ''.join(M[i])
+    study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
 
     # Aggregate with specified hamming distance
     if args.hamming_distance is not None:
@@ -116,11 +124,7 @@ if __name__ == '__main__':
 
     # 3) compute consensus sequences
     if args.sequences is not None:
-        orig = md2.dataset.load_gibson(dset=dset,
-                                        as_df=False,
-                                        species_assignment='both',
-                                        load_local=args.dataset_dir,
-                                        max_n_species=args.max_n_species)
+        orig = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
 
         for taxon in study.taxa:
             if md2.isotu(taxon):
