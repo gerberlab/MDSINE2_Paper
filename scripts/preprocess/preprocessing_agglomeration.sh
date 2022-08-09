@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source settings.sh
+source preprocess/settings.sh
 
 require_program python
 echo "Agglomerating ASVs into OTUs"

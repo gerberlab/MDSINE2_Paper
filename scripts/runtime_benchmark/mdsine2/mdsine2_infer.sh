@@ -41,7 +41,9 @@ mdsine2 infer \
 		--multiprocessing 0 \
 		--basepath $inference_out_dir \
 		--interaction-ind-prior "strong-sparse" \
-		--perturbation-ind-prior "weak-agnostic"
+		--perturbation-ind-prior "weak-agnostic" \
+		--benchmark \
+		| tee ${inference_out_dir}/log.txt
 
 end_time=$(date +%s%N)
 elapsed_time=$(( $(($end_time-$start_time)) / 1000000 ))
