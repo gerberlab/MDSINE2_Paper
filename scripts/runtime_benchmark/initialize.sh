@@ -22,7 +22,7 @@ mdsine2 filter \
     --colonization-time 1
 
 
-for n_taxa in 10 25 50 100 200; do
+for n_taxa in 10 25 50 100 125 150 175 200; do
 	target_dir=${DATASET_DIR}/trimmed_${n_taxa}
 
 	echo "[*] Preparing dataset of ${n_taxa} taxa... (target dir = ${target_dir})"
