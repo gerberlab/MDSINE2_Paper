@@ -40,7 +40,10 @@ python runtime_benchmark/helpers/mdsine2_nocluster.py \
 		--checkpoint 1000 \
 		--basepath $inference_out_dir \
 		--interaction-ind-prior "strong-sparse" \
-		--perturbation-ind-prior "weak-agnostic"
+		--perturbation-ind-prior "weak-agnostic" \
+		--log-every 100 \
+		--benchmark \
+		| tee ${inference_out_dir}/log.txt
 
 end_time=$(date +%s%N)
 elapsed_time=$(( $(($end_time-$start_time)) / 1000000 ))
