@@ -6,7 +6,7 @@ require_program python
 echo "Assigning Taxonomy for OTUs..."
 
 
-rdp_file=${DATASET_DIR}/metadata_ASV/taxonomy_RDP.txt
+rdp_file=${DATASET_DIR}/metadata_OTU/taxonomy_RDP.txt
 if ! [ -f $rdp_file ]; then
 	echo "Couldn't locate taxonomy file ${rdp_file}"
 	exit 1
