@@ -121,7 +121,10 @@ if __name__ == '__main__':
 
     # 6) Save the study set and sequences
     logger.info("# otus: {}".format(len(agg_study.taxa)))
-    agg_study.save(os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl'))
+    outpath = os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl')
+    agg_study.save(outpath)
+    logger.info(f"Saved study to {outpath}")
+
     ret = []
     for taxon in agg_study.taxa:
         ret.append(SeqRecord.SeqRecord(seq=Seq.Seq(taxon.sequence), id=taxon.name,
