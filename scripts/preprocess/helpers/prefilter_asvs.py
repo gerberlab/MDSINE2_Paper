@@ -21,9 +21,9 @@ def main():
 
     with open(args.input_fasta, 'r') as in_file, open(args.output_fasta, 'w') as out_file:
         for record in SeqIO.parse(in_file, "fasta"):
-            record.seq = Seq(str(record.seq).replace("-", ""))
-            if len(record.seq) < args.threshold:
-                print(f"Truncating record {record.id} (length = {len(record.seq)})")
+            ungapped_seq = str(record.seq).replace("-", "")
+            if len(ungapped_seq) < args.threshold:
+                print(f"Truncating record {record.id} (length = {len(ungapped_seq)})")
             else:
                 SeqIO.write(record, out_file, "fasta")
 
