@@ -13,7 +13,7 @@ echo "Only rendering the top ${top_n} OTUs."
 # Plot the OTU aggregates
 python preprocess/helpers/plot_otus.py \
     --study ${PREPROCESS_DIR}/gibson_healthy_agg.pkl \
-    --outdir ${PLOTS_OUT_DIR}/aggregate_plots/healthy \
+    --outdir "${DATASET_DIR}/metadata_OTU/plots" \
     --top $top_n
 
 echo "Done."
