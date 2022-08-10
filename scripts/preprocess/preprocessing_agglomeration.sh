@@ -18,10 +18,11 @@ if ![ -f asv_aln_fasta ]; then
 fi
 
 
+echo "[*] Pre-filtering ASVs by length ${PREFILT_LEN}"
 python preprocess/helpers/prefilter_asvs.py \
 	-i $asv_aln_fasta \
 	-o $prefilt_aln_fasta \
-	-t 250
+	-t $PREFILT_LEN
 
 
 # Agglomerate ASVs into OTUs
