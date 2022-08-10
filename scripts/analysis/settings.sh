@@ -10,7 +10,13 @@ export NEGBIN_OUT_DIR=${OUTPUT_DIR}/mdsine2/negbin
 export MDSINE2_OUT_DIR=${OUTPUT_DIR}/mdsine2/inference
 
 export HEALTHY_DSET=${DATASET_DIR}/preprocessed/gibson_healthy_agg_filtered.pkl
-
 export REPLICATE_DSET=${DATASET_DIR}/preprocessed/gibson_replicates_agg_filtered.pkl
 export REPLICATE_MCMC=${NEGBIN_OUT_DIR}/replicates/mcmc.pkl
 export REPLICATE_PLOTS=${NEGBIN_OUT_DIR}/replicates/posterior
+
+export BURNIN=5000
+export N_SAMPLES=15000
+export CHECKPOINT=100
+export MULTIPROCESSING=0
+export INTERACTION_IND_PRIOR="strong-sparse"
+export PERTURBATION_IND_PRIOR="weak-agnostic"
