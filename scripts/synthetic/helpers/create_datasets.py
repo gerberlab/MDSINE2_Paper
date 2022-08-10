@@ -114,7 +114,7 @@ def simulate_reads_dmd(synth: Synthetic, study_name: str, alpha_scale: float, nu
                 np.log(total_mass[tidx]) +
                 qpcr_noise_scale * pylab.random.normal.sample(size=3)
             )
-            subj.qpcr[t] = pylab.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+            subj.qpcr[t] = qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
     return study
 
 
@@ -152,7 +152,7 @@ def simulate_replicates(synth: Synthetic,
                 np.log(total_mass) +
                 qpcr_noise_scale * pylab.random.normal.sample(size=3)
             )
-            replicate_subj.qpcr[repl_t] = pylab.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+            replicate_subj.qpcr[repl_t] = qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
     return replicate_study
 
 

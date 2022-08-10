@@ -66,7 +66,7 @@ def parse_rdp(fname, confidence_threshold):
 
         for tax_key in columns:
             if tax_key not in taxaed:
-                temp.append(md2.pylab.base.DEFAULT_TAXLEVEL_NAME)
+                temp.append(md2.DEFAULT_TAXLEVEL_NAME)
         data.append(temp)
 
     df = pd.DataFrame(data, columns=columns, index=index)

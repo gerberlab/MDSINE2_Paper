@@ -26,13 +26,11 @@ can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 import argparse
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
-from mdsine2 import Study, OTU
+from mdsine2 import Study, OTU, OTUTaxaSet
 
 import mdsine2 as md2
 from mdsine2.logger import logger
 import os
-
-from mdsine2.pylab.base.taxa import OTUTaxaSet
 
 
 def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str) -> Study:

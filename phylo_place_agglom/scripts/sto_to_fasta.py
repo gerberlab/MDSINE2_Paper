@@ -1,7 +1,6 @@
 from pathlib import Path
 import argparse
 from typing import List, Iterator
-from collections import Counter
 
 
 def parse_args() -> argparse.Namespace:

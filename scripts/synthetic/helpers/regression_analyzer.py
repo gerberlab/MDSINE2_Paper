@@ -130,7 +130,7 @@ class Ridge():
            computed by ridge regression
         """
 
-        return self.A * self.scale, g, self.B
+        return self.A * self.scale, self.g, self.B
 
 
     def compute_hat_matrix(self):
