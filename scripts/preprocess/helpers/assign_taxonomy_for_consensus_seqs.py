@@ -85,6 +85,6 @@ if __name__ == '__main__':
     logger.info(f'Parsing RDP from {args.rdp_table}')
     df = parse_rdp(fname=args.rdp_table, confidence_threshold=args.confidence_threshold)
 
-    study = md2.Study.load(args.input_study)
+    study = md2.Study.load(args.input_study_path)
     study.taxa.generate_consensus_taxonomies(df)
-    study.save(args.output_study)
+    study.save(args.output_study_path)
