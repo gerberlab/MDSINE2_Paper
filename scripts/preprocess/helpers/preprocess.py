@@ -101,7 +101,6 @@ if __name__ == '__main__':
     study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
 
     # Aggregate with specified hamming distance
-    logger.info('Aggregating taxa with a hamming distance of {}'.format(args.hamming_distance))
     agg_study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
 
     # 3) compute consensus sequences
