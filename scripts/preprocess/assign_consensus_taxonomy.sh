@@ -7,7 +7,7 @@ echo "Assigning Taxonomy for OTUs..."
 
 
 rdp_file=${DATASET_DIR}/metadata_ASV/taxonomy_RDP.txt
-if ![ -f $rdp_file ]; then
+if ! [ -f $rdp_file ]; then
 	echo "Couldn't locate taxonomy file ${rdp_file}"
 	exit 1
 fi
