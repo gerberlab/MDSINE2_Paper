@@ -8,7 +8,7 @@ echo "Using dataset found in ${DATASET_DIR}."
 echo "Writing files into ${PREPROCESS_DIR}."
 
 # Agglomerate ASVs into OTUs
-for dataset in healthy replicate inoculum; do
+for dataset in healthy replicates inoculum; do
 	echo "[*] Extracting dataset: ${dataset}"
 	python preprocess/helpers/preprocess.py \
 			--hamming-distance 2 \

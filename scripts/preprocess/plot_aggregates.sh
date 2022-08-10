@@ -12,12 +12,7 @@ echo "Only rendering the top ${top_n} OTUs."
 
 # Plot the OTU aggregates
 python preprocess/helpers/plot_otus.py \
-    --study ${PREPROCESS_DIR}/gibson_healthy_agg_taxa.pkl \
-    --output-basepath ${PLOTS_OUT_DIR}/aggregate_plots \
-    --top $top_n
-
-python preprocess/helpers/plot_otus.py \
-    --study ${PREPROCESS_DIR}/gibson_uc_agg_taxa.pkl \
+    --study ${PREPROCESS_DIR}/gibson_healthy_agg.pkl \
     --output-basepath ${PLOTS_OUT_DIR}/aggregate_plots \
     --top $top_n
 

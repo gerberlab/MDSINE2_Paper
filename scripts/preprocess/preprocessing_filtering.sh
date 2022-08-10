@@ -11,8 +11,8 @@ echo "Performing consistency filtering over Study objects."
 
 # ==== Healthy
 mdsine2 filter \
-    --dataset ${PREPROCESS_DIR}/gibson_healthy_agg_taxa.pkl \
-    --outfile ${PREPROCESS_DIR}/gibson_healthy_agg_taxa_filtered.pkl \
+    --dataset ${PREPROCESS_DIR}/gibson_healthy_agg.pkl \
+    --outfile ${PREPROCESS_DIR}/gibson_healthy_agg_filtered.pkl \
     --dtype rel \
     --threshold 0.0001 \
     --min-num-consecutive 7 \
@@ -20,8 +20,8 @@ mdsine2 filter \
     --colonization-time 5
 
 python preprocess/helpers/filter_replicates_like_other_dataset.py \
-    --replicate-dataset ${PREPROCESS_DIR}/gibson_replicates_agg_taxa.pkl \
-    --like-other ${PREPROCESS_DIR}/gibson_healthy_agg_taxa_filtered.pkl \
-    --out-path ${PREPROCESS_DIR}/gibson_replicates_agg_taxa_filtered.pkl
+    --replicate-dataset ${PREPROCESS_DIR}/gibson_replicates_agg.pkl \
+    --like-other ${PREPROCESS_DIR}/gibson_healthy_agg_filtered.pkl \
+    --out-path ${PREPROCESS_DIR}/gibson_replicates_agg_filtered.pkl
 
 echo "Done."
