@@ -111,21 +111,19 @@ if __name__ == '__main__':
 
     # 4) Rename taxa
     if args.rename_prefix is not None:
-        print('Renaming taxa with prefix {}'.format(args.rename_prefix))
-        study.taxa.rename(prefix=args.rename_prefix, zero_based_index=False)
+        logger.info('Renaming taxa with prefix {}'.format(args.rename_prefix))
+        agg_study.taxa.rename(prefix=args.rename_prefix, zero_based_index=False)
 
     # 5) Remove timepoints
     if args.remove_timepoints is not None:
         if dset in ['healthy', 'uc']:
-            study.pop_times(args.remove_timepoints)
+            agg_study.pop_times(args.remove_timepoints)
 
     # 6) Save the study set and sequences
-    print("# otus: {}".format(len(study.taxa)))
-    for taxa in study.taxa:
-        print(taxa.name)
-    study.save(os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl'))
+    logger.info("# otus: {}".format(len(agg_study.taxa)))
+    agg_study.save(os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl'))
     ret = []
-    for taxon in study.taxa:
+    for taxon in agg_study.taxa:
         ret.append(SeqRecord.SeqRecord(seq=Seq.Seq(taxon.sequence), id=taxon.name,
             description=''))
     SeqIO.write(ret, os.path.join(args.basepath, 'gibson_' + dset + '_agg.fa'), 'fasta-2line')

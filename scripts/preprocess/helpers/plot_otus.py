@@ -33,7 +33,6 @@ if __name__ == "__main__":
         os.makedirs(subjpath, exist_ok=True)
         logger.info('Subject {}'.format(subj.name))
         for iii, taxon in enumerate(study.taxa):
-            print(taxon.__class__.__name__)
             if not isinstance(taxon, md2.OTU):
                 continue
             if iii >= top:
