@@ -26,11 +26,13 @@ can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 import argparse
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
-from mdsine2 import Study
+from mdsine2 import Study, OTU
 
 import mdsine2 as md2
 from mdsine2.logger import logger
 import os
+
+from mdsine2.pylab.base.taxa import OTUTaxaSet
 
 
 def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str) -> Study:
@@ -42,31 +44,30 @@ def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequen
                                     load_local=dataset_dir,
                                     max_n_species=max_n_species)
 
-    # 2) Set the sequences for each taxon
-    #    Remove all taxa that are not contained in that file
-    #    Remove the gaps
-    if sequence_file is not None:
-        logger.info('Replacing sequences with the file {}'.format(sequence_file))
-        seqs = SeqIO.to_dict(SeqIO.parse(sequence_file, format='fasta'))
-        to_delete = []
-        for taxon in study.taxa:
-            if taxon.name not in seqs:
-                to_delete.append(taxon.name)
-        for name in to_delete:
-            logger.info('Deleting {} because it was not in {}'.format(name, sequence_file))
-        study.pop_taxa(to_delete)
+    # Set the sequences for each taxon
+    # Remove all taxa that are not contained in that file
+    # Remove the gaps
+    logger.info('Replacing sequences with the file {}'.format(sequence_file))
+    seqs = SeqIO.to_dict(SeqIO.parse(sequence_file, format='fasta'))
+    to_delete = []
+    for taxon in study.taxa:
+        if taxon.name not in seqs:
+            to_delete.append(taxon.name)
+    for name in to_delete:
+        logger.info('Deleting {} because it was not in {}'.format(name, sequence_file))
+    study.pop_taxa(to_delete)
 
-        M = []
-        for taxon in study.taxa:
-            seq = list(str(seqs[taxon.name].seq))
-            M.append(seq)
-        M = np.asarray(M)
-        n_bases = np.sum(M != '-', axis=0)
-        idxs = np.where(n_bases > 0)[0]
-        logger.info('There were {} valid positions out of {}.'.format(len(idxs), M.shape[1]))
-        M = M[:, idxs]
-        for i,taxon in enumerate(study.taxa):
-            taxon.sequence = ''.join(M[i])
+    M = []
+    for taxon in study.taxa:
+        seq = list(str(seqs[taxon.name].seq))
+        M.append(seq)
+    M = np.asarray(M)
+    n_bases = np.sum(M != '-', axis=0)
+    idxs = np.where(n_bases > 0)[0]
+    logger.info('There were {} valid positions out of {}.'.format(len(idxs), M.shape[1]))
+    M = M[:, idxs]
+    for i,taxon in enumerate(study.taxa):
+        taxon.sequence = ''.join(M[i])
 
     return study
 
@@ -75,16 +76,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument('--output-basepath', '-o', type=str, dest='basepath',
         help='This is where you want to save the parsed dataset.')
-    parser.add_argument('--hamming-distance', '-hd', type=int, dest='hamming_distance',
+    parser.add_argument('--hamming-distance', '-hd', type=int, dest='hamming_distance', required=True,
         help='This is the hamming radius to aggregate ASV sequences. If nothing ' \
-            'is provided, then there will be no aggregation.', default=None)
+            'is provided, then there will be no aggregation.')
     parser.add_argument('--rename-prefix', '-rp', type=str, dest='rename_prefix',
         help='This is the prefix you are renaming the aggregate taxa to. ' \
             'If nothing is provided, then they will not be renamed', default=None)
-    parser.add_argument('--sequences', '-s', type=str, dest='sequences',
+    parser.add_argument('--sequences', '-s', type=str, dest='sequences', required=True,
         help='This is the fasta file location of the aligned sequences for each taxon' \
             ' that was used for placement in the phylogenetic tree. If nothing is ' \
-            'provided, then do not replace them.', default=None)
+            'provided, then do not replace them.')
     parser.add_argument('--remove-timepoints', dest='remove_timepoints', nargs='+', default=None, 
         type=float, help='Which times to remove')
     parser.add_argument('--max-n-species', '-ms', dest='max_n_species', type=int, default=2,
@@ -101,38 +102,14 @@ if __name__ == '__main__':
     study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
 
     # Aggregate with specified hamming distance
-    if args.hamming_distance is not None:
-        logger.info('Aggregating taxa with a hamming distance of {}'.format(args.hamming_distance))
-        md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
-
-        # Get the maximum distance of all the OTUs
-        m = -1
-        for taxon in study.taxa:
-            if md2.isotu(taxon):
-                for aname in taxon.aggregated_taxa:
-                    for bname in taxon.aggregated_taxa:
-                        if aname == bname:
-                            continue
-                        aseq = taxon.aggregated_seqs[aname]
-                        bseq = taxon.aggregated_seqs[bname]
-                        d = md2.diversity.beta.hamming(aseq, bseq)
-                        if d > m:
-                            m = d
-        logger.info('Maximum distance within an OTU: {}'.format(m))
+    logger.info('Aggregating taxa with a hamming distance of {}'.format(args.hamming_distance))
+    agg_study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
 
     # 3) compute consensus sequences
-    if args.sequences is not None:
-        orig = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
-
-        for taxon in study.taxa:
-            if md2.isotu(taxon):
-                for asvname in taxon.aggregated_taxa:
-                    taxon.aggregated_seqs[asvname] = orig.taxa[asvname].sequence
-            else:
-                taxon.sequence = orig.taxa[taxon.name].sequence
-
-        # Compute consensus sequences
-        study.taxa.generate_consensus_seqs(threshold=0.65, noconsensus_char='N')
+    if not isinstance(agg_study.taxa, OTUTaxaSet):
+        raise RuntimeError("Unexpected error: Expected OTUs, but got something else. "
+                           "Check internal implementation of aggregate_items().")
+    agg_study.taxa.generate_consensus_seqs(threshold=0.65, noconsensus_char='N')
 
     # 4) Rename taxa
     if args.rename_prefix is not None:
