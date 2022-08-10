@@ -22,6 +22,7 @@ for seed in 0 1; do
 	study_name="healthy-seed${seed}"
 
 	# Seed 0
+	echo "[*] Performing MDSINE2 inference on ${study_name}"
 	mdsine2 infer \
 			--input $HEALTHY_DSET \
 			--negbin $NEGBIN \
