@@ -1,7 +1,6 @@
 #!/bin/bash
-
 set -e
-source gibson_inference/settings.sh
+source analysis/settings.sh
 
 NEGBIN="${NEGBIN_OUT_DIR}/replicates/mcmc.pkl"
 BURNIN="5000"

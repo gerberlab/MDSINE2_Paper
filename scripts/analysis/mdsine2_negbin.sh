@@ -1,7 +1,6 @@
 #!/bin/bash
-
 set -e
-source gibson_inference/settings.sh
+source analysis/settings.sh
 
 echo "Learning negative binomial dispersion parameters..."
 echo "Output Directory: ${NEGBIN_OUT_DIR}"

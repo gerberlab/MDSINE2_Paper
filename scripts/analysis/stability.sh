@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-source settings.sh
-
+source analysis/settings.sh
 
 
