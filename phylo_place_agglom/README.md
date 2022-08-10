@@ -1,4 +1,7 @@
+# TODO 
+this directory needs to be integrated into the scripts/ and datasets/ directory.
 
+# Instructions
 
 ```bash
 conda create -n phyloplacement_py3
