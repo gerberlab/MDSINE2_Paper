@@ -19,5 +19,6 @@ for dataset in healthy replicates inoculum; do
 	--confidence-threshold 50 \
 	-i ${PREPROCESS_DIR}/gibson_${dataset}_agg.pkl \
 	-o ${PREPROCESS_DIR}/gibson_${dataset}_agg.pkl \
+done
 
 echo "Done."
