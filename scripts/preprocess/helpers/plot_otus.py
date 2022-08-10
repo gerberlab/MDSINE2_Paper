@@ -33,9 +33,12 @@ if __name__ == "__main__":
         os.makedirs(subjpath, exist_ok=True)
         logger.info('Subject {}'.format(subj.name))
         for iii, taxon in enumerate(study.taxa):
+            print(taxon.__class__.__name__)
             if not md2.isotu(taxon):
+                print(f"skipping taxa {taxon.name}")
                 continue
             if iii >= top:
+                print("second skipping step")
                 break
             logger.info('taxon {}/{}'.format(taxon.idx, len(study.taxa)))
             fig = plt.figure(figsize=(10, 5))

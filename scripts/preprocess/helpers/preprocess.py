@@ -34,6 +34,7 @@ import os
 
 
 def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str) -> Study:
+    logger.info(f"Loaading dataset `{dataset_name}` from {dataset_dir}")
     # 1) Load the dataset
     study = md2.dataset.load_gibson(dset=dataset_name,
                                     as_df=False,
@@ -52,8 +53,7 @@ def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequen
             if taxon.name not in seqs:
                 to_delete.append(taxon.name)
         for name in to_delete:
-            logger.info('Deleting {} because it was not in {}'.format(
-                name, sequence_file))
+            logger.info('Deleting {} because it was not in {}'.format(name, sequence_file))
         study.pop_taxa(to_delete)
 
         M = []
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     # Aggregate with specified hamming distance
     if args.hamming_distance is not None:
         logger.info('Aggregating taxa with a hamming distance of {}'.format(args.hamming_distance))
-        study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
+        md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
 
         # Get the maximum distance of all the OTUs
         m = -1
@@ -145,6 +145,9 @@ if __name__ == '__main__':
             study.pop_times(args.remove_timepoints)
 
     # 6) Save the study set and sequences
+    print("# otus: {}".format(len(study.taxa)))
+    for taxa in study.taxa:
+        print(taxa.name)
     study.save(os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl'))
     ret = []
     for taxon in study.taxa:
