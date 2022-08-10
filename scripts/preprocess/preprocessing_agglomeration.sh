@@ -25,18 +25,18 @@ python preprocess/helpers/prefilter_asvs.py \
 	-t $PREFILT_LEN
 
 
-# Agglomerate ASVs into OTUs
+echo "[*] Agglomerating ASVs into OTUs."
 for dataset in healthy replicates inoculum; do
 	echo "[*] Extracting dataset: ${dataset}"
 	python preprocess/helpers/preprocess.py \
 			--hamming-distance 2 \
 			--rename-prefix OTU \
 			--sequences $prefilt_aln_fasta \
-			--output-basepath ${PREPROCESS_DIR} \
 			--remove-timepoints 0 0.5 \
 			--max-n-species 2 \
 			--dataset-name ${dataset} \
-			--dataset-dir ${DATASET_DIR}/raw_tables
+			--dataset-dir ${DATASET_DIR}/raw_tables \
+			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg"
 done
 
 echo "Done."

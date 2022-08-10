@@ -12,7 +12,7 @@ import os
 import argparse
 
 
-def parse_rdp(fname, confidence_threshold):
+def parse_rdp(fname, confidence_threshold) -> pd.DataFrame:
     '''Parse the taxonomic assignment document from RDP with a confidence
     threshold `confidence_threshold`
 
@@ -69,29 +69,22 @@ def parse_rdp(fname, confidence_threshold):
                 temp.append(md2.DEFAULT_TAXLEVEL_NAME)
         data.append(temp)
 
-    df = pd.DataFrame(data, columns=columns, index=index)
-    return df
+    return pd.DataFrame(data, columns=columns, index=index)
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(usage=__doc__)
+    parser.add_argument('--input-study', '-i', type=str, dest='input_study_path')
+    parser.add_argument('--output-study', '-o', type=str, dest='output_study_path')
     parser.add_argument('--rdp-table', '-r', type=str, dest='rdp_table',
         help='Location of RDP file')
     parser.add_argument('--confidence-threshold', '-c', type=float, dest='confidence_threshold',
         help='This is the minimum confidence required for us to use the classification')
-    parser.add_argument('--output-basepath', '-o', type=str, dest='basepath',
-        help='This is where you want to save the parsed dataset.')
     args = parser.parse_args()
 
-    logger.info('Parsing RDP')
+    logger.info(f'Parsing RDP from {args.rdp_table}')
     df = parse_rdp(fname=args.rdp_table, confidence_threshold=args.confidence_threshold)
 
-    for dset in ['healthy', 'uc', 'replicates', 'inoculum']:
-        logger.info('Replacing {}'.format(dset))
-        study_fname = os.path.join(args.basepath, 'gibson_{dset}_agg.pkl'.format(dset=dset))
-        study = md2.Study.load(study_fname)
-
-        study.taxa.generate_consensus_taxonomies(df)
-        study_fname = os.path.join(args.basepath, 'gibson_{dset}_agg_taxa.pkl'.format(dset=dset))
-        study.save(study_fname)
+    study = md2.Study.load(args.input_study)
+    study.taxa.generate_consensus_taxonomies(df)
+    study.save(args.output_study)

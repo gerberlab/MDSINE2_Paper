@@ -24,6 +24,8 @@ can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 
 '''
 import argparse
+from pathlib import Path
+
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
 from mdsine2 import Study, OTU, OTUTaxaSet
@@ -72,8 +74,8 @@ def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequen
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument('--output-basepath', '-o', type=str, dest='basepath',
-        help='This is where you want to save the parsed dataset.')
+    parser.add_argument('--output-prefix', '-o', dest='output_prefix', required=True,
+                        help='The prefix to use (including any directory) for the resulting .pkl and .fa files.')
     parser.add_argument('--hamming-distance', '-hd', type=int, dest='hamming_distance', required=True,
         help='This is the hamming radius to aggregate ASV sequences. If nothing ' \
             'is provided, then there will be no aggregation.')
@@ -94,7 +96,6 @@ if __name__ == '__main__':
                         help='The directory containing the input dataset (A collection of TSV files).')
 
     args = parser.parse_args()
-    os.makedirs(args.basepath, exist_ok=True)
 
     dset = args.dataset_name
     study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
@@ -121,12 +122,15 @@ if __name__ == '__main__':
 
     # 6) Save the study set and sequences
     logger.info("# otus: {}".format(len(agg_study.taxa)))
-    outpath = os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl')
-    agg_study.save(outpath)
-    logger.info(f"Saved study to {outpath}")
+
+    pkl_path = Path(args.output_prefix).with_suffix('.pkl')
+    agg_study.save(pkl_path)
+    logger.info(f"Saved study to {pkl_path}")
 
     ret = []
     for taxon in agg_study.taxa:
         ret.append(SeqRecord.SeqRecord(seq=Seq.Seq(taxon.sequence), id=taxon.name,
             description=''))
-    SeqIO.write(ret, os.path.join(args.basepath, 'gibson_' + dset + '_agg.fa'), 'fasta-2line')
+
+    fasta_path = Path(args.output_prefix).with_suffix('.fa')
+    SeqIO.write(ret, fasta_path, 'fasta-2line')
