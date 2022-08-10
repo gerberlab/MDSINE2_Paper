@@ -26,6 +26,7 @@ for seed in 0 1; do
 			--interaction-ind-prior $INTERACTION_IND_PRIOR \
 			--perturbation-ind-prior $PERTURBATION_IND_PRIOR
 
+	echo "[*] Visualizing output of ${study_name}"
 	mdsine2 visualize-posterior \
 			--chain $MDSINE2_OUT_DIR/$study_name/mcmc.pkl \
 			--output-basepath $MDSINE2_OUT_DIR/$study_name/posterior
