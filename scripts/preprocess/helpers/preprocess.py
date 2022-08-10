@@ -61,11 +61,9 @@ def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequen
             seq = list(str(seqs[taxon.name].seq))
             M.append(seq)
         M = np.asarray(M)
-        gaps = M == '-'
-        n_gaps = np.sum(gaps, axis=0)
-        idxs = np.where(n_gaps == 0)[0]
-        logger.info('There are {} positions where there are no gaps out of {}. Setting those ' \
-            'to the sequences'.format(len(idxs), M.shape[1]))
+        n_bases = np.sum(M != '-', axis=0)
+        idxs = np.where(n_bases > 0)[0]
+        logger.info('There were {} valid positions out of {}.'.format(len(idxs), M.shape[1]))
         M = M[:, idxs]
         for i,taxon in enumerate(study.taxa):
             taxon.sequence = ''.join(M[i])
