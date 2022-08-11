@@ -11,7 +11,7 @@ conda create -n rmicrobiome \
   -c bioconda \
   -c defaults \
   --override-channels \
-  bioconductor-dada2=1.20
+  bioconductor-dada2=1.24
 
 ```
 Now activate the new `conda` environment
