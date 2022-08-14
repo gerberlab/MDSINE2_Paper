@@ -43,8 +43,10 @@ out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(245,150), maxN=0, ma
 
 head(out)
 
-errF <- learnErrors(filtFs, multithread=TRUE, randomize=TRUE, nbases=1e8, pool = "pseudo")
-errR <- learnErrors(filtRs, multithread=TRUE, randomize=TRUE, nbases=1e8, pool = "pseudo")
+setDadaOpt(PSEUDO_PREVALENCE=4)
+
+errF <- learnErrors(filtFs, multithread=TRUE, randomize=TRUE, nbases=5e8, pool = "pseudo")
+errR <- learnErrors(filtRs, multithread=TRUE, randomize=TRUE, nbases=5e8, pool = "pseudo")
 
 plotErrors(errF, nominalQ=TRUE)
 
