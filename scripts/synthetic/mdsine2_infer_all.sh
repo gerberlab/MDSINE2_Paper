@@ -31,7 +31,8 @@ for read_depth in 1000 25000; do
 					--multiprocessing 0 \
 					--basepath $inference_out_dir \
 					--interaction-ind-prior "strong-sparse" \
-					--perturbation-ind-prior "weak-agnostic"
+					--perturbation-ind-prior "weak-agnostic" \
+					--time_mask ${DATASET_DIR}/time_mask.tsv
 			echo "[*] Finished mdsine2 inference."
 		done
 	done

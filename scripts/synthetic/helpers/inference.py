@@ -70,6 +70,12 @@ def parse_args() -> argparse.Namespace:
         required=False,
         help='<Optional> Tells the inference loop to print debug messages every k iterations.'
     )
+
+    parser.add_argument(
+        '--time_mask', type=str,
+        required=False,
+        help='<Optional> Specify spike-in timepoint for each taxa.'
+    )
     return parser.parse_args()
 
 
@@ -106,6 +112,11 @@ def main():
         negbin_a0=a0, checkpoint=args.checkpoint)
     params.LEARN[STRNAMES.CLUSTERING] = False
     params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
+
+    if args.time_mask is not None and len(args.time_mask) > 0:
+        params.INITIALIZATION_KWARGS[STRNAMES.ZERO_INFLATION]['value_option'] = "custom"
+        params.ZERO_INFLATION_TRANSITION_POLICY = 'ignore'
+        params.ZERO_INFLATION_DATA_PATH = Path(args.time_mask)
 
     # Run with multiprocessing if necessary
     if args.mp:
