@@ -196,14 +196,22 @@ def simulate_trajectories(synth: Synthetic,
             synth.model.perturbations = None
 
             total_n_days = synth.times[-1]
-            print(f"Simulating first piece (day {intervene_day}): {init_abund}")
+            print("Simulating first piece (day {}): {} = {}".format(
+                0,
+                synth.taxa[0].name,
+                init_abund[0]
+            ))
             d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund.reshape(-1, 1),
                                     dt=dt, n_days=intervene_day, processvar=processvar,
                                     subsample=False)
 
             new_abund = d_pre['X'][:, -1]
             new_abund[0] = pathogen_abund
-            print(f"Simulating second piece: {new_abund}")
+            print("Simulating first piece (day {}): {} = {}".format(
+                intervene_day,
+                synth.taxa[0].name,
+                new_abund[0]
+            ))
             d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund.reshape(-1, 1),
                                      dt=dt, n_days=total_n_days - intervene_day + dt, processvar=processvar,
                                      subsample=False)
