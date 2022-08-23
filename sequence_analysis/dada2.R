@@ -43,15 +43,15 @@ out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(245,150), maxN=0, ma
 
 head(out)
 
-setDadaOpt(PSEUDO_PREVALENCE=4)
+setDadaOpt(MAX_CONSIST=30)
 
-errF <- learnErrors(filtFs, multithread=TRUE, randomize=TRUE, nbases=5e8, pool = "pseudo")
-errR <- learnErrors(filtRs, multithread=TRUE, randomize=TRUE, nbases=5e8, pool = "pseudo")
+errF <- learnErrors(filtFs, multithread=TRUE, randomize=TRUE, nbases=1e8, pool = "pseudo")
+errR <- learnErrors(filtRs, multithread=TRUE, randomize=TRUE, nbases=1e8, pool = "pseudo")
 
 plotErrors(errF, nominalQ=TRUE)
 
-dadaFs <- dada(filtFs, err=errF, multithread=TRUE, pool = "pseudo")
-dadaRs <- dada(filtRs, err=errR, multithread=TRUE, pool = "pseudo")
+dadaFs <- dada(filtFs, err=errF, multithread=TRUE, pool = "pseudo", selfConsist=TRUE) #19 consist steps
+dadaRs <- dada(filtRs, err=errR, multithread=TRUE, pool = "pseudo", selfConsist=TRUE) #13 consist steps
 
 mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
 seqtab <- makeSequenceTable(mergers)
