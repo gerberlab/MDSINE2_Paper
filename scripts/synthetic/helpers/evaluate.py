@@ -38,6 +38,9 @@ def parse_args() -> argparse.Namespace:
 # =============== Iterators through directory structures ==========
 def result_dirs(results_base_dir: Path) -> Iterator[Tuple[int, int, str, Path]]:
     for read_depth, read_depth_dir in read_depth_dirs(results_base_dir):
+        if read_depth == 1000:
+            print("Skipping read depth 1000.")
+            continue
         for trial_num, trial_dir in trial_dirs(read_depth_dir):
             for noise_level, noise_level_dir in noise_level_dirs(trial_dir):
                 print(f"Yielding (read_depth: {read_depth}, trial: {trial_num}, noise: {noise_level})")
@@ -403,6 +406,8 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
     :return:
     """
     def _error_metric(_pred_traj, _true_traj) -> float:
+        _pred_traj = np.log10(_pred_traj)
+        _true_traj = np.log10(_true_traj)
         return np.sqrt(np.mean(np.square(_pred_traj - _true_traj)))
 
     """ Simulation parameters """
@@ -608,20 +613,23 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    # out_path = output_dir / "growth_rate_errors.csv"
-    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    # print(f"WWrote growth rate errors to {out_path.name}.")
-    #
-    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    # out_path = output_dir / "interaction_strength_errors.csv"
-    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    # print(f"WWrote interaction strength errors to {out_path.name}.")
-    #
-    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    # out_path = output_dir / "topology_errors.csv"
-    # topology_errors.to_csv(output_dir / "topology_errors.csv")
-    # print(f"WWrote interaction topology errors to {out_path.name}.")
+    print("Evaluating growth rate errors.")
+    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    out_path = output_dir / "growth_rate_errors.csv"
+    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    print(f"Wrote growth rate errors to {out_path.name}.")
+
+    print("Evaluating interaction strength errors.")
+    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    out_path = output_dir / "interaction_strength_errors.csv"
+    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    print(f"Wrote interaction strength errors to {out_path.name}.")
+
+    print("Evaluating interaction topology errors.")
+    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    out_path = output_dir / "topology_errors.csv"
+    topology_errors.to_csv(output_dir / "topology_errors.csv")
+    print(f"Wrote interaction topology errors to {out_path.name}.")
 
     print("Evaluating holdout trajectory errors.")
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)

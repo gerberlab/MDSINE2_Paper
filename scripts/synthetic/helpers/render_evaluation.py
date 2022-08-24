@@ -123,7 +123,6 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
         )
     ax.set_ylabel('AUC-ROC')
     ax.set_xlabel(None)
-    ax.set_yscale('log')
     ax.set_title('Network Structure')
     ax.legend([], [], frameon=False)
 
