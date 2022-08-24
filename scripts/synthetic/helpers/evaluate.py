@@ -464,8 +464,11 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             pass
 
         # MDSINE1 error
-        #pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
-        #_eval_mdsine('MDSINE1', pred_interactions, pred_growths)
+        try:
+            pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
+            _eval_mdsine('MDSINE1', pred_interactions, pred_growths)
+        except FileNotFoundError:
+            pass
 
         _eval_regression("lra", "elastic_net")
         _eval_regression("glv", "elastic_net")
@@ -552,10 +555,6 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
         assert len(expected_t) <= len(_t)
 
         fwsims[gibbs_idx, :, :] = _x[:, target_time_idxs]
-
-    # print(
-    #     np.sum(np.isnan(fwsims), axis=0)
-    # )
     return fwsims
 
 
