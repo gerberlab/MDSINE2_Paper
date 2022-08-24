@@ -470,11 +470,11 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         except FileNotFoundError:
             pass
 
-        _eval_regression("lra", "elastic_net")
+        # _eval_regression("lra", "elastic_net")
         _eval_regression("glv", "elastic_net")
         _eval_regression("glv", "ridge")
-        _eval_regression("glv-ra", "elastic_net")
-        _eval_regression("glv-ra", "ridge")
+        # _eval_regression("glv-ra", "elastic_net")
+        # _eval_regression("glv-ra", "ridge")
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
         df['NoiseLevel'],
@@ -608,20 +608,20 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    out_path = output_dir / "growth_rate_errors.csv"
-    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    print(f"WWrote growth rate errors to {out_path.name}.")
-
-    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    out_path = output_dir / "interaction_strength_errors.csv"
-    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    print(f"WWrote interaction strength errors to {out_path.name}.")
-
-    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    out_path = output_dir / "topology_errors.csv"
-    topology_errors.to_csv(output_dir / "topology_errors.csv")
-    print(f"WWrote interaction topology errors to {out_path.name}.")
+    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    # out_path = output_dir / "growth_rate_errors.csv"
+    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    # print(f"WWrote growth rate errors to {out_path.name}.")
+    #
+    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    # out_path = output_dir / "interaction_strength_errors.csv"
+    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    # print(f"WWrote interaction strength errors to {out_path.name}.")
+    #
+    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    # out_path = output_dir / "topology_errors.csv"
+    # topology_errors.to_csv(output_dir / "topology_errors.csv")
+    # print(f"WWrote interaction topology errors to {out_path.name}.")
 
     print("Evaluating holdout trajectory errors.")
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
