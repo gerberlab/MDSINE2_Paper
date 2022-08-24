@@ -391,6 +391,7 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                                        true_interactions: np.ndarray,
                                        init_rv: scipy.stats.rv_continuous,
+                                       initial_min_value: float,
                                        results_base_dir: Path,
                                        subsample_frac: float) -> pd.DataFrame:
     """
@@ -418,11 +419,12 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         sim_seed += 1
         np.random.seed(sim_seed)
-        initial_cond = init_rv.rvs(size=len(true_growth))
-        print("preparing forward sim.")
-        true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
-        print("finished fwsim.")
 
+        # generate initial conditions.
+        initial_cond = init_rv.rvs(size=len(true_growth))
+        initial_cond[initial_cond < initial_min_value] = initial_min_value
+
+        true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
         true_traj = true_traj[:, target_t_idx]
 
         def _add_entry(_method: str, _err: float):
@@ -620,8 +622,14 @@ def main():
     # print(f"Wrote interaction topology errors.")
 
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions,
-                                                                   init_dist, results_base_dir, args.subsample_fwsim)
+    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
+        growth,
+        interactions,
+        init_dist,
+        100.0,
+        results_base_dir,
+        args.subsample_fwsim
+    )
     holdout_trajectory_errors.to_csv(output_dir / "holdout_trajectory_errors.csv")
     print(f"Wrote heldout trajectory prediction errors.")
 
