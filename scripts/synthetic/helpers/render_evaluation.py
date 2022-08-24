@@ -124,7 +124,7 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
     ax.set_title('Network Structure')
 
 
-def render_all(fig: plt.Figure, dataframe_dir: Path, output_path: Path, method_order: List[str], palette: Dict[str, np.ndarray], read_depth: int):
+def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], palette: Dict[str, np.ndarray], read_depth: int):
 
     # fig, axes = plt.subplots(1, 4, figsize=figsize)
     # fig = plt.figure(figsize=(16, 10), constrained_layout=True)
@@ -181,8 +181,6 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, output_path: Path, method_o
         palette=palette
     )
 
-    plt.savefig(output_path)
-
 
 def draw_legend(fig, method_order: List[str], palette: Dict[str, np.ndarray]):
     legend_elements = [
@@ -213,13 +211,13 @@ def main():
     render_all(
         fig,
         out_dir,
-        out_dir / f'errors_{read_depth}.{args.format}',
         method_order,
         color_palette,
         read_depth=args.read_depth
     )
 
     draw_legend(fig, method_order, color_palette)
+    plt.savefig(out_dir / f'errors_{read_depth}.{args.format}')
 
 
 if __name__ == "__main__":
