@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+from typing import Tuple
 
 import numpy as np
 import scipy.integrate
@@ -28,110 +29,61 @@ def load_df(df_path: Path) -> pd.DataFrame:
     return df
 
 
-def render_growth_rate_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
+def render_growth_rate_errors(df: pd.DataFrame, ax, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    section = df.loc[df['ReadDepth'] == 1000]
-    if section.shape[0] > 0:
+    if df.shape[0] > 0:
         sb.barplot(
-            data=section,
+            data=df,
             x='x',
             y='Error',
             hue='Method',
-            ax=ax1,
+            ax=ax,
             hue_order=order,
             palette=palette
         )
-    section = df.loc[df['ReadDepth'] == 25000]
-    if section.shape[0] > 0:
-        sb.barplot(
-            data=section,
-            x='x',
-            y='Error',
-            hue='Method',
-            ax=ax2,
-            hue_order=order,
-            palette=palette
-        )
-    ax1.set_ylabel('RMSE')
-    ax2.set_ylabel(None)
-    ax1.set_xlabel(None)
-    ax2.set_xlabel(None)
-    ax1.set_yscale('log')
-    ax2.set_yscale('log')
-    # ax1.sharey(ax2)
-    text_ax.text(x=0.5, y=0.5, s='Growth Rates', fontsize=14, horizontalalignment='center', verticalalignment='center')
-    text_ax.axis('off')
+    ax.set_ylabel('RMSE')
+    ax.set_xlabel(None)
+    ax.set_yscale('log')
+    ax.set_title('Growth Rates')
 
 
-def render_interaction_strength_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
+def render_interaction_strength_errors(df: pd.DataFrame, ax, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    section = df.loc[df['ReadDepth'] == 1000]
-    if section.shape[0] > 0:
+    if df.shape[0] > 0:
         sb.barplot(
-            data=section,
+            data=df,
             x='x',
             y='Error',
             hue='Method',
-            ax=ax1,
+            ax=ax,
             hue_order=order,
             palette=palette
         )
-    section = df.loc[df['ReadDepth'] == 25000]
-    if section.shape[0] > 0:
-        sb.barplot(
-            data=section,
-            x='x',
-            y='Error',
-            hue='Method',
-            ax=ax2,
-            hue_order=order,
-            palette=palette
-        )
-    ax1.set_ylabel('RMSE')
-    ax2.set_ylabel(None)
-    ax1.set_xlabel(None)
-    ax2.set_xlabel(None)
-    ax1.set_yscale('log')
-    ax2.set_yscale('log')
-    ax1.sharey(ax2)
-    text_ax.text(x=0.5, y=0.5, s='Interaction Strengths', fontsize=14, horizontalalignment='center', verticalalignment='center')
-    text_ax.axis('off')
+    ax.set_ylabel('RMSE')
+    ax.set_xlabel(None)
+    ax.set_yscale('log')
+    ax.set_title('Interaction Strengths')
 
 
-def render_holdout_trajectory_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
+def render_holdout_trajectory_errors(df: pd.DataFrame, ax, order, palette):
     df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
-    section = df.loc[df['ReadDepth'] == 1000]
-    if section.shape[0] > 0:
+    if df.shape[0] > 0:
         sb.barplot(
-            data=section,
+            data=df,
             x='x',
             y='Error',
             hue='Method',
-            ax=ax1,
+            ax=ax,
             hue_order=order,
             palette=palette
         )
-    section = df.loc[df['ReadDepth'] == 25000]
-    if section.shape[0] > 0:
-        sb.barplot(
-            data=section,
-            x='x',
-            y='Error',
-            hue='Method',
-            ax=ax2,
-            hue_order=order,
-            palette=palette
-        )
-    ax1.set_ylabel('RMSE')
-    ax2.set_ylabel(None)
-    ax1.set_xlabel(None)
-    ax2.set_xlabel(None)
-    ax1.sharey(ax2)
-    text_ax.text(x=0.5, y=0.5, s='Holdout trajectory', fontsize=14, horizontalalignment='center', verticalalignment='center')
-    text_ax.axis('off')
+    ax.set_ylabel('RMSE')
+    ax.set_xlabel(None)
+    ax.set_yscale('log')
+    ax.set_title('Holdout Trajectories')
 
 
-def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
+def render_topology_errors(df: pd.DataFrame, ax, order, palette):
     def auroc(_df):
         _df = _df[['FPR', 'TPR']].groupby('FPR').max().reset_index()
         _df = _df.sort_values('FPR', ascending=True)
@@ -143,90 +95,74 @@ def render_topology_errors(df: pd.DataFrame, text_ax, ax1, ax2, order, palette):
         )
 
     area_df = df.groupby(['Method', 'ReadDepth', 'Trial', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
-    print(area_df)
-
     area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
-    section = area_df.loc[area_df['ReadDepth'] == 1000]
-    if section.shape[0] > 0:
+
+    if area_df.shape[0] > 0:
         sb.barplot(
-            data=section,
+            data=area_df,
             x='x',
             y='Error',
             hue='Method',
-            ax=ax1,
+            ax=ax,
             hue_order=order,
             palette=palette
         )
-    section = area_df.loc[area_df['ReadDepth'] == 25000]
-    if section.shape[0] > 0:
-        sb.barplot(
-            data=section,
-            x='x',
-            y='Error',
-            hue='Method',
-            ax=ax2,
-            hue_order=order,
-            palette=palette
-        )
-
-    ax1.set_ylabel('AUROC')
-    ax2.set_ylabel(None)
-    ax1.set_xlabel(None)
-    ax2.set_xlabel(None)
-    ax1.sharey(ax2)
-    text_ax.text(x=0.5, y=0.5, s='Network Structure', fontsize=14, horizontalalignment='center', verticalalignment='center')
-    text_ax.axis('off')
+    ax.set_ylabel('AUC-ROC')
+    ax.set_xlabel(None)
+    ax.set_yscale('log')
+    ax.set_title('Network Structure')
 
 
-def render_all(dataframe_dir: Path, output_path: Path):
+def render_all(dataframe_dir: Path, output_path: Path, figsize: Tuple[int, int], read_depth: int):
     default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
     topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-ridge', 'glv-ra-ridge']
     palette = {method: c for method, c in zip(method_order, default_colors)}
 
-    fig = plt.figure(figsize=(16, 10), constrained_layout=True)
-    spec = fig.add_gridspec(ncols=4, nrows=4, height_ratios=[1, 10, 1, 10], width_ratios=[1, 1, 1, 1])
+    fig, axes = plt.subplots(1, 4, figsize=figsize)
+    # fig = plt.figure(figsize=(16, 10), constrained_layout=True)
+    # spec = fig.add_gridspec(ncols=4, nrows=4, height_ratios=[1, 10, 1, 10], width_ratios=[1, 1, 1, 1])
 
-    ax0 = fig.add_subplot(spec[0, :2])
-    ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
+    # ax0 = fig.add_subplot(spec[0, :2])
+    # ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
+    df = load_df(dataframe_dir / "growth_rate_errors.csv")
+    section = df.loc[df['ReadDepth'] == read_depth]
     render_growth_rate_errors(
-        load_df(dataframe_dir / "growth_rate_errors.csv"),
-        text_ax=ax0,
-        ax1=ax1,
-        ax2=ax2,
+        section,
+        ax=axes[0],
         order=method_order,
         palette=palette
     )
 
-    ax0 = fig.add_subplot(spec[0, 2:])
-    ax1, ax2 = fig.add_subplot(spec[1, 2]), fig.add_subplot(spec[1, 3])
+    # ax0 = fig.add_subplot(spec[0, 2:])
+    # ax1, ax2 = fig.add_subplot(spec[1, 2]), fig.add_subplot(spec[1, 3])
+    df = load_df(dataframe_dir / "interaction_strength_errors.csv")
+    section = df.loc[df['ReadDepth'] == read_depth]
     render_interaction_strength_errors(
-        load_df(dataframe_dir / "interaction_strength_errors.csv"),
-        text_ax=ax0,
-        ax1=ax1,
-        ax2=ax2,
+        section,
+        ax=axes[1],
         order=method_order,
         palette=palette
     )
 
-    ax0 = fig.add_subplot(spec[2, :2])
-    ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
+    # ax0 = fig.add_subplot(spec[2, :2])
+    # ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
+    df = load_df(dataframe_dir / 'holdout_trajectory_errors.csv')
+    section = df.loc[df['ReadDepth'] == read_depth]
     render_holdout_trajectory_errors(
-        load_df(dataframe_dir / 'holdout_trajectory_errors.csv'),
-        text_ax=ax0,
-        ax1=ax1,
-        ax2=ax2,
+        section,
+        ax=axes[2],
         order=method_order,
         palette=palette
     )
 
-    ax0 = fig.add_subplot(spec[2, 2:])
-    ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
+    # ax0 = fig.add_subplot(spec[2, 2:])
+    # ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
+    df = load_df(dataframe_dir / "topology_errors.csv")
+    section = df.loc[df['ReadDepth'] == read_depth]
     render_topology_errors(
-        load_df(dataframe_dir / "topology_errors.csv"),
-        text_ax=ax0,
-        ax1=ax1,
-        ax2=ax2,
+        section,
+        ax=axes[2],
         order=topology_method_order,
         palette=palette
     )
@@ -237,7 +173,9 @@ def render_all(dataframe_dir: Path, output_path: Path):
 def main():
     args = parse_args()
     out_dir = Path(args.output_dir)
-    render_all(out_dir, out_dir / f'errors.{args.format}')
+
+    read_depth = args.read_depth
+    render_all(out_dir, out_dir / f'errors_{read_depth}.{args.format}', figsize=(16, 8), read_depth=args.read_depth)
 
 
 if __name__ == "__main__":
