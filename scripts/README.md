@@ -1,18 +1,3 @@
-# Before you begin!
-
-First, open the `settings.sh` file, and edit the very first (non-commented) line
-
-```bash
-export PROJECT_DIR="<PATH_TO_THIS_REPOSITORY>"
-```
-
-For example:
-
-```bash
-export PROJECT_DIR="/home/teg/MDSINE2_figures"
-```
-
-
 # Navigation
 
 Each subdirectory is a collection of scripts for running different parts of analysis found in the paper.

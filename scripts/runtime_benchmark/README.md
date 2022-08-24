@@ -1,8 +1,5 @@
 # Runtime evaluation
 
-This assumes that the user has followed the appropriate steps to 
-[configure the environment](../README.md) (e.g. `PROJECT_DIR` is set correctly.)
-
 
 # Step 1: Initialize datasets of varying sizes.
 
