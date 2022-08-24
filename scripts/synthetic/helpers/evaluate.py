@@ -419,7 +419,10 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         sim_seed += 1
         np.random.seed(sim_seed)
         initial_cond = init_rv.rvs(size=len(true_growth))
+        print("preparing forward sim.")
         true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
+        print("finished fwsim.")
+
         true_traj = true_traj[:, target_t_idx]
 
         def _add_entry(_method: str, _err: float):
@@ -604,17 +607,17 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    print(f"Wrote growth rate errors.")
-
-    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    print(f"Wrote interaction strength errors.")
-
-    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    topology_errors.to_csv(output_dir / "topology_errors.csv")
-    print(f"Wrote interaction topology errors.")
+    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    # print(f"Wrote growth rate errors.")
+    #
+    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    # print(f"Wrote interaction strength errors.")
+    #
+    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    # topology_errors.to_csv(output_dir / "topology_errors.csv")
+    # print(f"Wrote interaction topology errors.")
 
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
     holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions,
