@@ -33,7 +33,7 @@ def load_df(df_path: Path) -> pd.DataFrame:
 
 
 def render_growth_rate_errors(df: pd.DataFrame, ax, order, palette):
-    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
+    df.loc[:, 'x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     if df.shape[0] > 0:
         sb.barplot(
             data=df,
@@ -51,7 +51,7 @@ def render_growth_rate_errors(df: pd.DataFrame, ax, order, palette):
 
 
 def render_interaction_strength_errors(df: pd.DataFrame, ax, order, palette):
-    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
+    df.loc[:, 'x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     if df.shape[0] > 0:
         sb.barplot(
             data=df,
@@ -69,7 +69,7 @@ def render_interaction_strength_errors(df: pd.DataFrame, ax, order, palette):
 
 
 def render_holdout_trajectory_errors(df: pd.DataFrame, ax, order, palette):
-    df['x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
+    df.loc[:, 'x'] = df['ReadDepth'].astype(str) + ' reads\n' + df['NoiseLevel'].astype(str) + ' noise'
     if df.shape[0] > 0:
         sb.barplot(
             data=df,
@@ -98,7 +98,7 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
         )
 
     area_df = df.groupby(['Method', 'ReadDepth', 'Trial', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
-    area_df['x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
+    area_df.loc[:, 'x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
 
     if area_df.shape[0] > 0:
         sb.barplot(
