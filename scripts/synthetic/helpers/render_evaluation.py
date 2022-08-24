@@ -16,6 +16,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-f', '--format', type=str, required=False,
                         default='pdf',
                         help='<Optional> The plot image format (Default: pdf)')
+    parser.add_argument('-r', '--read_depth', type=int, required=False,
+                        default=25000,
+                        help='<Optional> The read depth to render (Default: 25000)')
     return parser.parse_args()
 
 
