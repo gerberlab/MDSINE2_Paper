@@ -56,6 +56,7 @@ def render_growth_rate_errors(df: pd.DataFrame, ax, order, palette):
     ax.set_xlabel(None)
     ax.set_yscale('log')
     ax.set_title('Growth Rates')
+    ax.legend([], [], frameon=False)
 
 
 def render_interaction_strength_errors(df: pd.DataFrame, ax, order, palette):
@@ -74,6 +75,7 @@ def render_interaction_strength_errors(df: pd.DataFrame, ax, order, palette):
     ax.set_xlabel(None)
     ax.set_yscale('log')
     ax.set_title('Interaction Strengths')
+    ax.legend([], [], frameon=False)
 
 
 def render_holdout_trajectory_errors(df: pd.DataFrame, ax, order, palette):
@@ -92,6 +94,7 @@ def render_holdout_trajectory_errors(df: pd.DataFrame, ax, order, palette):
     ax.set_xlabel(None)
     ax.set_yscale('log')
     ax.set_title('Holdout Trajectories')
+    ax.legend([], [], frameon=False)
 
 
 def render_topology_errors(df: pd.DataFrame, ax, order, palette):
@@ -122,6 +125,7 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
     ax.set_xlabel(None)
     ax.set_yscale('log')
     ax.set_title('Network Structure')
+    ax.legend([], [], frameon=False)
 
 
 def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], palette: Dict[str, np.ndarray], read_depth: int):
@@ -190,6 +194,7 @@ def draw_legend(fig, method_order: List[str], palette: Dict[str, np.ndarray]):
 
     fig.legend(
         handles=legend_elements,
+        labels=method_order,
         bbox_to_anchor=(1.005, 0.75),
         markerfirst=False,
         loc='lower left'
