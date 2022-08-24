@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
                         help='<Optional> The plot image format (Default: pdf)')
 
     parser.add_argument('-fw', '--figure_width', type=int, required=False,
-                        default=16,
+                        default=25,
                         help='<Optional> The figure width (Default: 16)')
     parser.add_argument('-fh', '--figure_height', type=int, required=False,
                         default=5,
@@ -137,7 +137,7 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     # ax0 = fig.add_subplot(spec[0, :2])
     # ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
 
-    spec = fig.add_gridspec(left=0.1, ncols=4, nrows=1, width_ratios=[1, 1, 1, 1], wspace=0.4)
+    spec = fig.add_gridspec(ncols=5, nrows=1, width_ratios=[1, 1, 1, 1, 0.08], wspace=0.6)
     axes = [fig.add_subplot(spec[0, i]) for i in range(4)]
 
     df = load_df(dataframe_dir / "growth_rate_errors.csv")
@@ -194,7 +194,7 @@ def draw_legend(fig, method_order: List[str], palette: Dict[str, np.ndarray]):
     fig.legend(
         handles=legend_elements,
         labels=method_order,
-        bbox_to_anchor=(1.005, 0.75),
+        bbox_to_anchor=(0.88, 0.5),
         markerfirst=False,
         loc='lower left'
     )
