@@ -18,10 +18,10 @@ def parse_args() -> argparse.Namespace:
                         default='pdf',
                         help='<Optional> The plot image format (Default: pdf)')
 
-    parser.add_argument('-w', '--figure_width', type=int, required=False,
+    parser.add_argument('-fw', '--figure_width', type=int, required=False,
                         default=16,
                         help='<Optional> The figure width (Default: 16)')
-    parser.add_argument('-h', '--figure_height', type=int, required=False,
+    parser.add_argument('-fh', '--figure_height', type=int, required=False,
                         default=5,
                         help='<Optional> The figure height (Default: 5)')
     parser.add_argument('-r', '--read_depth', type=int, required=False,
