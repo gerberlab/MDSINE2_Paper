@@ -608,18 +608,22 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    # print(f"Wrote growth rate errors.")
-    #
-    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    # print(f"Wrote interaction strength errors.")
-    #
-    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    # topology_errors.to_csv(output_dir / "topology_errors.csv")
-    # print(f"Wrote interaction topology errors.")
+    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    out_path = output_dir / "growth_rate_errors.csv"
+    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    print(f"WWrote growth rate errors to {out_path.name}.")
 
+    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    out_path = output_dir / "interaction_strength_errors.csv"
+    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    print(f"WWrote interaction strength errors to {out_path.name}.")
+
+    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    out_path = output_dir / "topology_errors.csv"
+    topology_errors.to_csv(output_dir / "topology_errors.csv")
+    print(f"WWrote interaction topology errors to {out_path.name}.")
+
+    print("Evaluating holdout trajectory errors.")
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
     holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
         growth,
@@ -629,8 +633,9 @@ def main():
         results_base_dir,
         args.subsample_fwsim
     )
-    holdout_trajectory_errors.to_csv(output_dir / "holdout_trajectory_errors.csv")
-    print(f"Wrote heldout trajectory prediction errors.")
+    out_path = output_dir / "holdout_trajectory_errors.csv"
+    holdout_trajectory_errors.to_csv(out_path)
+    print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
 if __name__ == "__main__":
