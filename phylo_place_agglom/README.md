@@ -15,8 +15,6 @@ conda install -c bioconda pplacer #on Mac: brew install brewsci/bio/pplacer
 ```
 
 
-
-
 Place ASVs on pre-aligned RDP high quality 16S reads
 
 ```bash
@@ -36,3 +34,15 @@ python scripts/sto_to_fasta.py -i output_ASVs/placed_sequences_on_v4_region.sto 
 ```
 
 Agglomerate ASVs
+
+Then place OTUs
+
+```bash
+python scripts/place_seqs.py \
+    --v4-region-start 1045 \
+    --v4-region-end 1374 \
+    --refpkg RDP-11-5_TS_Processed.refpkg \
+    --query-reads ../datasets/gibson/preprocessed/gibson_healthy_agg.fa \
+    --output-folder output_OTUs \
+    --temp-folder tmp_OTUs/
+```
