@@ -137,8 +137,7 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     # ax0 = fig.add_subplot(spec[0, :2])
     # ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
 
-
-    spec = fig.add_gridspec(ncols=4, nrows=1, width_ratios=[1, 1, 1, 1])
+    spec = fig.add_gridspec(ncols=4, nrows=1, width_ratios=[1, 1, 1, 1], wspace=0.2)
     axes = [fig.add_subplot(spec[0, i]) for i in range(4)]
 
     df = load_df(dataframe_dir / "growth_rate_errors.csv")
@@ -224,7 +223,9 @@ def main():
     draw_legend(fig, method_order, color_palette)
 
     out_path = out_dir / f'errors_{read_depth}.{args.format}'
+
     plt.savefig(out_path)
+    fig.tight_layout()
     print(f"Saved figure to {out_path}")
 
 
