@@ -222,7 +222,11 @@ def main():
     )
 
     draw_legend(fig, method_order, color_palette)
-    plt.savefig(out_dir / f'errors_{read_depth}.{args.format}')
+
+    out_path = out_dir / f'errors_{read_depth}.{args.format}'
+    plt.savefig(out_path)
+    print(f"Saved figure to {out_path}")
+
 
 
 if __name__ == "__main__":
