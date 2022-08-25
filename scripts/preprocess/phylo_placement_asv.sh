@@ -5,16 +5,18 @@ source preprocess/settings.sh
 require_dir ${REFERENCE_RDP_DIR}
 require_file ${ASV_FASTA}
 
+outdir=${DATASET_DIR}/metadata_ASV
+
 echo "[*] Aligning ASV sequences and performing phylogenetic placement."
-python preprocess/helpers/place_seqs.py \
-    --v4-region-start 1045 \
-    --v4-region-end 1374 \
-    --refpkg ${REFERENCE_RDP_DIR}\
-    --query-reads ${ASV_FASTA} \
-    --output-folder ${DATASET_DIR}/metadata_ASV \
-    --temp-folder ${DATASET_DIR}/metadata_ASV/_tmp
+python preprocess/place_seqs.sh \
+${REFERENCE_RDP_DIR} \
+"RDP-11-5_TS_Processed" \
+${outdir} \
+${ASV_FASTA} \
+1045 1374
+
 
 echo "[*] Converting .sto to .fasta format."
 python preprocess/helpers/sto_to_fasta.py \
--i output_ASVs/placed_sequences_on_v4_region.sto \
--o ${DATASET_DIR}/metadata_asv/aligned_asvs.fa
+-i ${outdir}/aligned_sequences.sto \
+-o ${outdir}/aligned_asvs.fa
