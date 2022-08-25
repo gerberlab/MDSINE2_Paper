@@ -24,8 +24,7 @@ require_program perl
 
 
 # ===================== Main logic here
-cd $rdp_dir
-tmp_dir="__tmp"
+tmp_dir=${rdp_dir}/"__tmp"
 mkdir -p $tmp_dir
 
 
@@ -34,7 +33,7 @@ subseq_file=${tmp_dir}/${basename}_${start_idx}_${end_idx}.fa
 python preprocess/helpers/phylo_placement/trim_fasta.py \
 --start $start_idx \
 --end $end_idx \
--i ${basename}_Aln.fa \
+-i ${rdp_dir}/${basename}_Aln.fa \
 -o ${subseq_file}\
 
 
@@ -59,7 +58,7 @@ guppy tog -o $xml_output --xml $pplacer_output
 
 
 echo "[*] Replace species id with taxonomy."
-perl preprocess/helpers/phylo_placement/replace_id_taxaname.pl $xml_output ${basename}_info.csv
+perl preprocess/helpers/phylo_placement/replace_id_taxaname.pl $xml_output ${rdp_dir}/${basename}_info.csv
 xml_species_output=${tmp_dir}/xml_tree_speciesName.xml
 
 
