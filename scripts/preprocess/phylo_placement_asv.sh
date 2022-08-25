@@ -8,7 +8,7 @@ require_file ${ASV_FASTA}
 outdir=${DATASET_DIR}/metadata_ASV
 
 echo "[*] Aligning ASV sequences and performing phylogenetic placement."
-python preprocess/place_seqs.sh \
+bash preprocess/place_seqs.sh \
 ${REFERENCE_RDP_DIR} \
 "RDP-11-5_TS_Processed" \
 ${outdir} \
