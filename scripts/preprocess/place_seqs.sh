@@ -49,7 +49,7 @@ hmmalign --trim --mapali ${subseq_file} -o $aln_output $hmm_model $input_fasta
 
 echo "[*] Placing aligned sequences on the reference tree."
 pplacer_output=${out_dir}/placement.jplace
-pplacer --verbosity 1 -c . -o $pplacer_output $aln_output
+pplacer --verbosity 1 -c ${rdp_dir} -o $pplacer_output $aln_output
 
 
 echo "[*] Placing on XML tree."
