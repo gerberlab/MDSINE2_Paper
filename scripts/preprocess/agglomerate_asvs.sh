@@ -10,12 +10,7 @@ echo "Writing files into ${PREPROCESS_DIR}."
 
 asv_aln_fasta=${DATASET_DIR}/metadata_ASV/aligned_asvs.fa
 prefilt_aln_fasta=${DATASET_DIR}/metadata_ASV/prefiltered_asvs.fa
-
-
-if ![ -f asv_aln_fasta ]; then
-	echo "Couldn't locate pre-aligned ASV sequence file: ${asv_aln_fasta}"
-	exit 1
-fi
+require_file $asv_aln_fasta
 
 
 echo "[*] Pre-filtering ASVs by length ${PREFILT_LEN}"
