@@ -38,5 +38,6 @@ for dataset in healthy replicates inoculum; do
 			--dataset-dir ${DATASET_DIR}/raw_tables \
 			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg"
 done
+ln -s ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
 
 echo "Done."

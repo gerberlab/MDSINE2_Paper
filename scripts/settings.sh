@@ -24,6 +24,26 @@ require_variable()
 	fi
 }
 
+require_file()
+{
+	path=$1
+	if ![[ -f $path ]]
+	then
+		echo "File ${path} not found."
+		exit 1
+	fi
+}
+
+require_dir()
+{
+	path=$1
+	if ![[ -d $path ]]
+	then
+		echo "Directory ${path} not found."
+		exit 1
+	fi
+}
+
 export require_program
 export require_variable
 

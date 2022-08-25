@@ -1,27 +1,40 @@
 # Preprocessing of ASVs for MDSINE2
 
+## Before you start!
+
+This pipeline requires the following software: 
+`biopython`, `ete3`, `six`, `guppy3`, `hmmer`, `pplacer`.
+
+For example, install these using conda as shown below:
+
+```bash
+conda install -c conda-forge -c bioconda biopython ete3 six guppy3 hmmer pplacer
+```
+
+On Mac, it may be helpful to instead use a brew installation of pplacer:
+
+```
+brew install brewsci/bio/pplacer
+```
+
 ## Step 1: Run DADA2
 
 - Specify how to obtain the reads. Should we host it somewhere on the web?
 
-- TODO describe DADA2 script/how to use.
+- TODO update the read file pathing for the following script.
+- TODO specify that the user needs to run RDP separately.
+
+```bash
+bash preprocess/run_dada2.sh
+```
+
 
 ## Step 2: Run phylogenetic placement for ASVs (this also performs the necessary multiple alignment)
 
-- todo create a script which does this for the user.
 ```bash
-python scripts/place_seqs.py \
-    --v4-region-start 1045 \
-    --v4-region-end 1374 \
-    --refpkg RDP-11-5_TS_Processed.refpkg \
-    --query-reads ../sequence_analysis/output/sequences.fa \
-    --output-folder output_ASVs \
-    --temp-folder tmp_ASVs/
+bash preprocess/phylo_placement_asv.sh
 ```
 
-```bash
-python scripts/sto_to_fasta.py -i output_ASVs/placed_sequences_on_v4_region.sto -o aligned_asvs/aligned_asvs.fa
-```
 
 ## Step 3: Run agglomeration of ASVs into OTUs
 
@@ -29,19 +42,13 @@ python scripts/sto_to_fasta.py -i output_ASVs/placed_sequences_on_v4_region.sto 
 bash preprocess/agglomerate_asvs.sh
 ```
 
+
 ## Step 4: [Optional!] Run phylogenetic placement for OTUs
 
-- todo create a script which does this for the user.
-
 ```bash
-python scripts/place_seqs.py \
-    --v4-region-start 1045 \
-    --v4-region-end 1374 \
-    --refpkg RDP-11-5_TS_Processed.refpkg \
-    --query-reads ../datasets/gibson/preprocessed/gibson_healthy_agg.fa \
-    --output-folder output_OTUs \
-    --temp-folder tmp_OTUs/
+bash preprocess/phylo_placement_asv.sh
 ```
+
 
 ## Step 5: Assign taxonomic labels to OTUs.
 
@@ -52,11 +59,13 @@ python scripts/place_seqs.py \
 bash preprocess/assign_otu_taxonomy.sh
 ```
 
+
 ## Step 6: Filter the OTUs.
 
 ```bash
 bash preprocess/filter_otus.sh
 ```
+
 
 # Step 7: [Optional!] Visualize the OTUs' and their underlying ASVs' abundances.
 
