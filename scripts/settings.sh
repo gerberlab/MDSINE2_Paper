@@ -27,7 +27,7 @@ require_variable()
 require_file()
 {
 	path=$1
-	if ![[ -f $path ]]
+	if [ ! -f $path ]
 	then
 		echo "File ${path} not found."
 		exit 1
@@ -37,7 +37,7 @@ require_file()
 require_dir()
 {
 	path=$1
-	if ![[ -d $path ]]
+	if [ ! -d $path ]
 	then
 		echo "Directory ${path} not found."
 		exit 1
