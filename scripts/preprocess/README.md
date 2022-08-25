@@ -46,7 +46,7 @@ bash preprocess/agglomerate_asvs.sh
 ## Step 4: [Optional!] Run phylogenetic placement for OTUs
 
 ```bash
-bash preprocess/phylo_placement_asv.sh
+bash preprocess/phylo_placement_otu.sh
 ```
 
 
