@@ -58,7 +58,7 @@ guppy tog -o $xml_output --xml $pplacer_output
 
 
 echo "[*] Replace species id with taxonomy."
-perl preprocess/helpers/phylo_placement/replace_id_taxaname.pl $xml_output ${rdp_dir}/${basename}_info.csv
+perl preprocess/helpers/phylo_placement/replace_id_taxaname.pl $xml_output ${rdp_dir}/${basename}_seq_info.csv
 xml_species_output=${tmp_dir}/xml_tree_speciesName.xml
 
 
