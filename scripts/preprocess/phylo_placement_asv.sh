@@ -17,6 +17,6 @@ ${ASV_FASTA} \
 
 
 echo "[*] Converting .sto to .fasta format."
-python preprocess/helpers/sto_to_fasta.py \
+python preprocess/helpers/phylo_placement/sto_to_fasta.py \
 -i ${outdir}/aligned_sequences.sto \
 -o ${outdir}/aligned_asvs.fa
