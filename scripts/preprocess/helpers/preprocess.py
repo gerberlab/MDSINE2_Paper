@@ -35,7 +35,7 @@ from mdsine2.logger import logger
 import os
 
 
-def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str) -> Study:
+def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str, trim_option: str) -> Study:
     logger.info(f"Loaading dataset `{dataset_name}` from {dataset_dir}")
     # 1) Load the dataset
     study = md2.dataset.load_gibson(dset=dataset_name,
@@ -62,8 +62,18 @@ def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequen
         seq = list(str(seqs[taxon.name].seq))
         M.append(seq)
     M = np.asarray(M)
-    n_bases = np.sum(M != '-', axis=0)
-    idxs = np.where(n_bases > 0)[0]
+
+    if trim_option == "ANY_GAPS":
+        # Remove all columns consisting of all gaps.
+        n_gaps = np.sum(M == '-', axis=0)
+        idxs = np.where(n_gaps > 0)[0]
+    elif trim_option == "ALL_GAPS":
+        # Remove all columns consisting of all gaps.
+        n_bases = np.sum(M != '-', axis=0)
+        idxs = np.where(n_bases > 0)[0]
+    else:
+        raise RuntimeError(f"Unrecognized trim_option argument `{trim_option}`")
+
     logger.info('There were {} valid positions out of {}.'.format(len(idxs), M.shape[1]))
     M = M[:, idxs]
     for i,taxon in enumerate(study.taxa):
@@ -94,11 +104,13 @@ if __name__ == '__main__':
                         help='The name of the dataset to extract.')
     parser.add_argument('--dataset-dir', '-d', dest='dataset_dir', type=str, required=True,
                         help='The directory containing the input dataset (A collection of TSV files).')
+    parser.add_argument('--trim-option', dest='trim_option', type=str, required=False, default='ALL_GAPS',
+                        help='Specify how to trim columns with gaps in the alignment.')
 
     args = parser.parse_args()
 
     dset = args.dataset_name
-    study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences)
+    study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences, args.trim_option)
 
     # Aggregate with specified hamming distance
     agg_study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)

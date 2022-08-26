@@ -31,7 +31,8 @@ for dataset in healthy replicates inoculum; do
 			--max-n-species 2 \
 			--dataset-name ${dataset} \
 			--dataset-dir ${DATASET_DIR}/raw_tables \
-			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg"
+			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg" \
+			--trim-option ALL_GAPS
 done
 ln -s ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
 
