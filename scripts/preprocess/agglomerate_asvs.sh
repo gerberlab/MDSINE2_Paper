@@ -34,6 +34,6 @@ for dataset in healthy replicates inoculum; do
 			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg" \
 			--trim-option ALL_GAPS
 done
-ln -s ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
+cp ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
 
 echo "Done."
