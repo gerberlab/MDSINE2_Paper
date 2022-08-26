@@ -66,7 +66,7 @@ def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequen
     if trim_option == "ANY_GAPS":
         logger.info("Trimming aligned columns with any (> 0) gaps.")
         n_gaps = np.sum(M == '-', axis=0)
-        idxs = np.where(n_gaps > 0)[0]
+        idxs = np.where(n_gaps == 0)[0]
     elif trim_option == "ALL_GAPS":
         logger.info("Trimming aligned columns with all gaps.")
         n_bases = np.sum(M != '-', axis=0)
