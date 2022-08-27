@@ -38,6 +38,9 @@ def parse_args() -> argparse.Namespace:
 # =============== Iterators through directory structures ==========
 def result_dirs(results_base_dir: Path) -> Iterator[Tuple[int, int, str, Path]]:
     for read_depth, read_depth_dir in read_depth_dirs(results_base_dir):
+        if read_depth == 1000:
+            print("Skipping read depth 1000.")
+            continue
         for trial_num, trial_dir in trial_dirs(read_depth_dir):
             for noise_level, noise_level_dir in noise_level_dirs(trial_dir):
                 print(f"Yielding (read_depth: {read_depth}, trial: {trial_num}, noise: {noise_level})")
@@ -391,6 +394,7 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
 def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                                        true_interactions: np.ndarray,
                                        init_rv: scipy.stats.rv_continuous,
+                                       initial_min_value: float,
                                        results_base_dir: Path,
                                        subsample_frac: float) -> pd.DataFrame:
     """
@@ -402,6 +406,9 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
     :return:
     """
     def _error_metric(_pred_traj, _true_traj) -> float:
+        _pred_traj[_pred_traj < 1.0] = 1.0
+        _pred_traj = np.log10(_pred_traj)
+        _true_traj = np.log10(_true_traj)
         return np.sqrt(np.mean(np.square(_pred_traj - _true_traj)))
 
     """ Simulation parameters """
@@ -418,7 +425,11 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         sim_seed += 1
         np.random.seed(sim_seed)
+
+        # generate initial conditions.
         initial_cond = init_rv.rvs(size=len(true_growth))
+        initial_cond[initial_cond < initial_min_value] = initial_min_value
+
         true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
         true_traj = true_traj[:, target_t_idx]
 
@@ -459,14 +470,17 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
             pass
 
         # MDSINE1 error
-        #pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
-        #_eval_mdsine('MDSINE1', pred_interactions, pred_growths)
+        try:
+            pred_interactions, pred_growths, _ = mdsine1_output(result_dir)
+            _eval_mdsine('MDSINE1', pred_interactions, pred_growths)
+        except FileNotFoundError:
+            pass
 
-        _eval_regression("lra", "elastic_net")
+        # _eval_regression("lra", "elastic_net")
         _eval_regression("glv", "elastic_net")
         _eval_regression("glv", "ridge")
-        _eval_regression("glv-ra", "elastic_net")
-        _eval_regression("glv-ra", "ridge")
+        # _eval_regression("glv-ra", "elastic_net")
+        # _eval_regression("glv-ra", "ridge")
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
         df['NoiseLevel'],
@@ -547,10 +561,6 @@ def posterior_forward_sims(growths, interactions, initial_conditions, dt, sim_ma
         assert len(expected_t) <= len(_t)
 
         fwsims[gibbs_idx, :, :] = _x[:, target_time_idxs]
-
-    # print(
-    #     np.sum(np.isnan(fwsims), axis=0)
-    # )
     return fwsims
 
 
@@ -604,23 +614,37 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    print(f"Wrote growth rate errors.")
+    # print("Evaluating growth rate errors.")
+    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    # out_path = output_dir / "growth_rate_errors.csv"
+    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    # print(f"Wrote growth rate errors to {out_path.name}.")
+    #
+    # print("Evaluating interaction strength errors.")
+    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    # out_path = output_dir / "interaction_strength_errors.csv"
+    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    # print(f"Wrote interaction strength errors to {out_path.name}.")
+    #
+    # print("Evaluating interaction topology errors.")
+    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    # out_path = output_dir / "topology_errors.csv"
+    # topology_errors.to_csv(output_dir / "topology_errors.csv")
+    # print(f"Wrote interaction topology errors to {out_path.name}.")
 
-    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    print(f"Wrote interaction strength errors.")
-
-    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    topology_errors.to_csv(output_dir / "topology_errors.csv")
-    print(f"Wrote interaction topology errors.")
-
+    print("Evaluating holdout trajectory errors.")
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(growth, interactions,
-                                                                   init_dist, results_base_dir, args.subsample_fwsim)
-    holdout_trajectory_errors.to_csv(output_dir / "holdout_trajectory_errors.csv")
-    print(f"Wrote heldout trajectory prediction errors.")
+    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
+        growth,
+        interactions,
+        init_dist,
+        100.0,
+        results_base_dir,
+        args.subsample_fwsim
+    )
+    out_path = output_dir / "holdout_trajectory_errors.csv"
+    holdout_trajectory_errors.to_csv(out_path)
+    print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
 if __name__ == "__main__":
