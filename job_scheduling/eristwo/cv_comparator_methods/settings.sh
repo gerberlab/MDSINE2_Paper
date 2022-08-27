@@ -9,5 +9,5 @@ echo "[*] Using settings from ${_this_path}"
 
 # ========= Don't modify below
 export LSF_GROUP=LSF_JOB_GROUP
-export LSF_DIR="./lsf_files"
-export LSF_QUEUE="gpu"
+export LSF_DIR="${PROJECT_DIR}/job_scheduling/eristwo/cv_comparator_methods/lsf_files"
+export LSF_QUEUE="normal"
