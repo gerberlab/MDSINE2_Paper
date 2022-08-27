@@ -1,4 +1,4 @@
-#submits the jobs for running cLV model 
+# submits the jobs for running cLV model
 set -e 
 source settings.sh 
 
@@ -14,12 +14,9 @@ regression_types=("elastic-net")
 
 for reg in "${regression_types[@]}"; do
     LSF_PATH="${LSF_DIR}/${model}_${reg}_${abund_type}.lsf"
-    output_dir="$CV_OUTPUT_DIR/results_${abund_type}_${reg}"
-    mkdir -p "${output_dir}"
         # ============ Create LSF ===========
     echo 
     echo "Creating lsf for ${model}, ${reg} regression and ${abund_type} abundance"
-    echo "saving output to ${output_dir}"
     echo
     cat <<- EOFDOC > $LSF_PATH
 #!/bin/bash
@@ -30,16 +27,8 @@ for reg in "${regression_types[@]}"; do
 
 source activate mdsine2
 cd ${PROJECT_DIR}/scripts
-pwd
 
 bash cv_comparator_methods/run_${model}.sh $reg
 EOFDOC
 
 done
-
-
-for f in ${LSF_DIR}/*; do
-    echo "Submitting job in file $f"
-    bsub < $f
-done
-
