@@ -6,13 +6,13 @@ source cv_comparator_methods/settings.sh
 echo "[*] Preparing dataset for healthy data and saving to ${INPUT_DATASET_DIR}"
 
 python cv_comparator_methods/helpers/create_biomass_table.py \
-	-s "${PREPROCESS_DIR}/gibson_healthy_agg_taxa_filtered.pkl" \
+	-s "${PREPROCESS_DIR}/gibson_healthy_agg_filtered.pkl" \
 	-o "${INPUT_DATASET_DIR}" \
 	-on "abundance"
 
 python cv_comparator_methods/helpers/format_data.py \
 	-a "${INPUT_DATASET_DIR}/abundance.txt"\
-	-m "${CLV_DIR}/data/gibson/basic_info/metadata.txt"\
+	-m "${CLV_DIR}/data/gibson/raw_tables/metadata.txt"\
 	-o "${INPUT_DATASET_DIR}"
 
 echo "[*] Done."
