@@ -14,3 +14,15 @@ bash create_mdsine2_job.sh 1
 bash create_mdsine2_job.sh 2
 bash create_mdsine2_job.sh 3
 bash create_mdsine2_job.sh 4
+
+
+run_script_path=${LSF_DIR}/submit_all.sh
+
+cat <<- EOFDOC > $run_script_path
+#!/bin/bash
+echo "Searching for LSF jobs to run."
+for f in */*.lsf; do
+	echo "Submitting job: ${f}"
+	bsub < $f
+done
+EOFDOC
