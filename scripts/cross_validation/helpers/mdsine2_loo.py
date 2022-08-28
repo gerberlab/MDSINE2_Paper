@@ -81,7 +81,9 @@ def main():
     md2.seed(args.seed)
 
     # 1.5) Pop out the subject.
-    study.pop_subject(args.exclude_subject, f'cv-exclude-{args.exclude_subject}')
+    print("Removing subject: ")
+    heldout_study = study.pop_subject(args.exclude_subject, f'cv-exclude-{args.exclude_subject}')
+    heldout_study.save(f'cv-exclude-{args.exclude_subject}.pkl')
 
     # 2) Load the model parameters
     os.makedirs(args.basepath, exist_ok=True)
