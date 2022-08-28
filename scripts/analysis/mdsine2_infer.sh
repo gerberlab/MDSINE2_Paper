@@ -24,7 +24,8 @@ mdsine2 infer \
 		--rename-study $study_name \
 		--basepath $MDSINE2_OUT_DIR \
 		--interaction-ind-prior $INTERACTION_IND_PRIOR \
-		--perturbation-ind-prior $PERTURBATION_IND_PRIOR
+		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
+		| tee ${MDSINE2_OUT_DIR}/log_mdsine2_inference.txt
 
 echo "[*] Visualizing output of ${study_name}"
 mdsine2 visualize-posterior \

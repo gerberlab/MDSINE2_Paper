@@ -26,7 +26,8 @@ mdsine2 infer \
 		--basepath $MDSINE2_OUT_DIR \
 		--interaction-ind-prior $INTERACTION_IND_PRIOR \
 		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
-		--fixed-clustering $MDSINE2_OUT_DIR/$old_study_name/mcmc.pkl
+		--fixed-clustering $MDSINE2_OUT_DIR/$old_study_name/mcmc.pkl \
+		| tee ${MDSINE2_OUT_DIR}/log_mdsine2_inference_fixedcluster.txt
 
 echo "[*] Visualizing output of ${study_name}"
 mdsine2 visualize-posterior \
