@@ -1,7 +1,6 @@
 #!/bin/bash
-
 set -e
-source cv_comparator_methods/settings.sh
+source cross_validation/settings.sh
 
 model=$1
 reg=$2
