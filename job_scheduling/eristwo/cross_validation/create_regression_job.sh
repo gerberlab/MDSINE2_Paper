@@ -12,7 +12,7 @@ require_variable "model" $model
 require_variable "regression_type" $regression_type
 
 
-job_name="mdsine2_exclude_${excluded_subj}"
+job_name="${model}_${regression_type}"
 lsf_subdir="${LSF_DIR}/${job_name}"
 lsf_path="${lsf_subdir}/job.lsf"
 log_stdout="${lsf_subdir}/stdout.txt"
