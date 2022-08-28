@@ -42,7 +42,6 @@ python runtime_benchmark/helpers/mdsine2_nocluster.py \
 		--interaction-ind-prior "strong-sparse" \
 		--perturbation-ind-prior "weak-agnostic" \
 		--log-every 100 \
-		--benchmark \
 		| tee ${inference_out_dir}/log.txt
 
 end_time=$(date +%s%N)

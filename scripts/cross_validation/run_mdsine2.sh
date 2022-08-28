@@ -22,6 +22,5 @@ python cross_validation/helpers/mdsine2_loo.py \
 		--interaction-ind-prior $MDSINE2_INTERACTION_INDICATOR_PRIOR \
 		--perturbation-ind-prior $MDSINE2_PERTURBATION_INDICATOR_PRIOR \
 		--log-every 100 \
-		--benchmark \
 		--exclude-subject $excluded_subj \
 		| tee ${inference_out_dir}/log.txt
