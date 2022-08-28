@@ -82,8 +82,14 @@ def main():
 
     # 1.5) Pop out the subject.
     print("Removing subject: ")
-    heldout_study = study.pop_subject(args.exclude_subject, f'cv-exclude-{args.exclude_subject}')
-    heldout_study.save(f'cv-exclude-{args.exclude_subject}.pkl')
+    try:
+        heldout_study = study.pop_subject(args.exclude_subject, f'cv-exclude-{args.exclude_subject}')
+        heldout_study.save(f'cv-exclude-{args.exclude_subject}.pkl')
+    except ValueError as e:
+        print("Encountered ValueError. Available subjects: {}".format(
+            list(study._subjects.keys())
+        ))
+        exit(1)
 
     # 2) Load the model parameters
     os.makedirs(args.basepath, exist_ok=True)
