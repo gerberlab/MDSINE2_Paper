@@ -66,7 +66,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '--log_every', type=int, default=100,
+        '--log-every', type=int, default=100,
         required=False,
         help='<Optional> Tells the inference loop to print debug messages every k iterations.'
     )
