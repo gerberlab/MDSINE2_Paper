@@ -42,5 +42,3 @@ printenv | grep '^LSB'
 cd ${PROJECT_DIR}/scripts
 bash cross_validation/run_regression.sh ${model} ${regression_type}
 EOFDOC
-
-done

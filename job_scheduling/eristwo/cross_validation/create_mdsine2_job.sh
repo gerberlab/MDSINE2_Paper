@@ -39,5 +39,3 @@ printenv | grep '^LSB'
 cd ${PROJECT_DIR}/scripts
 bash cross_validation/run_mdsine2.sh ${excluded_subj}
 EOFDOC
-
-done
