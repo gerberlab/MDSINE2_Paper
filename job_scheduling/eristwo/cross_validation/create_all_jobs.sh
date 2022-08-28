@@ -22,7 +22,7 @@ cat <<- EOFDOC > $run_script_path
 #!/bin/bash
 echo "Searching for LSF jobs to run."
 for f in */*.lsf; do
-	echo "Submitting job: ${f}"
-	bsub < $f
+	echo "Submitting job: \$f"
+	bsub < \$f
 done
 EOFDOC
