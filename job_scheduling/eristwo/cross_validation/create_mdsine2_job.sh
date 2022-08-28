@@ -16,7 +16,7 @@ log_stderr="${log_dir}/mdsine2_${excluded_subj}.err"
 
 
 mkdir -p ${LSF_DIR}
-mkdir -p ${LOG_DIR}
+mkdir -p ${log_dir}
 
 
 # ============ Create LSF ===========

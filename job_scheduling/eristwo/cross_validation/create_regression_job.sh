@@ -19,7 +19,7 @@ log_stderr="${log_dir}/${model}_${regression_type}.err"
 
 
 mkdir -p ${LSF_DIR}
-mkdir -p ${LOG_DIR}
+mkdir -p ${log_dir}
 
 
 # ============ Create LSF ===========
