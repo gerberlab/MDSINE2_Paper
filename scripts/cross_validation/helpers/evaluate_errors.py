@@ -80,7 +80,12 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
         if 'data_path' not in kwargs:
             raise RuntimeError(f"function `{fwsim_fn.__name__}` should be called with a `data_path` kwarg.")
 
-        recompute = 'recompute_cache' in kwargs and kwargs['recompute_cache'] == True
+        if 'recompute_cache' in kwargs:
+            recompute = 'recompute_cache' in kwargs and kwargs['recompute_cache'] == True
+            del kwargs['recompute_cache']
+        else:
+            recompute = False
+
         data_path = kwargs['data_path']
         fwsim_path = data_path.with_suffix('.fwsim.npy')
         if recompute or (not fwsim_path.exists()):
