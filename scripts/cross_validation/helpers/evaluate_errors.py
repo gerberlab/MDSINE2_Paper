@@ -53,8 +53,7 @@ class HoldoutData:
         self.trajectories = self.subject.matrix()['abs']
 
     def initial_conditions(self, lower_bound: float) -> np.ndarray:
-        x = self.trajectories[:, 0]
-        x2 = np.copy(x)
+        x2 = np.copy(self.trajectories[:, 0])
         x2[x2 < lower_bound] = lower_bound
         return x2
 
@@ -163,7 +162,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
     dyn = md2.model.gLVDynamicsSingleClustering(
         growth=None,
         interactions=None,
-        start_day=heldout.subject.times[0],
+        start_day=times[0],
         sim_max=sim_max,
         perturbation_starts=pert_starts,
         perturbation_ends=pert_ends
@@ -171,7 +170,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
 
     n_samples = growth.shape[0]
     n_taxa = growth.shape[1]
-    pred_matrix = np.zeros(shape=(n_samples, n_taxa, len(times)))
+    pred_matrix = np.empty(shape=(n_samples, n_taxa, len(times)))
     for sample_idx in tqdm(range(n_samples), desc="MDSINE2 fwsim"):
         dyn.growth = growth[sample_idx]
         dyn.interactions = interactions[sample_idx]
