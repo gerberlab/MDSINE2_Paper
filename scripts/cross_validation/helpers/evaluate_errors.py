@@ -76,8 +76,16 @@ class HoldoutData:
         pred = np.log(pred)
         return np.sqrt(np.mean(np.square(pred - truth)))  # RMS
 
-    def evaluate_relative(self, pred: np.ndarray) -> float:
-        raise NotImplementedError()
+    def evaluate_relative(self, rel_pred: np.ndarray) -> float:
+        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
+        rel_truth = truth / truth.sum(axis=0, keepdims=True)
+
+        if rel_pred.shape != rel_truth.shape:
+            raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
+
+        rel_truth = np.log(rel_truth)
+        rel_pred = np.log(rel_pred)
+        return np.sqrt(np.mean(np.square(rel_pred - rel_truth)))
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
@@ -333,10 +341,10 @@ def evaluate_all(regression_inputs_dir: Path,
             })
 
         # Absolute abundance
-        add_absolute_entry(
-            'MDSINE2',
-            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), sim_max)
-        )
+        # add_absolute_entry(
+        #     'MDSINE2',
+        #     heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), sim_max)
+        # )
         add_absolute_entry(
             'gLV-elastic net',
             heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), sim_max)
@@ -347,10 +355,10 @@ def evaluate_all(regression_inputs_dir: Path,
         )
 
         # Relative abundance
-        add_relative_entry(
-            'MDSINE2',
-            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0))
-        )
+        # add_relative_entry(
+        #     'MDSINE2',
+        #     heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0))
+        # )
         add_relative_entry(
             'cLV',
             heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t))
