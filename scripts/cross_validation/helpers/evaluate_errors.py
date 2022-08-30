@@ -365,10 +365,10 @@ def evaluate_all(regression_inputs_dir: Path,
                 })
 
         # Absolute abundance
-        # add_absolute_entry(
-        #     'MDSINE2',
-        #     heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
-        # )
+        add_absolute_entry(
+            'MDSINE2',
+            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
+        )
         add_absolute_entry(
             'gLV-elastic net',
             heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
@@ -379,10 +379,10 @@ def evaluate_all(regression_inputs_dir: Path,
         )
 
         # Relative abundance
-        # add_relative_entry(
-        #     'MDSINE2',
-        #     heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
-        # )
+        add_relative_entry(
+            'MDSINE2',
+            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
+        )
         add_relative_entry(
             'cLV',
             heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
