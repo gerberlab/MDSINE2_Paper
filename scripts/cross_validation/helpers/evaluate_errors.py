@@ -31,6 +31,7 @@ SUBJECT_IDS = ["2", "3", "4", "5"]
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', type=str, required=True)
+    parser.add_argument('--regression_inputs_dir', type=str, required=True)
     parser.add_argument('--mdsine_outdir', type=str, required=True)
     parser.add_argument('--clv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_elastic_outdir', type=str, required=True)
