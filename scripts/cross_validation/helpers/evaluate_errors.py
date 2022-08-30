@@ -148,7 +148,10 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
         if perts is not None:
             dyn.perturbations = [pert[sample_idx] for pert in perts]
 
-        x = md2.integrate(dynamics=dyn, initial_conditions=heldout.initial_conditions,
+        init = heldout.initial_conditions
+        if len(init.shape) == 1:
+            init = init.reshape(-1, 1)
+        x = md2.integrate(dynamics=dyn, initial_conditions=init,
                           dt=sim_dt, n_days=times[-1] + sim_dt, subsample=True, times=times)
         pred_matrix[sample_idx] = x['X']
     return pred_matrix
