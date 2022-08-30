@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import scipy.special
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
@@ -39,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--glv_ra_ridge_outdir', type=str, required=True)
     parser.add_argument('--glv_ridge_outdir', type=str, required=True)
     parser.add_argument('--lra_elastic_outdir', type=str, required=True)
+    parser.add_argument('--plot_path', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
     parser.add_argument('--recompute_cache', action='store_true')
@@ -67,8 +69,8 @@ class HoldoutData:
         trajs[trajs < self.limit_of_detection] = self.limit_of_detection
         return trajs
 
-    def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lb: float = 1e5) -> float:
-        """Compute RMS error metric between prediction and truth."""
+    def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lb: float = 1e5) -> np.ndarray:
+        """Compute RMS error metric between prediction and truth, one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         truth = np.where(truth < lb, lb, truth)
         truth = np.where(truth > sim_max, sim_max, truth)
@@ -80,22 +82,19 @@ class HoldoutData:
 
         truth = np.log10(truth)
         pred = np.log10(pred)
-        return np.sqrt(np.mean(np.square(pred - truth)))  # RMS
+        return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
 
-    def evaluate_relative(self, rel_pred: np.ndarray) -> float:
+    def evaluate_relative(self, rel_pred: np.ndarray) -> np.ndarray:
+        """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
-        print(truth)
-        print("sums: {}".format(truth.sum(axis=0, keepdims=True)))
-        print("sums shape: {}".format(truth.sum(axis=0, keepdims=True).shape))
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
-        print(rel_truth)
 
         if rel_pred.shape != rel_truth.shape:
-            raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
+            raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
 
         rel_truth = np.log10(rel_truth)
         rel_pred = np.log10(rel_pred)
-        return np.sqrt(np.mean(np.square(rel_pred - rel_truth)))
+        return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
@@ -335,21 +334,25 @@ def evaluate_all(regression_inputs_dir: Path,
         print("INITAL COND: {}".format(x0))
         heldout_data = HoldoutData(complete_study[sid], sidx, 1e5)
 
-        def add_absolute_entry(_method, _err):
-            absolute_df_entries.append({
-                'HeldoutSubjectId': sid,
-                'HeldoutSubjectIdx': sidx,
-                'Method': _method,
-                'Error': _err
-            })
+        def add_absolute_entry(_method: str, _errs: np.ndarray):
+            for taxa_idx, taxa_err in _errs:
+                absolute_df_entries.append({
+                    'HeldoutSubjectId': sid,
+                    'HeldoutSubjectIdx': sidx,
+                    'Method': _method,
+                    'TaxonIdx': taxa_idx,
+                    'Error': taxa_err
+                })
 
-        def add_relative_entry(_method, _err):
-            relative_df_entries.append({
-                'HeldoutSubjectId': sid,
-                'HeldoutSubjectIdx': sidx,
-                'Method': _method,
-                'Error': _err
-            })
+        def add_relative_entry(_method: str, _errs: np.ndarray):
+            for taxa_idx, taxa_err in _errs:
+                relative_df_entries.append({
+                    'HeldoutSubjectId': sid,
+                    'HeldoutSubjectIdx': sidx,
+                    'Method': _method,
+                    'TaxonIdx': taxa_idx,
+                    'Error': taxa_err
+                })
 
         # Absolute abundance
         # add_absolute_entry(
@@ -392,6 +395,10 @@ def evaluate_all(regression_inputs_dir: Path,
     return absolute_results, relative_results
 
 
+def make_box_plot(ax, df):
+    sns.boxplot()
+
+
 def main():
     args = parse_args()
 
@@ -418,14 +425,18 @@ def main():
     print(absolute_results)
     print(relative_results)
 
-    # fig, ax = plt.subplots(
-    #     nrows=1,
-    #     ncols=4,
-    #     figsize=(22, 4.5),
-    #     gridspec_kw={
-    #         'width_ratios': [1, 1, 2, 2]
-    #     }
-    # )
+    fig, ax = plt.subplots(
+        nrows=1,
+        ncols=2,
+        figsize=(11, 4.5),
+        gridspec_kw={
+            'width_ratios': [1, 2]
+        }
+    )
+
+    make_box_plot(ax[0], absolute_results)
+    make_box_plot(ax[1], relative_results)
+    plt.savefig(args.plot_path)
 
 
 if __name__ == "__main__":
