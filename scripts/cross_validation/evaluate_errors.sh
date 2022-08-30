@@ -3,6 +3,7 @@ set -e
 source cross_validation/settings.sh
 
 
+export PYTHONPATH="${PYTHONPATH}:${CLV_DIR}"
 echo "[*] Evaluating cross-validation runs."
 python cross_validation/helpers/evaluate_errors.py \
 --study ${DATASET_PKL} \
