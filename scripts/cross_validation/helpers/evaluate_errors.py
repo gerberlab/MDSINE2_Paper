@@ -48,34 +48,31 @@ def parse_args() -> argparse.Namespace:
 
 
 class HoldoutData:
-    def __init__(self, subject: md2.Subject, subject_index: int, limit_of_detection: float):
+    def __init__(self, subject: md2.Subject, subject_index: int):
         self.subject = subject
         self.subject_index = subject_index
         self.trajectories = self.subject.matrix()['abs']
-        self.limit_of_detection = limit_of_detection
 
-    @property
-    def initial_conditions(self) -> np.ndarray:
+    def initial_conditions(self, lower_bound: float) -> np.ndarray:
         x = self.trajectories[:, 0]
         x2 = np.copy(x)
-        x2[x2 < self.limit_of_detection] = self.limit_of_detection
+        x2[x2 < lower_bound] = lower_bound
         return x2
 
-    def trajectory_subset(self, start: float, end: float) -> np.ndarray:
+    def trajectory_subset(self, start: float, end: float, lower_bound: float) -> np.ndarray:
         times = self.subject.times
         t_inside_range = (times >= start) & (times <= end)
         t_subset_indices, = np.where(t_inside_range)
         trajs = np.copy(self.trajectories[:, t_subset_indices])
-        trajs[trajs < self.limit_of_detection] = self.limit_of_detection
+        trajs[trajs < lower_bound] = lower_bound
         return trajs
 
-    def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lb: float = 1e5) -> np.ndarray:
+    def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lower_bound: float) -> np.ndarray:
         """Compute RMS error metric between prediction and truth, one metric for each taxa."""
-        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
-        truth = np.where(truth < lb, lb, truth)
+        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1], lower_bound=lower_bound)
         truth = np.where(truth > sim_max, sim_max, truth)
 
-        pred = np.where(pred < lb, lb, pred)
+        pred = np.where(pred < lower_bound, lower_bound, pred)
         pred = np.where(pred > sim_max, sim_max, pred)
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
@@ -84,10 +81,11 @@ class HoldoutData:
         pred = np.log10(pred)
         return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
 
-    def evaluate_relative(self, rel_pred: np.ndarray) -> np.ndarray:
+    def evaluate_relative(self, rel_pred: np.ndarray, lower_bound: float) -> np.ndarray:
         """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
-        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
+        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1], lower_bound=0)
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
+        rel_truth[rel_truth < lower_bound] = lower_bound
 
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
@@ -122,7 +120,7 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
 
 
 @cached_forward_simulation
-def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
+def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float) -> np.ndarray:
     logger.info(f"Evaluating forward simulation using mdsine2 MCMC samples ({data_path})")
     mcmc = md2.BaseMCMC.load(str(data_path))
 
@@ -179,7 +177,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
         if perts is not None:
             dyn.perturbations = [pert[sample_idx] for pert in perts]
 
-        init = heldout.initial_conditions
+        init = heldout.initial_conditions(lower_bound=init_limit_of_detection)
         if len(init.shape) == 1:
             init = init.reshape(-1, 1)
         x = md2.integrate(dynamics=dyn, initial_conditions=init,
@@ -193,7 +191,7 @@ def forward_sim_clv(data_path: Path,
                     x0: np.ndarray,
                     u: np.ndarray,
                     t: np.ndarray,
-                    pseudo_count: int=0) -> np.ndarray:
+                    pseudo_count: int=1e-6) -> np.ndarray:
     logger.info(f"Evaluating cLV simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
@@ -224,15 +222,16 @@ def forward_sim_glv(data_path: Path,
                     u: np.ndarray,
                     t: np.ndarray,
                     scale: float,
+                    init_limit_of_detection: float,
                     rel_abund: bool) -> np.ndarray:
     logger.info(f"Evaluating gLV simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
 
-    x0 = np.log(x0)
     if rel_abund:
         # Normalize (in log-scale)
+        x0 = np.log(x0)
         x0 = x0 - scipy.special.logsumexp(x0)
     else:
         """
@@ -240,6 +239,10 @@ def forward_sim_glv(data_path: Path,
         This is the inverse transformation!
         """
         A = A * scale
+        x0 = add_limit_detection(x0, init_limit_of_detection)
+        x0 = np.log(x0)
+
+    # Include the limit of detection value
     return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund).transpose(1, 0)
 
 
@@ -268,22 +271,28 @@ class HeldoutInferences:
         _require_file(self.lra_elastic)
 
     def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
-        return forward_sim_mdsine2(data_path=self.mdsine2, recompute_cache=self.recompute_cache, heldout=heldout, sim_dt=sim_dt, sim_max=sim_max)
+        return forward_sim_mdsine2(data_path=self.mdsine2,
+                                   recompute_cache=self.recompute_cache,
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
 
     def clv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
 
     def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=False)
+        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=False)
 
     def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=True)
+        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=True)
 
     def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=True)
+        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=True)
 
     def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=False)
+        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=False)
 
     def lra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
@@ -321,8 +330,6 @@ def evaluate_all(regression_inputs_dir: Path,
     with open(regression_inputs_dir / "T.pkl", "rb") as f:
         T = pickle.load(f)
 
-    # Include the limit of detection value
-    Y = add_limit_detection(Y, 1e5)
     _, scale = adjust_concentrations(Y)
     logger.debug(f"Regression input rescaling value: {scale}")
 
@@ -331,8 +338,7 @@ def evaluate_all(regression_inputs_dir: Path,
     relative_df_entries = []
     for sidx, sid, inferences in retrieve_grouped_results(directories):
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
-        print("INITAL COND: {}".format(x0))
-        heldout_data = HoldoutData(complete_study[sid], sidx, 1e5)
+        heldout_data = HoldoutData(complete_study[sid], sidx)
 
         def add_absolute_entry(_method: str, _errs: np.ndarray):
             for taxa_idx, taxa_err in enumerate(_errs):
@@ -361,11 +367,11 @@ def evaluate_all(regression_inputs_dir: Path,
         # )
         add_absolute_entry(
             'gLV-elastic net',
-            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), sim_max)
+            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), sim_max, lower_bound=1e5)
         )
         add_absolute_entry(
             'gLV-ridge',
-            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), sim_max)
+            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), sim_max, lower_bound=1e5)
         )
 
         # Relative abundance
@@ -375,19 +381,19 @@ def evaluate_all(regression_inputs_dir: Path,
         # )
         add_relative_entry(
             'cLV',
-            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t))
+            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=1e-6)
         )
         add_relative_entry(
             'gLV-elastic net',
-            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale))
+            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=1e-6)
         )
         add_relative_entry(
             'gLV-ridge',
-            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale))
+            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=1e-6)
         )
         add_relative_entry(
             'LRA',
-            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t))
+            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=1e-6)
         )
 
     absolute_results = pd.DataFrame(absolute_df_entries)
