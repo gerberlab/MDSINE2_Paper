@@ -1,7 +1,7 @@
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, Iterator, Callable, Any
+from typing import Tuple, Iterator, Callable, Any, Optional
 
 import pickle
 import pandas as pd
@@ -365,10 +365,10 @@ def evaluate_all(regression_inputs_dir: Path,
                 })
 
         # Absolute abundance
-        add_absolute_entry(
-            'MDSINE2',
-            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
-        )
+        # add_absolute_entry(
+        #     'MDSINE2',
+        #     heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
+        # )
         add_absolute_entry(
             'gLV-elastic net',
             heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
@@ -379,10 +379,10 @@ def evaluate_all(regression_inputs_dir: Path,
         )
 
         # Relative abundance
-        add_relative_entry(
-            'MDSINE2',
-            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
-        )
+        # add_relative_entry(
+        #     'MDSINE2',
+        #     heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
+        # )
         add_relative_entry(
             'cLV',
             heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
@@ -413,7 +413,7 @@ def evaluate_all(regression_inputs_dir: Path,
     return absolute_results, relative_results
 
 
-def make_box_plot(ax, df):
+def make_box_plot(ax, df, show_legend: bool = True, xlabel: Optional[str] = None, ylabel: Optional[str] = None):
     method_order = ['MDSINE2', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']  # all methods
     palette_tab20 = sns.color_palette("tab10", len(method_order))
     palette = {m: palette_tab20[i] for i, m in enumerate(method_order)}
@@ -423,13 +423,38 @@ def make_box_plot(ax, df):
     sns.boxplot(
         data=df,
         ax=ax,
-        hue='Method',
-        x='HeldoutSubjectId',
+        x='Method',
+        # hue='Method', hue_order=method_order,
+        # x='HeldoutSubjectId',
         y='Error',
         showfliers=False,
-        hue_order=method_order,
         palette=palette
     )
+    # handles = ax.legend_.legendHandles
+    # labels = [text.get_text() for text in ax.legend_.texts]
+
+    sns.stripplot(
+        data=df,
+        ax=ax,
+        x='Method',
+        # hue='Method', hue_order=method_order,
+        # x='HeldoutSubjectId',
+        y='Error',
+        dodge=True,
+        color='black',
+        alpha=0.3,
+        linewidth=1.0
+    )
+
+    if xlabel is not None:
+        ax.set_xlabel(xlabel, fontsize=20)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel, fontsize=20)
+
+    # if show_legend:
+    #     ax.legend(handles, labels, bbox_to_anchor=(1.04, 1), loc="upper left")
+    # else:
+    #     ax.legend([], [])
 
 
 def main():
@@ -461,14 +486,16 @@ def main():
     fig, ax = plt.subplots(
         nrows=1,
         ncols=2,
-        figsize=(11, 4.5),
+        figsize=(12, 5),
         gridspec_kw={
-            'width_ratios': [1, 2]
+            'width_ratios': [1, 2],
+            'right': 0.8,
+            'left': 0.08
         }
     )
 
-    make_box_plot(ax[0], absolute_results)
-    make_box_plot(ax[1], relative_results)
+    make_box_plot(ax[0], absolute_results, show_legend=False, xlabel='Heldout Subject', ylabel='RMSE (log Abs Abundance)')
+    make_box_plot(ax[1], relative_results, xlabel='Heldout Subject', ylabel='RMSE (log Rel Abundance)')
     plt.savefig(args.plot_path)
 
 
