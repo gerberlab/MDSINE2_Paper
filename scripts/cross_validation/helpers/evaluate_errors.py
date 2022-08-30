@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--lra_elastic_outdir', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
+    parser.add_argument('--recompute_cache', action='store_true')
     return parser.parse_args()
 
 
@@ -69,6 +70,9 @@ class HoldoutData:
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
         return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
+
+    def evaluate_relative(self, pred: np.ndarray) -> float:
+        raise NotImplementedError()
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
@@ -221,6 +225,7 @@ class HeldoutInferences:
     glv_ra_ridge: Path
     glv_ridge: Path
     lra_elastic: Path
+    recompute_cache: bool
 
     def __post_init__(self):
         def _require_file(path: Path):
@@ -236,25 +241,25 @@ class HeldoutInferences:
         _require_file(self.lra_elastic)
 
     def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
-        return forward_sim_mdsine2(data_path=self.mdsine2, heldout=heldout, sim_dt=sim_dt, sim_max=sim_max)
+        return forward_sim_mdsine2(data_path=self.mdsine2, recompute_cache=self.recompute_cache, heldout=heldout, sim_dt=sim_dt, sim_max=sim_max)
 
     def clv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
-        return forward_sim_clv(data_path=self.clv_elastic, x0=x0, u=u, t=t)
+        return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
 
     def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_elastic, x0=x0, u=u, t=t, scale=scale, relabund=False)
+        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=False)
 
     def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_elastic, x0=x0, u=u, t=t, scale=scale, relabund=True)
+        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=True)
 
     def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_ridge, x0=x0, u=u, t=t, scale=scale, relabund=True)
+        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=True)
 
     def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ridge, x0=x0, u=u, t=t, scale=scale, relabund=False)
+        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=False)
 
     def lra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
-        return forward_sim_lra(data_path=self.lra_elastic, x0=x0, u=u, t=t)
+        return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
 
 
 def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[int, str, HeldoutInferences]]:
@@ -272,6 +277,7 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
             glv_ra_ridge=directories.glv_ra_ridge / f'glv-ra-ridge-{subject_idx}-model.pkl',
             glv_ridge=directories.glv_ridge / f'glv-ridge-{subject_idx}-model.pkl',
             lra_elastic=directories.lra_elastic / f'lra-{subject_idx}-model.pkl',
+            recompute_cache=directories.recompute_cache
         )
 
 
@@ -369,6 +375,7 @@ def main():
         glv_ra_ridge=Path(args.glv_ra_ridge_outdir),
         glv_ridge=Path(args.glv_ridge_outdir),
         lra_elastic=Path(args.lra_elastic_outdir),
+        recompute_cache=args.recompute_cache
     )
 
     absolute_results, relative_results = evaluate_all(
