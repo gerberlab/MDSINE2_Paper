@@ -69,7 +69,7 @@ class HoldoutData:
         pred = np.where(pred > sim_max, sim_max, pred)
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
-        return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
+        return np.sqrt(np.mean(np.square(pred - truth)))  # RMS
 
     def evaluate_relative(self, pred: np.ndarray) -> float:
         raise NotImplementedError()
