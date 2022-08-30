@@ -399,7 +399,8 @@ def make_box_plot(ax, df):
     sns.boxplot(
         data=df,
         ax=ax,
-        x='Method',
+        hue='Method',
+        x='HeldoutSubjectId',
         y='Error',
         showfliers=False
     )
