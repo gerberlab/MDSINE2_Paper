@@ -160,6 +160,7 @@ def forward_sim_clv(data_path: Path,
                     u: np.ndarray,
                     t: np.ndarray,
                     pseudo_count: int=0) -> np.ndarray:
+    logger.info(f"Evaluating cLV simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
@@ -174,6 +175,7 @@ def forward_sim_lra(data_path: Path,
                     x0: np.ndarray,
                     u: np.ndarray,
                     t: np.ndarray) -> np.ndarray:
+    logger.info(f"Evaluating LRA simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
@@ -189,6 +191,7 @@ def forward_sim_glv(data_path: Path,
                     t: np.ndarray,
                     scale: float,
                     rel_abund: bool) -> np.ndarray:
+    logger.info(f"Evaluating gLV simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
