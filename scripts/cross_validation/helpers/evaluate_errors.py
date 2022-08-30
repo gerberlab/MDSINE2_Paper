@@ -57,7 +57,7 @@ class HoldoutData:
 
     def trajectory_subset(self, start: float, end: float) -> np.ndarray:
         times = self.subject.times
-        t_inside_range = (times >= start) and (times <= end)
+        t_inside_range = (times >= start) & (times <= end)
         t_subset_indices, = np.where(t_inside_range)
         return self.trajectories[:, t_subset_indices]
 
@@ -247,16 +247,16 @@ class HeldoutInferences:
         return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
 
     def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=False)
+        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=False)
 
     def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=True)
+        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=True)
 
     def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=True)
+        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=True)
 
     def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, relabund=False)
+        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=False)
 
     def lra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
@@ -325,7 +325,7 @@ def evaluate_all(regression_inputs_dir: Path,
         # Absolute abundance
         add_absolute_entry(
             'MDSINE2',
-            heldout_data.evaluate_absolute(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), sim_max)
+            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), sim_max)
         )
         add_absolute_entry(
             'gLV-elastic net',
@@ -339,7 +339,7 @@ def evaluate_all(regression_inputs_dir: Path,
         # Relative abundance
         add_relative_entry(
             'MDSINE2',
-            heldout_data.evaluate_relative(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max))
+            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0))
         )
         add_relative_entry(
             'cLV',
