@@ -16,7 +16,6 @@ from mdsine2.logger import logger
 from tqdm import tqdm
 
 from lv_forward_sims import \
-    add_limit_detection, \
     adjust_concentrations, \
     forward_sim_single_subj_clv, \
     forward_sim_single_subj_lra, \
@@ -67,13 +66,13 @@ class HoldoutData:
         trajs[trajs < lower_bound] = lower_bound
         return trajs
 
-    def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lower_bound: float) -> np.ndarray:
+    def evaluate_absolute(self, pred: np.ndarray, upper_bound: float, lower_bound: float) -> np.ndarray:
         """Compute RMS error metric between prediction and truth, one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1], lower_bound=lower_bound)
-        truth = np.where(truth > sim_max, sim_max, truth)
+        truth = np.where(truth > upper_bound, upper_bound, truth)
 
         pred = np.where(pred < lower_bound, lower_bound, pred)
-        pred = np.where(pred > sim_max, sim_max, pred)
+        pred = np.where(pred > upper_bound, upper_bound, pred)
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
 
@@ -81,15 +80,17 @@ class HoldoutData:
         pred = np.log10(pred)
         return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
 
-    def evaluate_relative(self, rel_pred: np.ndarray, lower_bound: float) -> np.ndarray:
+    def evaluate_relative(self, pred: np.ndarray, lower_bound: float) -> np.ndarray:
         """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1], lower_bound=0)
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
         rel_truth[rel_truth < lower_bound] = lower_bound
 
+        rel_pred = pred / pred.sum(axis=0, keepdims=True)
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
 
+        rel_pred[rel_pred < lower_bound] = lower_bound
         rel_truth = np.log10(rel_truth)
         rel_pred = np.log10(rel_pred)
         return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
@@ -322,7 +323,9 @@ def evaluate_all(regression_inputs_dir: Path,
                  directories: HeldoutInferences,
                  complete_study: md2.Study,
                  sim_dt: float,
-                 sim_max: float):
+                 sim_max: float,
+                 abs_lower_bound: float = 1e5,
+                 rel_lower_bound: float = 1e-6):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
         Y = pickle.load(f)
@@ -362,39 +365,47 @@ def evaluate_all(regression_inputs_dir: Path,
                 })
 
         # Absolute abundance
-        # add_absolute_entry(
-        #     'MDSINE2',
-        #     heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), sim_max)
-        # )
+        add_absolute_entry(
+            'MDSINE2',
+            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
+        )
         add_absolute_entry(
             'gLV-elastic net',
-            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), sim_max, lower_bound=1e5)
+            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
         )
         add_absolute_entry(
             'gLV-ridge',
-            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), sim_max, lower_bound=1e5)
+            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
         )
 
         # Relative abundance
-        # add_relative_entry(
-        #     'MDSINE2',
-        #     heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0))
-        # )
+        add_relative_entry(
+            'MDSINE2',
+            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
+        )
         add_relative_entry(
             'cLV',
-            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=1e-6)
+            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
+        )
+        add_relative_entry(
+            'gLV-RA-elastic net',
+            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+        )
+        add_relative_entry(
+            'gLV-RA-ridge',
+            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'gLV-elastic net',
-            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=1e-6)
+            heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'gLV-ridge',
-            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=1e-6)
+            heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'LRA',
-            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=1e-6)
+            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
         )
 
     absolute_results = pd.DataFrame(absolute_df_entries)
@@ -403,13 +414,21 @@ def evaluate_all(regression_inputs_dir: Path,
 
 
 def make_box_plot(ax, df):
+    method_order = ['MDSINE2', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']  # all methods
+    palette_tab20 = sns.color_palette("tab10", len(method_order))
+    palette = {m: palette_tab20[i] for i, m in enumerate(method_order)}
+
+    provided_methods = set(pd.unique(df['Method']))
+    method_order = [m for m in method_order if m in provided_methods]
     sns.boxplot(
         data=df,
         ax=ax,
         hue='Method',
         x='HeldoutSubjectId',
         y='Error',
-        showfliers=False
+        showfliers=False,
+        hue_order=method_order,
+        palette=palette
     )
 
 
