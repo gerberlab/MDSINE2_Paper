@@ -57,8 +57,10 @@ def compute_eigenvalues(mcmc: md2.BaseMCMC, taxa: TaxaSet) -> Iterator[Tuple[int
 
 def main():
     args = parse_args()
-    mcmc = md2.BaseMCMC.load(args.mcmc_path)
-    study = md2.BaseMCMC.load(args.mcmc_path.parent / "subjset.pkl")
+
+    mcmc_path = Path(args.mcmc_path)
+    mcmc = md2.BaseMCMC.load(mcmc_path)
+    study = md2.BaseMCMC.load(mcmc_path.parent / "subjset.pkl")
     taxa = study.taxa
 
     out_dir = Path(args.out_dir)
