@@ -303,7 +303,7 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
             glv_ra_ridge=directories.glv_ra_ridge / f'glv-ra-ridge-{subject_idx}-model.pkl',
             glv_ridge=directories.glv_ridge / f'glv-ridge-{subject_idx}-model.pkl',
             lra_elastic=directories.lra_elastic / f'lra-{subject_idx}-model.pkl',
-            recompute_cache=directories.recompute_cache
+            recompute_cache=directories.recompute_cache,
         )
 
 
@@ -331,7 +331,7 @@ def evaluate_all(regression_inputs_dir: Path,
     for sidx, sid, inferences in retrieve_grouped_results(directories):
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
         print("INITAL COND: {}".format(x0))
-        heldout_data = HoldoutData(complete_study[sid], sidx)
+        heldout_data = HoldoutData(complete_study[sid], sidx, 1e5)
 
         def add_absolute_entry(_method, _err):
             absolute_df_entries.append({
