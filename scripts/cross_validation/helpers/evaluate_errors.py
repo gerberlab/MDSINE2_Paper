@@ -396,7 +396,12 @@ def evaluate_all(regression_inputs_dir: Path,
 
 
 def make_box_plot(ax, df):
-    sns.boxplot()
+    sns.boxplot(
+        data=df,
+        ax=ax,
+        x='Method',
+        y='Error'
+    )
 
 
 def main():
