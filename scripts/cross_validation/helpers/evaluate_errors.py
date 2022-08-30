@@ -179,7 +179,7 @@ def forward_sim_clv(data_path: Path,
         denom = model.denom
 
     x0 = x0 / np.sum(x0)  # normalize.
-    return forward_sim_single_subj_clv(A, g, B, x0, u, t, denom, pc=pseudo_count).transpose(0, 1)
+    return forward_sim_single_subj_clv(A, g, B, x0, u, t, denom, pc=pseudo_count).transpose(1, 0)
 
 
 @cached_forward_simulation
@@ -193,7 +193,7 @@ def forward_sim_lra(data_path: Path,
         A, g, B = model.get_params()
 
     x0 = x0 / np.sum(x0)  # normalize.
-    return forward_sim_single_subj_lra(A, g, B, x0, u, t).transpose(0, 1)
+    return forward_sim_single_subj_lra(A, g, B, x0, u, t).transpose(1, 0)
 
 
 @cached_forward_simulation
@@ -218,7 +218,7 @@ def forward_sim_glv(data_path: Path,
         This is the inverse transformation!
         """
         A = A * scale
-    return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund).transpose(0, 1)
+    return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund).transpose(1, 0)
 
 
 @dataclass
