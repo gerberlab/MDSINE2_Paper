@@ -318,7 +318,7 @@ def evaluate_all(regression_inputs_dir: Path,
 
     # Include the limit of detection value
     Y = add_limit_detection(Y, 1e5)
-    Y_adj, scale = adjust_concentrations(Y)
+    _, scale = adjust_concentrations(Y)
     logger.debug(f"Regression input rescaling value: {scale}")
 
     # =========== Load evaluations.
@@ -326,6 +326,7 @@ def evaluate_all(regression_inputs_dir: Path,
     relative_df_entries = []
     for sidx, sid, inferences in retrieve_grouped_results(directories):
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
+        print("INITAL COND: {}".format(x0))
         heldout_data = HoldoutData(complete_study[sid], sidx)
 
         def add_absolute_entry(_method, _err):
