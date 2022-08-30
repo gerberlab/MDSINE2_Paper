@@ -400,7 +400,8 @@ def make_box_plot(ax, df):
         data=df,
         ax=ax,
         x='Method',
-        y='Error'
+        y='Error',
+        showfliers=False
     )
 
 
