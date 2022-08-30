@@ -63,7 +63,9 @@ class HoldoutData:
         times = self.subject.times
         t_inside_range = (times >= start) & (times <= end)
         t_subset_indices, = np.where(t_inside_range)
-        return self.trajectories[:, t_subset_indices]
+        trajs = np.copy(self.trajectories[:, t_subset_indices])
+        trajs[trajs < self.limit_of_detection] = self.limit_of_detection
+        return trajs
 
     def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lb: float = 1e5) -> float:
         """Compute RMS error metric between prediction and truth."""
