@@ -78,7 +78,10 @@ class HoldoutData:
 
     def evaluate_relative(self, rel_pred: np.ndarray) -> float:
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
+        print(truth)
+        print("sums: {}".format(truth.sum(axis=0, keepdims=True)))
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
+        print(rel_truth)
 
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
