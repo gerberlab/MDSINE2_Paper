@@ -59,8 +59,8 @@ def main():
     args = parse_args()
 
     mcmc_path = Path(args.mcmc_path)
-    mcmc = md2.BaseMCMC.load(mcmc_path)
-    study = md2.BaseMCMC.load(mcmc_path.parent / "subjset.pkl")
+    mcmc = md2.BaseMCMC.load(str(mcmc_path))
+    study = md2.BaseMCMC.load(str(mcmc_path.parent / "subjset.pkl"))
     taxa = study.taxa
 
     out_dir = Path(args.out_dir)
