@@ -335,7 +335,7 @@ def evaluate_all(regression_inputs_dir: Path,
         heldout_data = HoldoutData(complete_study[sid], sidx, 1e5)
 
         def add_absolute_entry(_method: str, _errs: np.ndarray):
-            for taxa_idx, taxa_err in _errs:
+            for taxa_idx, taxa_err in enumerate(_errs):
                 absolute_df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
@@ -345,7 +345,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 })
 
         def add_relative_entry(_method: str, _errs: np.ndarray):
-            for taxa_idx, taxa_err in _errs:
+            for taxa_idx, taxa_err in enumerate(_errs):
                 relative_df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
