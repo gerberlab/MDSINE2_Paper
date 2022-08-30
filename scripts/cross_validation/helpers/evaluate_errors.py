@@ -46,14 +46,18 @@ def parse_args() -> argparse.Namespace:
 
 
 class HoldoutData:
-    def __init__(self, subject: md2.Subject, subject_index: int):
+    def __init__(self, subject: md2.Subject, subject_index: int, limit_of_detection: float):
         self.subject = subject
         self.subject_index = subject_index
         self.trajectories = self.subject.matrix()['abs']
+        self.limit_of_detection = limit_of_detection
 
     @property
     def initial_conditions(self) -> np.ndarray:
-        return self.trajectories[:, 0]
+        x = self.trajectories[:, 0]
+        x2 = np.copy(x)
+        x2[x2 < self.limit_of_detection] = self.limit_of_detection
+        return x2
 
     def trajectory_subset(self, start: float, end: float) -> np.ndarray:
         times = self.subject.times
