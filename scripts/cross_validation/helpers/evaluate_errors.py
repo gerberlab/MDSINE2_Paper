@@ -80,6 +80,7 @@ class HoldoutData:
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         print(truth)
         print("sums: {}".format(truth.sum(axis=0, keepdims=True)))
+        print("sums shape: {}".format(truth.sum(axis=0, keepdims=True).shape))
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
         print(rel_truth)
 
