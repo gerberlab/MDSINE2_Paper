@@ -72,8 +72,8 @@ class HoldoutData:
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
 
-        truth = np.log(truth)
-        pred = np.log(pred)
+        truth = np.log10(truth)
+        pred = np.log10(pred)
         return np.sqrt(np.mean(np.square(pred - truth)))  # RMS
 
     def evaluate_relative(self, rel_pred: np.ndarray) -> float:
@@ -83,8 +83,8 @@ class HoldoutData:
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
 
-        rel_truth = np.log(rel_truth)
-        rel_pred = np.log(rel_pred)
+        rel_truth = np.log10(rel_truth)
+        rel_pred = np.log10(rel_pred)
         return np.sqrt(np.mean(np.square(rel_pred - rel_truth)))
 
 
