@@ -229,6 +229,8 @@ def forward_sim_glv(data_path: Path,
         model = pickle.load(f)
         A, g, B = model.get_params()
 
+    x0 = np.copy(x0)
+    x0[x0 < init_limit_of_detection] = init_limit_of_detection
     if rel_abund:
         # Normalize (in log-scale)
         x0 = np.log(x0)
@@ -239,7 +241,6 @@ def forward_sim_glv(data_path: Path,
         This is the inverse transformation!
         """
         A = A * scale
-        x0 = add_limit_detection(x0, init_limit_of_detection)
         x0 = np.log(x0)
 
     # Include the limit of detection value
@@ -280,19 +281,19 @@ class HeldoutInferences:
 
     def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=False)
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
 
     def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=True)
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=True, init_limit_of_detection=1e5)
 
     def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=True)
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=True, init_limit_of_detection=1e5)
 
     def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=False)
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
 
     def lra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
