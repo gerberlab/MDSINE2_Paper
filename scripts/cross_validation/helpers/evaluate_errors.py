@@ -65,6 +65,8 @@ class HoldoutData:
         """Compute RMS error metric between prediction and truth."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         truth = np.where(truth < lb, lb, truth)
+        truth = np.where(truth > sim_max, sim_max, truth)
+
         pred = np.where(pred < lb, lb, pred)
         pred = np.where(pred > sim_max, sim_max, pred)
         if pred.shape != truth.shape:
