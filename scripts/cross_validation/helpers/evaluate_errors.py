@@ -430,7 +430,7 @@ def make_boxplot(ax, df: pd.DataFrame,
                  xlabel: Optional[str] = None,
                  ylabel: Optional[str] = None):
     _ordering = {m: i for i, m in enumerate(method_order)}
-    df = df.sort_values(key=_ordering)
+    df = df.sort_values(by='Method', key=lambda m: _ordering[m])
 
     sns.boxplot(
         data=df,
