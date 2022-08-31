@@ -1,13 +1,14 @@
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, Iterator, Callable, Any, Optional
+from typing import Tuple, Iterator, Callable, Any, Optional, List, Dict
 
 import pickle
 import pandas as pd
 import numpy as np
 import scipy.special
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 
 import mdsine2 as md2
@@ -39,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--glv_ra_ridge_outdir', type=str, required=True)
     parser.add_argument('--glv_ridge_outdir', type=str, required=True)
     parser.add_argument('--lra_elastic_outdir', type=str, required=True)
-    parser.add_argument('--plot_path', type=str, required=True)
+    parser.add_argument('--plot_dir', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
     parser.add_argument('--recompute_cache', action='store_true')
@@ -51,6 +52,10 @@ class HoldoutData:
         self.subject = subject
         self.subject_index = subject_index
         self.trajectories = self.subject.matrix()['abs']
+
+    @property
+    def normalized_trajectories(self) -> np.ndarray:
+        return self.trajectories / self.trajectories.sum(axis=0, keepdims=True)
 
     def initial_conditions(self, lower_bound: float) -> np.ndarray:
         x2 = np.copy(self.trajectories[:, 0])
@@ -343,25 +348,30 @@ def evaluate_all(regression_inputs_dir: Path,
     relative_df_entries = []
     for sidx, sid, inferences in retrieve_grouped_results(directories):
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
+
         heldout_data = HoldoutData(complete_study[sid], sidx)
+        true_abs_means = np.log10(np.mean(heldout_data.trajectories, axis=1))
+        true_rel_means = np.log10(np.mean(heldout_data.normalized_trajectories, axis=1))
 
         def add_absolute_entry(_method: str, _errs: np.ndarray):
-            for taxa_idx, taxa_err in enumerate(_errs):
+            for taxa_idx, (taxa_err, true_abs_mean) in enumerate(zip(_errs, true_abs_means)):
                 absolute_df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
                     'Method': _method,
                     'TaxonIdx': taxa_idx,
+                    'TrueAbundMean': true_abs_mean,
                     'Error': taxa_err
                 })
 
         def add_relative_entry(_method: str, _errs: np.ndarray):
-            for taxa_idx, taxa_err in enumerate(_errs):
+            for taxa_idx, (taxa_err, true_rel_mean) in enumerate(zip(_errs, true_rel_means)):
                 relative_df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
                     'Method': _method,
                     'TaxonIdx': taxa_idx,
+                    'TrueAbundMean': true_rel_mean,
                     'Error': taxa_err
                 })
 
@@ -414,32 +424,27 @@ def evaluate_all(regression_inputs_dir: Path,
     return absolute_results, relative_results
 
 
-def make_box_plot(ax, df, show_legend: bool = True, xlabel: Optional[str] = None, ylabel: Optional[str] = None):
-    method_order = ['MDSINE2', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']  # all methods
-    palette_tab20 = sns.color_palette("tab10", len(method_order))
-    palette = {m: palette_tab20[i] for i, m in enumerate(method_order)}
+def make_boxplot(ax, df: pd.DataFrame,
+                 method_order: List[str],
+                 method_colors: Dict[str, np.ndarray],
+                 xlabel: Optional[str] = None,
+                 ylabel: Optional[str] = None):
+    _ordering = {m: i for i, m in enumerate(method_order)}
+    df = df.sort_values(key=_ordering)
 
-    provided_methods = set(pd.unique(df['Method']))
-    method_order = [m for m in method_order if m in provided_methods]
     sns.boxplot(
         data=df,
         ax=ax,
         x='Method',
-        # hue='Method', hue_order=method_order,
-        # x='HeldoutSubjectId',
         y='Error',
         showfliers=False,
-        palette=palette
+        palette=method_colors
     )
-    # handles = ax.legend_.legendHandles
-    # labels = [text.get_text() for text in ax.legend_.texts]
 
     sns.stripplot(
         data=df,
         ax=ax,
         x='Method',
-        # hue='Method', hue_order=method_order,
-        # x='HeldoutSubjectId',
         y='Error',
         dodge=True,
         color='black',
@@ -452,14 +457,83 @@ def make_box_plot(ax, df, show_legend: bool = True, xlabel: Optional[str] = None
     if ylabel is not None:
         ax.set_ylabel(ylabel, fontsize=20)
 
-    # if show_legend:
-    #     ax.legend(handles, labels, bbox_to_anchor=(1.04, 1), loc="upper left")
-    # else:
-    #     ax.legend([], [])
+
+def make_grouped_boxplot(abund_ax, error_ax,
+                         df,
+                         method_order: List[str],
+                         method_colors: Dict[str, np.ndarray],
+                         lb: float,
+                         num_quantiles: int = 10,
+                         error_ylabel: Optional[str] = None):
+    # Divide taxa based on abundance quantiles.
+    df = df.assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_quantiles))
+    log_lb = np.log10(lb)
+
+    # ============ Render bin counts.
+    def _aggregate_abundances_bin(_df):
+        bin = _df.head(1)['Bin'].item()
+        return pd.Series({
+            'Left': bin.left if not np.isinf(bin.left) else log_lb,
+            'Right': bin.right,
+            'Count': _df.shape[0]
+        })
+    bin_counts = df.groupby('Bin').apply(_aggregate_abundances_bin)
+    widths = bin_counts['Right'] - bin_counts['Left']
+    abund_ax.bar(
+        x=bin_counts['Left'],
+        height=1 / widths,
+        align='edge',
+        width=widths,
+        linewidth=0.5,
+        edgecolor='black',
+        color='tab:blue'
+    )
+    abund_ax.set_xlabel('')
+    abund_ax.set_ylabel('Density of OTUs')
+
+    # ============= Render RMSE.
+    def _bin_label(interval):
+        left = interval.left
+        right = interval.right
+        if np.isinf(left):
+            left = log_lb
+        return '({:.1f},\n{:.1f}]'.format(left, right)
+    df['BinLabel'] = df['Bin'].map(_bin_label)
+    df = df.sort_values('Bin')
+    supported_methods = set(pd.unique(df['Method']))
+    method_order = [m for m in method_order if m in supported_methods]
+    sns.boxplot(
+        data=df, ax=error_ax,
+        x='BinLabel',
+        y='Error',
+        hue='Method', hue_order=method_order, palette=method_colors,
+        showfliers=False
+    )
+    error_ax.set_axisbelow(True)
+    error_ax.yaxis.grid(True, 'major', linewidth=1, color='#e6e6e6')
+    error_ax.set_xlabel('')
+    if error_ylabel is not None:
+        error_ax.set_ylabel(error_ylabel)
+
+    abund_ax.legend([], [])
+    error_ax.legend([], [])
+
+
+def draw_method_legend(fig, method_order, method_colors, position: Tuple[float, float]):
+    legend_elements = [
+        Patch(facecolor=method_colors[method], edgecolor='black', linewidth=0.5, label=method)
+        for method in method_order
+    ]
+    fig.legend(
+        handles=legend_elements,
+        loc='upper center', bbox_to_anchor=position,
+        fancybox=True, ncol=len(method_order)
+    )
 
 
 def main():
     args = parse_args()
+    plot_dir = Path(args.plot_dir)
 
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
@@ -473,6 +547,7 @@ def main():
         recompute_cache=args.recompute_cache
     )
 
+    # =================== Evaluate all errors.
     absolute_results, relative_results = evaluate_all(
         Path(args.regression_inputs_dir),
         directories,
@@ -481,9 +556,12 @@ def main():
         args.sim_max
     )
 
-    print(absolute_results)
-    print(relative_results)
+    # ==================== Plot settings.
+    methods = ['MDSINE2', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']
+    palette_tab20 = sns.color_palette("tab10", len(methods))
+    method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
 
+    # ==================== Evaluate and plot overall errors.
     fig, ax = plt.subplots(
         nrows=1,
         ncols=2,
@@ -495,9 +573,34 @@ def main():
         }
     )
 
-    make_box_plot(ax[0], absolute_results, show_legend=False, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
-    make_box_plot(ax[1], relative_results, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
-    plt.savefig(args.plot_path)
+    make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
+    make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
+    plt.savefig(plot_dir / "overall.pdf")
+    plt.close(fig)
+
+    # ==================== Evaluate and plot errors binned by log-abundances.
+    fig, ax = plt.subplots(
+        nrows=2,
+        ncols=2,
+        figsize=(20, 5),
+        gridspec_kw={
+            'height_ratios': [1, 2],
+            'width_ratios': [1, 2],
+            'wspace': 0.05,
+            'right': 0.99,
+            'left': 0.03,
+            'bottom': 0.2,
+            'top': 0.95
+        }
+    )
+
+    make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, lb=1e5, error_ylabel='RMSE (log Abs abundance)')
+    make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, lb=1e-6, error_ylabel='RMSE (log Rel abundance)')
+    draw_method_legend(fig, methods, method_colors, position=(0.5, 0.1))
+    plt.show()
+    fig.tight_layout()
+    plt.savefig(plot_dir / "binned.pdf")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
