@@ -57,17 +57,17 @@ class HoldoutData:
         x2[x2 < lower_bound] = lower_bound
         return x2
 
-    def trajectory_subset(self, start: float, end: float, lower_bound: float) -> np.ndarray:
+    def trajectory_subset(self, start: float, end: float) -> np.ndarray:
         times = self.subject.times
         t_inside_range = (times >= start) & (times <= end)
         t_subset_indices, = np.where(t_inside_range)
         trajs = np.copy(self.trajectories[:, t_subset_indices])
-        trajs[trajs < lower_bound] = lower_bound
         return trajs
 
     def evaluate_absolute(self, pred: np.ndarray, upper_bound: float, lower_bound: float) -> np.ndarray:
         """Compute RMS error metric between prediction and truth, one metric for each taxa."""
-        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1], lower_bound=lower_bound)
+        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
+        truth = np.where(truth < lower_bound, lower_bound, truth)
         truth = np.where(truth > upper_bound, upper_bound, truth)
 
         pred = np.where(pred < lower_bound, lower_bound, pred)
@@ -81,7 +81,7 @@ class HoldoutData:
 
     def evaluate_relative(self, pred: np.ndarray, lower_bound: float) -> np.ndarray:
         """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
-        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1], lower_bound=0)
+        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
         rel_truth[rel_truth < lower_bound] = lower_bound
 
@@ -242,7 +242,7 @@ def forward_sim_glv(data_path: Path,
         gLV inference is run with scaling (for numerical precision). 
         This is the inverse transformation!
         """
-        A = A * scale
+        # A = A * scale
         x0 = np.log(x0)
 
     # Include the limit of detection value
