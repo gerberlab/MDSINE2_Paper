@@ -429,8 +429,10 @@ def make_boxplot(ax, df: pd.DataFrame,
                  method_colors: Dict[str, np.ndarray],
                  xlabel: Optional[str] = None,
                  ylabel: Optional[str] = None):
-    _ordering = {m: i for i, m in enumerate(method_order)}
-    df = df.sort_values(by='Method', key=lambda m: _ordering[m])
+    df = df.sort_values(
+        by='Method',
+        key=lambda col: col.map({m: i for i, m in enumerate(method_order)})
+    )
 
     sns.boxplot(
         data=df,
