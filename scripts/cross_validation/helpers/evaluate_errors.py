@@ -490,13 +490,13 @@ def main():
         figsize=(12, 5),
         gridspec_kw={
             'width_ratios': [1, 2],
-            'right': 0.8,
+            'right': 0.92,
             'left': 0.08
         }
     )
 
-    make_box_plot(ax[0], absolute_results, show_legend=False, xlabel='Heldout Subject', ylabel='RMSE (log Abs Abundance)')
-    make_box_plot(ax[1], relative_results, xlabel='Heldout Subject', ylabel='RMSE (log Rel Abundance)')
+    make_box_plot(ax[0], absolute_results, show_legend=False, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
+    make_box_plot(ax[1], relative_results, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
     plt.savefig(args.plot_path)
 
 
