@@ -142,7 +142,9 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
                 raise KeyError(f"Heldout subject ({heldout.subject.name}) has perturbation `{subj_pert.name}`, "
                                f"but learned model does not.")
 
-            perts.append(mcmc.graph.perturbations[subj_pert.name].get_trace_from_disk())
+            pert_values = mcmc.graph.perturbations[subj_pert.name].get_trace_from_disk()
+            pert_values[np.isnan(pert_values)] = 0.
+            perts.append(pert_values)
             pert_starts.append(subj_pert.starts[heldout.subject.name])
             pert_ends.append(subj_pert.ends[heldout.subject.name])
 
