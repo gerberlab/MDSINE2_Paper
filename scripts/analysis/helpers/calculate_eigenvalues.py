@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
                         help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
     parser.add_argument('--output', '-o', type=str, dest='out_dir',
                         required=True,
-                        help='Directory to save desired output eigenvalues (.npz format).')
+                        help='Directory to save desired output eigenvalues (.npy format).')
     return parser.parse_args()
 
 
@@ -67,7 +67,7 @@ def main():
     print(f"Output directory: {out_dir}")
     for cluster_idx, cluster_id, sample_eigs in compute_eigenvalues(mcmc, taxa):
         print(f"Computed eigenvalues by excluding cluster IDX:{cluster_idx} ID:{cluster_id}")
-        out_path = out_dir / f'eigenvalues_exclude_cluster_{cluster_idx}-{cluster_id}.npz'
+        out_path = out_dir / f'eigenvalues_exclude_cluster_{cluster_idx}-{cluster_id}.npy'
         np.save(str(out_path), sample_eigs)
 
 
