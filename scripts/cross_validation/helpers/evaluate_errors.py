@@ -599,7 +599,6 @@ def main():
     make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, lb=1e5, error_ylabel='RMSE (log Abs abundance)')
     make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, lb=1e-6, error_ylabel='RMSE (log Rel abundance)')
     draw_method_legend(fig, methods, method_colors, position=(0.5, 0.1))
-    plt.show()
     fig.tight_layout()
     plt.savefig(plot_dir / "binned.pdf")
     plt.close(fig)
