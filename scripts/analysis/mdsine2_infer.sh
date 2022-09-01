@@ -13,6 +13,8 @@ study_name="healthy-seed${seed}"
 
 # Seed 0
 echo "[*] Performing MDSINE2 inference on ${study_name}"
+export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/analysis/logging_to_file.ini"
+export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_inference_${study_name}.log"
 mdsine2 infer \
 		--input $HEALTHY_DSET \
 		--negbin $REPLICATE_MCMC \
@@ -24,10 +26,10 @@ mdsine2 infer \
 		--rename-study $study_name \
 		--basepath $MDSINE2_OUT_DIR \
 		--interaction-ind-prior $INTERACTION_IND_PRIOR \
-		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
-		| tee ${MDSINE2_OUT_DIR}/log_mdsine2_inference.txt
+		--perturbation-ind-prior $PERTURBATION_IND_PRIOR
 
 echo "[*] Visualizing output of ${study_name}"
+export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_visualization_${study_name}.log"
 mdsine2 visualize-posterior \
 		--chain $MDSINE2_OUT_DIR/$study_name/mcmc.pkl \
 		--output-basepath $MDSINE2_OUT_DIR/$study_name/posterior
