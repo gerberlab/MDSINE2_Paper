@@ -106,6 +106,9 @@ if __name__ == '__main__':
                         help='The directory containing the input dataset (A collection of TSV files).')
     parser.add_argument('--trim-option', dest='trim_option', type=str, required=False, default='ALL_GAPS',
                         help='Specify how to trim columns with gaps in the alignment.')
+    parser.add_argument('--sort-order', dest='sort_order', type=str, required=False, default='SIZE',
+                        help='Specify how to order the agglomerations. '
+                             'Options: [\"SIZE\", \"MIN_ASV_IDX\"]')
 
     args = parser.parse_args()
 
@@ -113,7 +116,7 @@ if __name__ == '__main__':
     study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences, args.trim_option)
 
     # Aggregate with specified hamming distance
-    agg_study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
+    agg_study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance, sort_order=args.sort_order)
 
     # 3) compute consensus sequences
     if not isinstance(agg_study.taxa, OTUTaxaSet):

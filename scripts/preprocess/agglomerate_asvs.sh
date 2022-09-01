@@ -24,7 +24,7 @@ echo "[*] Agglomerating ASVs into OTUs."
 for dataset in healthy replicates inoculum; do
 	echo "[*] Extracting dataset: ${dataset}"
 	python preprocess/helpers/preprocess.py \
-			--hamming-distance 3 \
+			--hamming-distance 0 \
 			--rename-prefix OTU \
 			--sequences $prefilt_aln_fasta \
 			--remove-timepoints 0 0.5 \
@@ -32,7 +32,8 @@ for dataset in healthy replicates inoculum; do
 			--dataset-name ${dataset} \
 			--dataset-dir ${DATASET_DIR}/raw_tables \
 			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg" \
-			--trim-option ALL_GAPS
+			--trim-option "ALL_GAPS" \
+			--sort-order "MIN_ASV_IDX"
 done
 cp ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
 
