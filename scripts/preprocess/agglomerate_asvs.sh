@@ -25,7 +25,6 @@ for dataset in healthy replicates inoculum; do
 	echo "[*] Extracting dataset: ${dataset}"
 	python preprocess/helpers/preprocess.py \
 			--hamming-distance 0 \
-			--rename-prefix OTU \
 			--sequences $prefilt_aln_fasta \
 			--remove-timepoints 0 0.5 \
 			--max-n-species 2 \

@@ -90,9 +90,6 @@ if __name__ == '__main__':
     parser.add_argument('--hamming-distance', '-hd', type=int, dest='hamming_distance', required=True,
         help='This is the hamming radius to aggregate ASV sequences. If nothing ' \
             'is provided, then there will be no aggregation.')
-    parser.add_argument('--rename-prefix', '-rp', type=str, dest='rename_prefix',
-        help='This is the prefix you are renaming the aggregate taxa to. ' \
-            'If nothing is provided, then they will not be renamed', default=None)
     parser.add_argument('--sequences', '-s', type=str, dest='sequences', required=True,
         help='This is the fasta file location of the aligned sequences for each taxon' \
             ' that was used for placement in the phylogenetic tree. If nothing is ' \
@@ -140,17 +137,12 @@ if __name__ == '__main__':
                            "Check internal implementation of aggregate_items().")
     agg_study.taxa.generate_consensus_seqs(threshold=0.65, noconsensus_char='N')
 
-    # 4) Rename taxa
-    if args.rename_prefix is not None:
-        logger.info('Renaming taxa with prefix {}'.format(args.rename_prefix))
-        agg_study.taxa.rename(prefix=args.rename_prefix, zero_based_index=False)
-
-    # 5) Remove timepoints
+    # 4) Remove timepoints
     if args.remove_timepoints is not None:
         if dset in ['healthy', 'uc']:
             agg_study.pop_times(args.remove_timepoints)
 
-    # 6) Save the study set and sequences
+    # 5) Save the study set and sequences
     logger.info("# otus: {}".format(len(agg_study.taxa)))
 
     pkl_path = Path(args.output_prefix).with_suffix('.pkl')
