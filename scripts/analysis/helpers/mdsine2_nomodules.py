@@ -60,6 +60,11 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
+        '--rename-study', type=str, dest='rename_study',
+        required=False, default=None,
+        help='Specify the name of the study to set'
+    )
+    parser.add_argument(
         '--log-every', type=int, default=100,
         required=False,
         help='<Optional> Tells the inference loop to print debug messages every k iterations.'
@@ -73,6 +78,9 @@ def main():
     # 1) load dataset
     print('Loading dataset {}'.format(args.input))
     study = md2.Study.load(args.input)
+    if args.rename_study is not None:
+        if args.rename_study.lower() != 'none':
+            study.name = args.rename_study
     md2.seed(args.seed)
 
     # 2) Load the model parameters
