@@ -112,7 +112,7 @@ if __name__ == '__main__':
                              'Options: [\"SIZE\", \"MIN_ASV_IDX\"]')
     parser.add_argument('--naming-scheme', dest='naming_scheme', type=str, required=False, default='DEFAULT',
                         help='Specify how to name the agglomerations.'
-                             'Options: [\"DEFAULT\", \"MIN_ASV_IDX\"]')
+                             'Options: [\"DEFAULT\", \"MIN_ASV_LABEL\"]')
 
     args = parser.parse_args()
 
@@ -123,9 +123,9 @@ if __name__ == '__main__':
     logger.info(f"Using {args.naming_scheme} naming scheme of OTU.")
 
     def otu_naming(idx: int, asvs: List[md2.Taxon]) -> str:
-        if args.naming_scheme == 'MIN_ASV_IDX':
-            min_idx = min(asv.idx for asv in asvs)
-            return f'OTU_{min_idx + 1}'
+        if args.naming_scheme == 'MIN_ASV_LABEL':
+            min_asv_label = min(int(asv.name.split("_")[1]) for asv in asvs)
+            return f'OTU_{min_asv_label}'
         else:
             return f'OTU_{idx + 1}'
 
