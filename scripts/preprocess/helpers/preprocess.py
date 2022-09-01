@@ -25,6 +25,7 @@ can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 '''
 import argparse
 from pathlib import Path
+from typing import List
 
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
@@ -109,6 +110,9 @@ if __name__ == '__main__':
     parser.add_argument('--sort-order', dest='sort_order', type=str, required=False, default='SIZE',
                         help='Specify how to order the agglomerations. '
                              'Options: [\"SIZE\", \"MIN_ASV_IDX\"]')
+    parser.add_argument('--naming-scheme', dest='naming_scheme', type=str, required=False, default='DEFAULT',
+                        help='Specify how to name the agglomerations.'
+                             'Options: [\"DEFAULT\", \"MIN_ASV_IDX\"]')
 
     args = parser.parse_args()
 
@@ -116,7 +120,19 @@ if __name__ == '__main__':
     study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences, args.trim_option)
 
     # Aggregate with specified hamming distance
-    agg_study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance, sort_order=args.sort_order)
+    logger.info(f"Using {args.naming_scheme} naming scheme of OTU.")
+
+    def otu_naming(idx: int, asvs: List[md2.Taxon]) -> str:
+        if args.naming_scheme == 'MIN_ASV_IDX':
+            min_idx = min(asv.idx for asv in asvs)
+            return f'OTU_{min_idx + 1}'
+        else:
+            return f'OTU_{idx + 1}'
+
+    agg_study = md2.aggregate_items(subjset=study,
+                                    hamming_dist=args.hamming_distance,
+                                    sort_order=args.sort_order,
+                                    otu_naming=otu_naming)
 
     # 3) compute consensus sequences
     if not isinstance(agg_study.taxa, OTUTaxaSet):

@@ -33,7 +33,8 @@ for dataset in healthy replicates inoculum; do
 			--dataset-dir ${DATASET_DIR}/raw_tables \
 			--output-prefix "${PREPROCESS_DIR}/gibson_${dataset}_agg" \
 			--trim-option "ALL_GAPS" \
-			--sort-order "MIN_ASV_IDX"
+			--sort-order "MIN_ASV_IDX" \
+			--naming-scheme "MIN_ASV_IDX"
 done
 cp ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
 
