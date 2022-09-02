@@ -73,12 +73,12 @@ def phylogenetic_heatmap_gram_split(inoc_pkl, healthy_pkl, chain_healthy,
         else:
             grampos_taxanames.append(name)
 
-    fig = plt.figure(figsize=(42,62))
+    fig = plt.figure(figsize=(48,72))
     gs = fig.add_gridspec(128,112)
 
     # Make the number of rows of the heatmap proportional
     # ---------------------------------------------------
-    pert_nrows = 7
+    pert_nrows = 8
     grampos_nrows = 111 - pert_nrows
     gramneg_nrows = int(grampos_nrows * len(gramneg_taxanames)/len(grampos_taxanames))
     ntwk_buffer = 0
@@ -155,7 +155,7 @@ def phylogenetic_heatmap_gram_split(inoc_pkl, healthy_pkl, chain_healthy,
     bayes_rows = 20
     bayes_row_gap = 20
 
-    ax_healthy_network = fig.add_subplot(gs[61:80, 75:79])
+    ax_healthy_network = fig.add_subplot(gs[65:80, 75:79])
     ax_healthy_network.set_title("E", fontsize=60, fontweight="bold", loc="left")
 
     #fig.text(x=0.545, y=0.55, s="Legend", fontsize=40, fontweight="bold")
@@ -216,7 +216,7 @@ def phylogenetic_heatmap_gram_split(inoc_pkl, healthy_pkl, chain_healthy,
     fig.text(x=0.37, y=0.020, s=text_, fontsize=40)
     fig.subplots_adjust(wspace=0.00, left=0.005, right=0.995, hspace=0.1,
         top=.96, bottom=0.02)
-    plt.savefig(outfile)
+    plt.savefig(outfile, bbox_inches="tight")
     plt.close()
 
 def _remove_border(ax):
@@ -238,7 +238,7 @@ def _make_phylogenetic_tree(tree_fname, names, taxa, ax, fig, figlabel=None,
     tree = ete3.Tree(tree_fname)
     tree.prune(names, True)
     tree.write(outfile='tmp/temp.nhx')
-    fontsize = 31
+    fontsize = 32.5
 
     taxonomies = ['family', 'order', 'class', 'phylum', 'kingdom']
     suffix_taxa = {'genus': '*', 'family': '**', 'order': '***', 'class': '****'
@@ -686,7 +686,7 @@ def _make_cluster_membership_heatmap(chainname, study_pkl, ax, order, binary, fi
             markerfacecolor="yellowgreen",
             markersize=35)]
 
-        lgd_ax = fig.add_axes([0.57, 0.515, 0.05, 0.05])
+        lgd_ax = fig.add_axes([0.57, 0.50, 0.05, 0.05])
         lgd_ax.legend(handles=legend_elements, loc="center", fontsize=35,
             frameon=False, labelspacing=1)
         lgd_ax = _remove_border(lgd_ax)
@@ -713,7 +713,8 @@ def parse_args():
         help="pl.Base.Study file for the inoculum")
     parser.add_argument("-s3", "--detected_study_healthy", required=True,
         help="pl.Base.Study file for consistently detected OTUs in healthy")
-    parser.add_argument("-k", "--keystoneness_file", required=True)
+    parser.add_argument("-k", "--keystoneness_file", default=None,
+        help="result of the keystoneness analysis")
     parser.add_argument("-o", "--output_loc", required = "True",
         help = "path to the folder where the output is saved")
 
@@ -739,9 +740,10 @@ if __name__ == '__main__':
 
     print("Making keystoneness figure")
     fig = plt.figure(figsize=(10, 10))
-    ky.KeystonenessFigure("Healthy", Path(args.chain_healthy),
+    if args.keystoneness_file is not None:
+        ky.KeystonenessFigure("Healthy", Path(args.chain_healthy),
                          Path(args.study_healthy), Path(args.keystoneness_file)).plot(fig)
-    fig.savefig(output_path / "figure4_keystoneness.pdf", bbox_inches="tight")
+        fig.savefig(output_path / "figure4_keystoneness.pdf", bbox_inches="tight")
 
 
     print("Done Making Figure 4")
