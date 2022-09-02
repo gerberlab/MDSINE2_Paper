@@ -525,7 +525,9 @@ def plot_legend(axlegend, level, cutoff, color_taxa_dict, names_union, files_loc
     lower_tax = TAXLEVEL_INTS[taxidx]
 
     #print(level, upper_tax, lower_tax)
+    labels = color_taxa_dict.pop("NA NA")
     labels = list(color_taxa_dict.keys())
+
     new_labels = []
     for lab in labels:
         if "Families" not in lab:
@@ -583,8 +585,11 @@ def plot_legend(axlegend, level, cutoff, color_taxa_dict, names_union, files_loc
 
     for label in not_in_labels:
         l1,_ = label.split(" ")
+
         if "phylum" not in l1 and "class" not in l1:
             legend_labels = legend_labels + [l1.capitalize()]
+        elif "unknown" in l1:
+            legend_labels = legend_labels + ["(Bacteria)"]
         else:
             legend_labels = legend_labels + ["({})".format(l1.split(",")[0])]
 
@@ -606,8 +611,11 @@ def plot_legend(axlegend, level, cutoff, color_taxa_dict, names_union, files_loc
                 l2 = " ".join(l2.split()[1:])
         if "Phylum" in l2:
             l2 = "(not resolved below Phylum)"
+            if "unknown" in label.split(" ")[0]:
+                l2 = "(not resolved below Kingdom)"
         if "Class" in l2:
             l2 = "(not resolved below Class)"
+
         legend_labels = legend_labels + [l2.capitalize()]
 
     legend_labels = legend_labels
@@ -727,15 +735,13 @@ def rel_abundance_plot(subject, axis, n, t, title):
         tick_labels = ["55%", "90%", "99%", "99.9%"]
 
         otu_arr = abund_df["otu_names"].to_numpy()
-        print(otu_arr[pos_50], otu_arr[pos_90], otu_arr[pos_99],
-            otu_arr[pos_999], otu_arr[pos_9999])
         axis.set_xticks(new_xticks)
         axis.set_xticklabels(tick_labels, fontsize=26)
         for x in new_xticks:
             axis.axvline(x=x, color="black", linestyle="--")
 
         abund_df["cdf"] = cdf
-        abund_df.to_csv("rel_abund.csv", sep=",")
+        #abund_df.to_csv("rel_abund.csv", sep=",")
 
     except KeyError:
         print("No data available for time point {}. Please select a valid"\
