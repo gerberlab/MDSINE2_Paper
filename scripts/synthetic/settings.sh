@@ -14,9 +14,9 @@ export NUM_SAMPLE_TRIALS=10
 export COHORT_SIZE=10
 export PROCESS_VAR=0.00
 export SIMULATION_DT=0.01
-export LOW_NOISE_SCALE=0.01
-export MEDIUM_NOISE_SCALE=0.15
-export HIGH_NOISE_SCALE=0.3
+export LOW_NOISE_SCALE=0.5
+export MEDIUM_NOISE_SCALE=1.0
+export HIGH_NOISE_SCALE=2.0
 
 export QPCR_TRIPLICATES=6  # The number of physical+technical replicate combinations to create.
 
