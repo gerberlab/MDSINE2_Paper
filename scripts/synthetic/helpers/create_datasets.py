@@ -35,10 +35,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-a', '--dmd_alpha_scale', type=float, required=False, default=286,
                         help='DMD dispersion parameter estimated from mean estimates at all time-points from '
                              'C. diff data (Default: 286, carry-over from MDSINE1)')
+    parser.add_argument('-q', '--qpcr_noise', type=float, required=False, default=0.01)
     parser.add_argument('-r', '--read_depth', type=int, required=False, default=50000)
-    parser.add_argument('--low_noise', type=float, required=False, default=0.01)
-    parser.add_argument('--medium_noise', type=float, required=False, default=0.1)
-    parser.add_argument('--high_noise', type=float, required=False, default=0.2)
+
+    # VARIANCE SCALING (noise levels)
+    parser.add_argument('--low_noise', type=float, required=False, default=0.5)
+    parser.add_argument('--medium_noise', type=float, required=False, default=1.0)
+    parser.add_argument('--high_noise', type=float, required=False, default=2.0)
     return parser.parse_args()
 
 
@@ -288,16 +291,17 @@ def main():
 
     # Sample the data.
     for read_depth in [1000, 25000]:
-        for noise_level_name, noise_level in noise_levels.items():
-            print(f"Simulating QPcr noise level {noise_level_name}: {noise_level}, and reads noise model `DMD`.")
+        for noise_level_name, variance_scaling in noise_levels.items():
+            dmd_scale = args.dmd_alpha_scale / variance_scaling
+            print(f"Simulating DMD noise level {noise_level_name}: {dmd_scale}.")
 
             # ======== Simulate noise using DMD to test robustness.
             study = simulate_reads_dmd(
                 synth=synthetic,
                 study_name=f'simulated-{noise_level_name}',
-                alpha_scale=args.dmd_alpha_scale,
+                alpha_scale=dmd_scale,
                 num_reads=read_depth,
-                qpcr_noise_scale=noise_level
+                qpcr_noise_scale=args.qpcr_noise
             )
 
             replicate_study = simulate_replicates(
@@ -307,26 +311,10 @@ def main():
                 num_replicates=args.num_qpcr_triplicates,
                 taxa=taxa,
                 study_name=f'replicate-{noise_level_name}',
-                alpha_scale=args.dmd_alpha_scale,
+                alpha_scale=dmd_scale,
                 num_reads=read_depth,
-                qpcr_noise_scale=noise_level
+                qpcr_noise_scale=args.qpcr_noise
             )
-
-            # ======== Simulate using NegBin noise model.
-            # study = synthetic.simulateMeasurementNoise(
-            #     a0=args.negbin_a0,
-            #     a1=args.negbin_a1,
-            #     qpcr_noise_scale=noise_level,
-            #     approx_read_depth=args.read_depth,
-            #     name=f'simulated-{noise_level_name}'
-            # )
-
-            # ======== Pull out heldout subject.
-            # holdout_study = study.pop_subject('holdout', name=f'holdout-{noise_level_name}')
-            # study.perturbations = None
-            # holdout_study.perturbations = None
-            # holdout_study.save(str(out_dir / f'holdout_{noise_level_name}.pkl'))
-            # print("Generated heldout subjset.")
 
             pkl_dir = out_dir / f'reads_{read_depth}' / f'noise_{noise_level_name}'
             pkl_dir.mkdir(exist_ok=True, parents=True)
