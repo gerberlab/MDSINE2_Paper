@@ -62,6 +62,8 @@ def parse_args():
         help="the timepoint at which the the relative abundace is plotted")
     parser.add_argument("-o", "--output_loc", required="True",
         help = "directory(folder name) where the output figure is saved")
+    parser.add_argument("-de", "--make_deseq", default="True",
+        help="whether or not to include the deseq results")
 
     return parser.parse_args()
 
@@ -567,45 +569,50 @@ def _remove_border(ax):
 
 def get_deseq_info(csv_file):
 
-    df = pd.read_csv(csv_file, index_col=0)
-    raw_names = df.index
-    np_df = df.to_numpy()
+    try:
+        df = pd.read_csv(csv_file, index_col=0)
+        raw_names = df.index
+        np_df = df.to_numpy()
 
-    cleaned_names = []
-    i = 0
-    map_ = {}
-    for name in raw_names:
-        name_split = name.split()
-        p_adj = np_df[i, -1]
-        order_family = " ".join(name_split[2:])
-        class_ = name_split[1]
-        phylum = name_split[0]
-        order = name_split[2]
-        family = name_split[3]
-        if p_adj <= 0.05:
+        cleaned_names = []
+        i = 0
+        map_ = {}
+        for name in raw_names:
+            name_split = name.split()
+            p_adj = np_df[i, -1]
+            order_family = " ".join(name_split[2:])
+            class_ = name_split[1]
+            phylum = name_split[0]
+            order = name_split[2]
+            family = name_split[3]
+            if p_adj <= 0.05:
 
-            if "unknown" in order_family:
-                if class_ == "unknown" and phylum == "unknown":
-                    cleaned_names.append("{},kingdom Kingdom unknown".format("Bacteria"))
-                elif class_ == "unknown":
-                    cleaned_names.append("{},phylum".format(phylum) + " " +
-                        "Phylum unknown")
-                elif order == "unknown":
-                    cleaned_names.append("{},class".format(class_) + " " +
+                if "unknown" in order_family:
+                    if class_ == "unknown" and phylum == "unknown":
+                        cleaned_names.append("{},kingdom Kingdom unknown".format("Bacteria"))
+                    elif class_ == "unknown":
+                        cleaned_names.append("{},phylum".format(phylum) + " " +
+                            "Phylum unknown")
+                    elif order == "unknown":
+                        cleaned_names.append("{},class".format(class_) + " " +
                             "Class unknown")
+                    else:
+                        #cleaned_names.append("{},order".format(order) + " " +
+                        #        "Order unknown")
+                        cleaned_names.append(order_family)
                 else:
-                    #cleaned_names.append("{},order".format(order) + " " +
-                    #        "Order unknown")
                     cleaned_names.append(order_family)
-            else:
-                cleaned_names.append(order_family)
-            map_[cleaned_names[-1]] = name
-        i += 1
+                map_[cleaned_names[-1]] = name
+            i += 1
+        return set(cleaned_names), map_
+    except:
+        print("Making plot without deseq")
+        return set([]), {}
 
-    return set(cleaned_names), map_
 
 def plot_legend(axlegend, level, color_taxa_dict, high_abund1, high_abund2_key,
-                high_abund2, low_abund_key, low_abund, name_deseq_map):
+                high_abund2, low_abund_key, low_abund, name_deseq_map,
+                include_deseq=True):
 
     def modify_name(name):
         cleaned_name = ""
@@ -650,34 +657,48 @@ def plot_legend(axlegend, level, color_taxa_dict, high_abund1, high_abund2_key,
         family_names.append(name[1])
         ims.append(im)
 
+    if include_deseq:
     #high abundance order family not defined
-    im, = axlegend.bar([0],[0], color= color_taxa_dict[high_abund2_key],
+        im, = axlegend.bar([0],[0], color= color_taxa_dict[high_abund2_key],
                        label=high_abund2_key)
-    ims.append(im)
-    name = modify_name(high_abund2_key)
-    order_names.append(name[0])
-    family_names.append(name[1])
-    for label in high_abund2:
-        im, = axlegend.bar([0],[0], color= "white", label=label)
         ims.append(im)
-        name = modify_name(label)
+        name = modify_name(high_abund2_key)
+        order_names.append(name[0])
+        family_names.append(name[1])
+        for label in high_abund2:
+            im, = axlegend.bar([0],[0], color= "white", label=label)
+            ims.append(im)
+            name = modify_name(label)
+            order_names.append(name[0])
+            family_names.append(name[1])
+
+        ims = ims + [extra, extra]
+        order_names = order_names + [" ", " "]
+        family_names = family_names + [" ", " "]
+        im, = axlegend.bar([0],[0], color= color_taxa_dict[low_abund_key],
+                           label=low_abund_key)
+        ims.append(im)
+        order_names.append('Other < {}%'.format(CUTOFF_FRAC_ABUNDANCE*100))
+        family_names.append(" ")
+        for label in low_abund:
+            im, = axlegend.bar([0],[0], color= "white", label=label)
+            ims.append(im)
+            name = modify_name(label)
+            order_names.append(name[0])
+            family_names.append(name[1])
+    else:
+        im, = axlegend.bar([0],[0], color= color_taxa_dict[high_abund2_key],
+                       label=high_abund2_key)
+        ims.append(im)
+        name = modify_name(high_abund2_key)
         order_names.append(name[0])
         family_names.append(name[1])
 
-    ims = ims + [extra, extra]
-    order_names = order_names + [" ", " "]
-    family_names = family_names + [" ", " "]
-    im, = axlegend.bar([0],[0], color= color_taxa_dict[low_abund_key],
-                       label=low_abund_key)
-    ims.append(im)
-    order_names.append('Other < {}%'.format(CUTOFF_FRAC_ABUNDANCE*100))
-    family_names.append(" ")
-    for label in low_abund:
-        im, = axlegend.bar([0],[0], color= "white", label=label)
+        im, = axlegend.bar([0],[0], color= color_taxa_dict[low_abund_key],
+                           label=low_abund_key)
         ims.append(im)
-        name = modify_name(label)
-        order_names.append(name[0])
-        family_names.append(name[1])
+        order_names.append('Other < {}%'.format(CUTOFF_FRAC_ABUNDANCE*100))
+        family_names.append(" ")
 
     legend_handle = [extra]
     legend_handle = legend_handle + ims
@@ -750,6 +771,7 @@ def main():
     df_healthy, taxa_map_healthy = get_df(subjset_healthy)
     XKCD_COLORS_IDX = set_colors(df_healthy, XKCD_COLORS_IDX,
                       DATA_FIGURE_COLORS, XKCD_COLORS)
+    include_deseq = args.make_deseq == "True"
 
     fig = plt.figure(figsize=(40,28))
     gs = fig.add_gridspec(18, 42)
@@ -778,62 +800,71 @@ def main():
     ax_experiment =  fig.add_subplot(gs[0, 1:30],
                       facecolor='none')
     add_expt_figure(ax_experiment, subjset_healthy, figlabel = 'A')
-
-    names_deseq1, name_map1 = get_deseq_info(Path(args.files_loc) / "{}1.csv".format(
-                                 args.deseq_file_name))
-    names_deseq2, name_map2 = get_deseq_info(Path(args.files_loc) / "{}2.csv".format(
-                                 args.deseq_file_name))
-    names_deseq3, name_map3 = get_deseq_info(Path(args.files_loc) / "{}3.csv".format(
-                                 args.deseq_file_name))
-    name_map = {}
-    for d in [name_map1, name_map2, name_map3]:
-        name_map.update(d)
-
-    names_deseq = names_deseq1.union(names_deseq2).union(names_deseq3)
-    new_data_figure_colors = replace_NA(DATA_FIGURE_COLORS)
-    names_deseq = set(replace_NA(list(names_deseq)))
-
-    high_abund_defined, high_abund_not_defined_key, low_abundance_key = categorize_legend_keys(
-                                                                new_data_figure_colors)
-    high_abund_not_defined = [key for key in names_deseq if "unknown" in key and "," in key]
-    low_abundace = [name for name in names_deseq if name not in high_abund_defined]
-    low_abundace = [name for name in low_abundace if "unknown" not in name]
-
     axlegend = fig.add_subplot(gs[2 : 10, 19: 50], facecolor='none')
     fig.text(0.55, 0.84, "B", fontsize = 50, fontweight = "bold")
-    plot_legend(axlegend=axlegend, level=TAXLEVEL, color_taxa_dict=new_data_figure_colors,
+
+    new_data_figure_colors = replace_NA(DATA_FIGURE_COLORS)
+    high_abund_defined, high_abund_not_defined_key, low_abundance_key = categorize_legend_keys(
+                                                        new_data_figure_colors)
+    if include_deseq:
+        names_deseq1, name_map1 = get_deseq_info(Path(args.files_loc) / "{}1.csv".format(
+                                 args.deseq_file_name))
+        names_deseq2, name_map2 = get_deseq_info(Path(args.files_loc) / "{}2.csv".format(
+                                 args.deseq_file_name))
+        names_deseq3, name_map3 = get_deseq_info(Path(args.files_loc) / "{}3.csv".format(
+                                 args.deseq_file_name))
+        name_map = {}
+        for d in [name_map1, name_map2, name_map3]:
+            name_map.update(d)
+
+        names_deseq = names_deseq1.union(names_deseq2).union(names_deseq3)
+        names_deseq = set(replace_NA(list(names_deseq)))
+
+        high_abund_not_defined = [key for key in names_deseq if "unknown" in key and "," in key]
+        low_abundace = [name for name in names_deseq if name not in high_abund_defined]
+        low_abundace = [name for name in low_abundace if "unknown" not in name]
+
+
+        plot_legend(axlegend=axlegend, level=TAXLEVEL, color_taxa_dict=new_data_figure_colors,
                 high_abund1=sorted(high_abund_defined), high_abund2_key=high_abund_not_defined_key,
                 high_abund2=sorted(high_abund_not_defined), low_abund_key=low_abundance_key,
                 low_abund=sorted(low_abundace), name_deseq_map=name_map)
+    else:
+        plot_legend(axlegend=axlegend, level=TAXLEVEL, color_taxa_dict=new_data_figure_colors,
+                high_abund1=sorted(high_abund_defined), high_abund2_key=high_abund_not_defined_key,
+                high_abund2=[], low_abund_key=low_abundance_key, low_abund=[],
+                name_deseq_map={}, include_deseq=include_deseq)
+
     fig.subplots_adjust(wspace = 0.50, left = 0.03, right = 0.95, top=0.90,
            bottom = 0.002, hspace = 0.9)
 
     loc = Path(args.output_loc)
     loc.mkdir(parents=True, exist_ok = True)
 
-    plt.savefig(loc / "figure2_.pdf", dpi = 100, bbox_inches="tight")
+    plt.savefig(loc / "figure2.pdf", dpi = 100, bbox_inches="tight")
     plt.close()
 
-    print("Made abundance plot. Now making the heatmaps showing deseq results.")
+    print("Made abundance plot")
 
-    high_abund_defined_df = make_df(Path(args.files_loc), args.deseq_file_name,
-                                    sorted(high_abund_defined), name_map)
-    high_abund_not_defined_df = make_df(Path(args.files_loc), args.deseq_file_name,
-                                    sorted(high_abund_not_defined), name_map)
-
-    low_abund_df = make_df(Path(args.files_loc), args.deseq_file_name,
-                                    sorted(low_abundace), name_map)
-    make_plot(high_abund_defined_df, "high_abund_defined", "order",
-              "heatmap_{}".format("high_abund_defined"), Path(args.output_loc))
-    print("Made heatmap for high abundant OTUs whose order and/or family are defined\n")
-    make_plot(high_abund_not_defined_df, "high_abund_not_defined", "order",
-              "heatmap_{}".format("high_abund_not_defined"), Path(args.output_loc))
-    print("Made heatmap for high abundant OTUs whose order and/or family are not defined\n")
-    make_plot(low_abund_df, "low_abund", "order",
-              "heatmap_{}".format("low_abund"), Path(args.output_loc))
-    print("Made heatmap for low abundant OTUs whose order and/or family are defined")
-    print()
-    print("Done Making Figure 2")
+    if include_deseq:
+        print("Now making the heatmaps showing deseq results.")
+        high_abund_defined_df = make_df(Path(args.files_loc), args.deseq_file_name,
+                                        sorted(high_abund_defined), name_map)
+        high_abund_not_defined_df = make_df(Path(args.files_loc), args.deseq_file_name,
+                                        sorted(high_abund_not_defined), name_map)
+        low_abund_df = make_df(Path(args.files_loc), args.deseq_file_name,
+                                        sorted(low_abundace), name_map)
+        make_plot(high_abund_defined_df, "high_abund_defined", "order",
+                  "heatmap_{}".format("high_abund_defined"), Path(args.output_loc))
+        print("Made heatmap for high abundant OTUs whose order and/or family are defined\n")
+        make_plot(high_abund_not_defined_df, "high_abund_not_defined", "order",
+                  "heatmap_{}".format("high_abund_not_defined"), Path(args.output_loc))
+        print("Made heatmap for high abundant OTUs whose order and/or family are not defined\n")
+        make_plot(low_abund_df, "low_abund", "order",
+                  "heatmap_{}".format("low_abund"), Path(args.output_loc))
+        print("Made heatmap for low abundant OTUs whose order and/or family are defined")
+        print()
+        print("Done Making Figure 2")
 
 
 main()

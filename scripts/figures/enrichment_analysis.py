@@ -301,9 +301,9 @@ def plot_module(cohort, df, axes, title, ylab, plot_cbar=False, cbar_ax=None, vm
                fontsize = 35)
     axes.tick_params(length=0, axis = "both")
     xtick_labels = []
-    cohort_label = "H"
+    cohort_label = "M"
     if cohort != "healthy":
-        cohort_label = "D"
+        cohort_label = "M"
     xtick_labels = [cohort_label + str(i) for i in range(1,
         df.to_numpy().shape[1] + 1)]
 
@@ -327,9 +327,9 @@ def _make_table(cohort, table_df, axes, title, tick_right, y_lab):
     map_ = sns.heatmap(table_df, linewidths=1, ax=axes, cmap=ListedColormap(['white']),
         cbar=False, annot=True, linecolor="black",
         annot_kws={"fontsize":30})
-    cohort_label = "H"
+    cohort_label = "M"
     if cohort != "healthy":
-        cohort_label = "D"
+        cohort_label = "M"
     xtick_labels = [cohort_label + str(i) for i in range(1,
         table_df.to_numpy().shape[1] + 1)]
 
@@ -355,7 +355,7 @@ def make_plot(df_healthy_p_order, df_healthy_p_family, df_healthy_p_class,
               df_healthy_phylum_abund, loc):
 
     fig = plt.figure(figsize=(40, 70))
-    spec = GridSpec(ncols=44, nrows= 98, figure=fig)
+    spec = GridSpec(ncols=44, nrows= 110, figure=fig)
 
     family_abund_start = 2
     family_abund_end = 26
@@ -369,17 +369,17 @@ def make_plot(df_healthy_p_order, df_healthy_p_family, df_healthy_p_class,
     phylum_abund_start = 59
     phylum_abund_end = 65
 
-    family_enrich_start = 68
-    family_enrich_end = 72
+    family_enrich_start = 70
+    family_enrich_end = 77
 
-    order_enrich_start = 74
-    order_enrich_end = 81
+    order_enrich_start = 80
+    order_enrich_end = 88
 
-    class_enrich_start = 83
-    class_enrich_end = 90
+    class_enrich_start = 91
+    class_enrich_end = 99
 
-    phylum_enrich_start = 92
-    phylum_enrich_end = 98
+    phylum_enrich_start = 102
+    phylum_enrich_end = 110
 
     healthy_column_start = 2
     healthy_column_end = 18
@@ -419,21 +419,21 @@ def make_plot(df_healthy_p_order, df_healthy_p_family, df_healthy_p_class,
         cax_column_start:cax_column_end])
 
     ax_healthy_family_enrich = plot_module("healthy", df_healthy_p_family, ax_healthy_family_enrich,
-        "I", "Family", plot_cbar=False)
+        "E", "Family", plot_cbar=False)
     ax_healthy_order_enrich = plot_module("healthy",df_healthy_p_order, ax_healthy_order_enrich,
-        "K", "Order", plot_cbar=False)
+        "F", "Order", plot_cbar=False)
     ax_healthy_class_enrich = plot_module("healthy", df_healthy_p_class, ax_healthy_class_enrich,
-        "M", "Class", plot_cbar=False)
+        "G", "Class", plot_cbar=True, cbar_ax=cax)
     ax_healthy_phylum_enrich = plot_module("healthy", df_healthy_p_phylum, ax_healthy_phylum_enrich,
-        "O", "Phylum", plot_cbar=False)
+        "H", "Phylum", plot_cbar=False)
     ax_healthy_family_abund = _make_table("healthy", df_healthy_family_abund,
         ax_healthy_family_abund, "A", False, "Family")
     ax_healthy_order_abund = _make_table("healthy", df_healthy_order_abund,
-        ax_healthy_order_abund, "C", False, "Order")
+        ax_healthy_order_abund, "B", False, "Order")
     ax_healthy_class_abund = _make_table("healthy", df_healthy_class_abund,
-        ax_healthy_class_abund, "E", False, "Class")
+        ax_healthy_class_abund, "C", False, "Class")
     ax_healthy_phylum_abund = _make_table("healthy", df_healthy_phylum_abund,
-        ax_healthy_phylum_abund, "G", False, "Phylum")
+        ax_healthy_phylum_abund, "D", False, "Phylum")
 
     fig.text(0.025, 0.075, "NA: Taxonomy not resolved", fontsize=45)
     fig.subplots_adjust(hspace=25)

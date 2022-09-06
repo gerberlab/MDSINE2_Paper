@@ -142,7 +142,7 @@ def make_plot(df1, abundance, taxonomy, name, loc):
         elif abundance == "low":
             axes1 = fig.add_subplot(gs[19:28, 0:3])
 
-    make_heatmap(df1, axes1, False, "Healthy", True)
+    make_heatmap(df1, axes1, False, "Healthy", False)
 
     loc.mkdir(exist_ok=True, parents=True)
     fig.savefig(loc / "{}.pdf".format(name), bbox_inches="tight")
