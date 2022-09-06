@@ -1,13 +1,15 @@
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, Iterator, Callable, Any
+from typing import Tuple, Iterator, Callable, Any, Optional, List, Dict
 
 import pickle
 import pandas as pd
 import numpy as np
 import scipy.special
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+import seaborn as sns
 
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
@@ -15,7 +17,6 @@ from mdsine2.logger import logger
 from tqdm import tqdm
 
 from lv_forward_sims import \
-    add_limit_detection, \
     adjust_concentrations, \
     forward_sim_single_subj_clv, \
     forward_sim_single_subj_lra, \
@@ -39,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--glv_ra_ridge_outdir', type=str, required=True)
     parser.add_argument('--glv_ridge_outdir', type=str, required=True)
     parser.add_argument('--lra_elastic_outdir', type=str, required=True)
+    parser.add_argument('--plot_dir', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
     parser.add_argument('--recompute_cache', action='store_true')
@@ -52,27 +54,50 @@ class HoldoutData:
         self.trajectories = self.subject.matrix()['abs']
 
     @property
-    def initial_conditions(self) -> np.ndarray:
-        return self.trajectories[:, 0]
+    def normalized_trajectories(self) -> np.ndarray:
+        return self.trajectories / self.trajectories.sum(axis=0, keepdims=True)
+
+    def initial_conditions(self, lower_bound: float) -> np.ndarray:
+        x2 = np.copy(self.trajectories[:, 0])
+        x2[x2 < lower_bound] = lower_bound
+        return x2
 
     def trajectory_subset(self, start: float, end: float) -> np.ndarray:
         times = self.subject.times
         t_inside_range = (times >= start) & (times <= end)
         t_subset_indices, = np.where(t_inside_range)
-        return self.trajectories[:, t_subset_indices]
+        trajs = np.copy(self.trajectories[:, t_subset_indices])
+        return trajs
 
-    def evaluate_absolute(self, pred: np.ndarray, sim_max: float, lb: float = 1e5) -> float:
-        """Compute RMS error metric between prediction and truth."""
+    def evaluate_absolute(self, pred: np.ndarray, upper_bound: float, lower_bound: float) -> np.ndarray:
+        """Compute RMS error metric between prediction and truth, one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
-        truth = np.where(truth < lb, lb, truth)
-        pred = np.where(pred < lb, lb, pred)
-        pred = np.where(pred > sim_max, sim_max, pred)
+        truth = np.where(truth < lower_bound, lower_bound, truth)
+        truth = np.where(truth > upper_bound, upper_bound, truth)
+
+        pred = np.where(pred < lower_bound, lower_bound, pred)
+        pred = np.where(pred > upper_bound, upper_bound, pred)
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
+
+        truth = np.log10(truth)
+        pred = np.log10(pred)
         return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
 
-    def evaluate_relative(self, pred: np.ndarray) -> float:
-        raise NotImplementedError()
+    def evaluate_relative(self, pred: np.ndarray, lower_bound: float) -> np.ndarray:
+        """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
+        truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
+        rel_truth = truth / truth.sum(axis=0, keepdims=True)
+        rel_truth[rel_truth < lower_bound] = lower_bound
+
+        rel_pred = pred / pred.sum(axis=0, keepdims=True)
+        if rel_pred.shape != rel_truth.shape:
+            raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
+
+        rel_pred[rel_pred < lower_bound] = lower_bound
+        rel_truth = np.log10(rel_truth)
+        rel_pred = np.log10(rel_pred)
+        return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
@@ -80,7 +105,12 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
         if 'data_path' not in kwargs:
             raise RuntimeError(f"function `{fwsim_fn.__name__}` should be called with a `data_path` kwarg.")
 
-        recompute = 'recompute_cache' in kwargs and kwargs['recompute_cache'] == True
+        if 'recompute_cache' in kwargs:
+            recompute = 'recompute_cache' in kwargs and kwargs['recompute_cache'] == True
+            del kwargs['recompute_cache']
+        else:
+            recompute = False
+
         data_path = kwargs['data_path']
         fwsim_path = data_path.with_suffix('.fwsim.npy')
         if recompute or (not fwsim_path.exists()):
@@ -95,7 +125,7 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
 
 
 @cached_forward_simulation
-def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
+def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float) -> np.ndarray:
     logger.info(f"Evaluating forward simulation using mdsine2 MCMC samples ({data_path})")
     mcmc = md2.BaseMCMC.load(str(data_path))
 
@@ -117,7 +147,9 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
                 raise KeyError(f"Heldout subject ({heldout.subject.name}) has perturbation `{subj_pert.name}`, "
                                f"but learned model does not.")
 
-            perts.append(mcmc.graph.perturbations[subj_pert.name].get_trace_from_disk())
+            pert_values = mcmc.graph.perturbations[subj_pert.name].get_trace_from_disk()
+            pert_values[np.isnan(pert_values)] = 0.
+            perts.append(pert_values)
             pert_starts.append(subj_pert.starts[heldout.subject.name])
             pert_ends.append(subj_pert.ends[heldout.subject.name])
 
@@ -137,7 +169,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
     dyn = md2.model.gLVDynamicsSingleClustering(
         growth=None,
         interactions=None,
-        start_day=heldout.subject.times[0],
+        start_day=times[0],
         sim_max=sim_max,
         perturbation_starts=pert_starts,
         perturbation_ends=pert_ends
@@ -145,14 +177,14 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
 
     n_samples = growth.shape[0]
     n_taxa = growth.shape[1]
-    pred_matrix = np.zeros(shape=(n_samples, n_taxa, len(times)))
+    pred_matrix = np.empty(shape=(n_samples, n_taxa, len(times)))
     for sample_idx in tqdm(range(n_samples), desc="MDSINE2 fwsim"):
         dyn.growth = growth[sample_idx]
         dyn.interactions = interactions[sample_idx]
         if perts is not None:
             dyn.perturbations = [pert[sample_idx] for pert in perts]
 
-        init = heldout.initial_conditions
+        init = heldout.initial_conditions(lower_bound=init_limit_of_detection)
         if len(init.shape) == 1:
             init = init.reshape(-1, 1)
         x = md2.integrate(dynamics=dyn, initial_conditions=init,
@@ -166,7 +198,7 @@ def forward_sim_clv(data_path: Path,
                     x0: np.ndarray,
                     u: np.ndarray,
                     t: np.ndarray,
-                    pseudo_count: int=0) -> np.ndarray:
+                    pseudo_count: int=1e-6) -> np.ndarray:
     logger.info(f"Evaluating cLV simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
@@ -174,7 +206,7 @@ def forward_sim_clv(data_path: Path,
         denom = model.denom
 
     x0 = x0 / np.sum(x0)  # normalize.
-    return forward_sim_single_subj_clv(A, g, B, x0, u, t, denom, pc=pseudo_count)
+    return forward_sim_single_subj_clv(A, g, B, x0, u, t, denom, pc=pseudo_count).transpose(1, 0)
 
 
 @cached_forward_simulation
@@ -188,7 +220,7 @@ def forward_sim_lra(data_path: Path,
         A, g, B = model.get_params()
 
     x0 = x0 / np.sum(x0)  # normalize.
-    return forward_sim_single_subj_lra(A, g, B, x0, u, t)
+    return forward_sim_single_subj_lra(A, g, B, x0, u, t).transpose(1, 0)
 
 
 @cached_forward_simulation
@@ -197,23 +229,29 @@ def forward_sim_glv(data_path: Path,
                     u: np.ndarray,
                     t: np.ndarray,
                     scale: float,
+                    init_limit_of_detection: float,
                     rel_abund: bool) -> np.ndarray:
     logger.info(f"Evaluating gLV simulation using output ({data_path})")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
 
-    x0 = np.log(x0)
+    x0 = np.copy(x0)
+    x0[x0 < init_limit_of_detection] = init_limit_of_detection
     if rel_abund:
         # Normalize (in log-scale)
+        x0 = np.log(x0)
         x0 = x0 - scipy.special.logsumexp(x0)
     else:
         """
         gLV inference is run with scaling (for numerical precision). 
         This is the inverse transformation!
         """
-        A = A * scale
-    return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund)
+        # A = A * scale
+        x0 = np.log(x0)
+
+    # Include the limit of detection value
+    return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund).transpose(1, 0)
 
 
 @dataclass
@@ -241,22 +279,28 @@ class HeldoutInferences:
         _require_file(self.lra_elastic)
 
     def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
-        return forward_sim_mdsine2(data_path=self.mdsine2, recompute_cache=self.recompute_cache, heldout=heldout, sim_dt=sim_dt, sim_max=sim_max)
+        return forward_sim_mdsine2(data_path=self.mdsine2,
+                                   recompute_cache=self.recompute_cache,
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
 
     def clv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
 
     def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=False)
+        return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
 
     def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=True)
+        return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=True, init_limit_of_detection=1e5)
 
     def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=True)
+        return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=True, init_limit_of_detection=1e5)
 
     def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
-        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t, scale=scale, rel_abund=False)
+        return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
 
     def lra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
@@ -277,7 +321,7 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
             glv_ra_ridge=directories.glv_ra_ridge / f'glv-ra-ridge-{subject_idx}-model.pkl',
             glv_ridge=directories.glv_ridge / f'glv-ridge-{subject_idx}-model.pkl',
             lra_elastic=directories.lra_elastic / f'lra-{subject_idx}-model.pkl',
-            recompute_cache=directories.recompute_cache
+            recompute_cache=directories.recompute_cache,
         )
 
 
@@ -285,7 +329,9 @@ def evaluate_all(regression_inputs_dir: Path,
                  directories: HeldoutInferences,
                  complete_study: md2.Study,
                  sim_dt: float,
-                 sim_max: float):
+                 sim_max: float,
+                 abs_lower_bound: float = 1e5,
+                 rel_lower_bound: float = 1e-6):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
         Y = pickle.load(f)
@@ -294,9 +340,7 @@ def evaluate_all(regression_inputs_dir: Path,
     with open(regression_inputs_dir / "T.pkl", "rb") as f:
         T = pickle.load(f)
 
-    # Include the limit of detection value
-    Y = add_limit_detection(Y, 1e5)
-    Y_adj, scale = adjust_concentrations(Y)
+    _, scale = adjust_concentrations(Y)
     logger.debug(f"Regression input rescaling value: {scale}")
 
     # =========== Load evaluations.
@@ -304,58 +348,75 @@ def evaluate_all(regression_inputs_dir: Path,
     relative_df_entries = []
     for sidx, sid, inferences in retrieve_grouped_results(directories):
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
+
         heldout_data = HoldoutData(complete_study[sid], sidx)
+        true_abs_means = np.log10(np.mean(heldout_data.trajectories, axis=1))
+        true_rel_means = np.log10(np.mean(heldout_data.normalized_trajectories, axis=1))
 
-        def add_absolute_entry(_method, _err):
-            absolute_df_entries.append({
-                'HeldoutSubjectId': sid,
-                'HeldoutSubjectIdx': sidx,
-                'Method': _method,
-                'Error': _err
-            })
+        def add_absolute_entry(_method: str, _errs: np.ndarray):
+            for taxa_idx, (taxa_err, true_abs_mean) in enumerate(zip(_errs, true_abs_means)):
+                absolute_df_entries.append({
+                    'HeldoutSubjectId': sid,
+                    'HeldoutSubjectIdx': sidx,
+                    'Method': _method,
+                    'TaxonIdx': taxa_idx,
+                    'TrueAbundMean': true_abs_mean,
+                    'Error': taxa_err
+                })
 
-        def add_relative_entry(_method, _err):
-            relative_df_entries.append({
-                'HeldoutSubjectId': sid,
-                'HeldoutSubjectIdx': sidx,
-                'Method': _method,
-                'Error': _err
-            })
+        def add_relative_entry(_method: str, _errs: np.ndarray):
+            for taxa_idx, (taxa_err, true_rel_mean) in enumerate(zip(_errs, true_rel_means)):
+                relative_df_entries.append({
+                    'HeldoutSubjectId': sid,
+                    'HeldoutSubjectIdx': sidx,
+                    'Method': _method,
+                    'TaxonIdx': taxa_idx,
+                    'TrueAbundMean': true_rel_mean,
+                    'Error': taxa_err
+                })
 
         # Absolute abundance
         add_absolute_entry(
             'MDSINE2',
-            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), sim_max)
+            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
         )
         add_absolute_entry(
             'gLV-elastic net',
-            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), sim_max)
+            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
         )
         add_absolute_entry(
             'gLV-ridge',
-            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), sim_max)
+            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
         )
 
         # Relative abundance
         add_relative_entry(
             'MDSINE2',
-            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0))
+            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'cLV',
-            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t))
+            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
+        )
+        add_relative_entry(
+            'gLV-RA-elastic net',
+            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+        )
+        add_relative_entry(
+            'gLV-RA-ridge',
+            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'gLV-elastic net',
-            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale))
+            heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'gLV-ridge',
-            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale))
+            heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
         )
         add_relative_entry(
             'LRA',
-            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t))
+            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
         )
 
     absolute_results = pd.DataFrame(absolute_df_entries)
@@ -363,8 +424,118 @@ def evaluate_all(regression_inputs_dir: Path,
     return absolute_results, relative_results
 
 
+def make_boxplot(ax, df: pd.DataFrame,
+                 method_order: List[str],
+                 method_colors: Dict[str, np.ndarray],
+                 xlabel: Optional[str] = None,
+                 ylabel: Optional[str] = None):
+    df = df.sort_values(
+        by='Method',
+        key=lambda col: col.map({m: i for i, m in enumerate(method_order)})
+    )
+
+    sns.boxplot(
+        data=df,
+        ax=ax,
+        x='Method',
+        y='Error',
+        showfliers=False,
+        palette=method_colors
+    )
+
+    sns.stripplot(
+        data=df,
+        ax=ax,
+        x='Method',
+        y='Error',
+        dodge=True,
+        color='black',
+        alpha=0.3,
+        linewidth=1.0
+    )
+
+    if xlabel is not None:
+        ax.set_xlabel(xlabel, fontsize=20)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel, fontsize=20)
+
+
+def make_grouped_boxplot(abund_ax, error_ax,
+                         df,
+                         method_order: List[str],
+                         method_colors: Dict[str, np.ndarray],
+                         lb: float,
+                         num_quantiles: int = 10,
+                         error_ylabel: Optional[str] = None):
+    # Divide taxa based on abundance quantiles.
+    df = df.assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_quantiles))
+    log_lb = np.log10(lb)
+
+    # ============ Render bin counts.
+    def _aggregate_abundances_bin(_df):
+        bin = _df.head(1)['Bin'].item()
+        return pd.Series({
+            'Left': bin.left if not np.isinf(bin.left) else log_lb,
+            'Right': bin.right,
+            'Count': _df.shape[0]
+        })
+    bin_counts = df.groupby('Bin').apply(_aggregate_abundances_bin)
+    widths = bin_counts['Right'] - bin_counts['Left']
+    abund_ax.bar(
+        x=bin_counts['Left'],
+        height=1 / widths,
+        align='edge',
+        width=widths,
+        linewidth=0.5,
+        edgecolor='black',
+        color='tab:blue'
+    )
+    abund_ax.set_xlabel('')
+    abund_ax.set_ylabel('Density of OTUs')
+
+    # ============= Render RMSE.
+    def _bin_label(interval):
+        left = interval.left
+        right = interval.right
+        if np.isinf(left):
+            left = log_lb
+        return '({:.1f},\n{:.1f}]'.format(left, right)
+    df['BinLabel'] = df['Bin'].map(_bin_label)
+    df = df.sort_values('Bin')
+    supported_methods = set(pd.unique(df['Method']))
+    method_order = [m for m in method_order if m in supported_methods]
+    sns.boxplot(
+        data=df, ax=error_ax,
+        x='BinLabel',
+        y='Error',
+        hue='Method', hue_order=method_order, palette=method_colors,
+        showfliers=False
+    )
+    error_ax.set_axisbelow(True)
+    error_ax.yaxis.grid(True, 'major', linewidth=1, color='#e6e6e6')
+    error_ax.set_xlabel('')
+    if error_ylabel is not None:
+        error_ax.set_ylabel(error_ylabel)
+
+    abund_ax.legend([], [])
+    error_ax.legend([], [])
+
+
+def draw_method_legend(fig, method_order, method_colors, position: Tuple[float, float]):
+    legend_elements = [
+        Patch(facecolor=method_colors[method], edgecolor='black', linewidth=0.5, label=method)
+        for method in method_order
+    ]
+    fig.legend(
+        handles=legend_elements,
+        loc='upper center', bbox_to_anchor=position,
+        fancybox=True, ncol=len(method_order)
+    )
+
+
 def main():
     args = parse_args()
+    plot_dir = Path(args.plot_dir)
 
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
@@ -378,6 +549,7 @@ def main():
         recompute_cache=args.recompute_cache
     )
 
+    # =================== Evaluate all errors.
     absolute_results, relative_results = evaluate_all(
         Path(args.regression_inputs_dir),
         directories,
@@ -386,17 +558,50 @@ def main():
         args.sim_max
     )
 
-    print(absolute_results)
-    print(relative_results)
+    # ==================== Plot settings.
+    methods = ['MDSINE2', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']
+    palette_tab20 = sns.color_palette("tab10", len(methods))
+    method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
 
-    # fig, ax = plt.subplots(
-    #     nrows=1,
-    #     ncols=4,
-    #     figsize=(22, 4.5),
-    #     gridspec_kw={
-    #         'width_ratios': [1, 1, 2, 2]
-    #     }
-    # )
+    # ==================== Evaluate and plot overall errors.
+    fig, ax = plt.subplots(
+        nrows=1,
+        ncols=2,
+        figsize=(12, 5),
+        gridspec_kw={
+            'width_ratios': [1, 2],
+            'right': 0.92,
+            'left': 0.08
+        }
+    )
+
+    make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
+    make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
+    plt.savefig(plot_dir / "overall.pdf")
+    plt.close(fig)
+
+    # ==================== Evaluate and plot errors binned by log-abundances.
+    fig, ax = plt.subplots(
+        nrows=2,
+        ncols=2,
+        figsize=(20, 5),
+        gridspec_kw={
+            'height_ratios': [1, 2],
+            'width_ratios': [1, 2],
+            'wspace': 0.05,
+            'right': 0.99,
+            'left': 0.03,
+            'bottom': 0.2,
+            'top': 0.95
+        }
+    )
+
+    make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, lb=1e5, error_ylabel='RMSE (log Abs abundance)')
+    make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, lb=1e-6, error_ylabel='RMSE (log Rel abundance)')
+    draw_method_legend(fig, methods, method_colors, position=(0.5, 0.1))
+    fig.tight_layout()
+    plt.savefig(plot_dir / "binned.pdf")
+    plt.close(fig)
 
 
 if __name__ == "__main__":

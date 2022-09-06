@@ -14,4 +14,5 @@ python cross_validation/helpers/evaluate_errors.py \
 --glv_ra_elastic_outdir ${OUTPUT_DIR}/regression_glv-ra_elastic-net \
 --glv_ra_ridge_outdir ${OUTPUT_DIR}/regression_glv-ra_ridge \
 --glv_ridge_outdir ${OUTPUT_DIR}/regression_glv_ridge \
+--plot_dir ${OUTPUT_DIR} \
 --lra_elastic_outdir ${OUTPUT_DIR}/regression_lra_elastic-net
