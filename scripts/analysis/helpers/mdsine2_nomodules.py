@@ -111,6 +111,8 @@ def main():
     params.LEARN[STRNAMES.CLUSTERING] = False
     params.LEARN[STRNAMES.CONCENTRATION] = False
     params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
+    params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['N'] = 'fixed-clustering'
+    params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICTOR_PROB]['N'] = 'fixed-clustering'
 
     # Set the sparsities
     if args.interaction_prior is None:
