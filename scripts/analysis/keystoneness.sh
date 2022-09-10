@@ -21,4 +21,5 @@ mdsine2 evaluate-keystoneness \
 		-s $HEALTHY_DSET \
 		-it 19 \
 		-o $outdir \
-		--n-days 100
+		--n-days 100 \
+		--simulate-every-n 1
