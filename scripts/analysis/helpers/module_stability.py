@@ -110,7 +110,7 @@ def simulate_random_perturbations(
         x_pert = run_fwsim(
             growth=r, interactions=A, pert_strengths=perts,
             pert_start=21, pert_end=34,
-            initial=init,
+            initial=init[:, None],
             sim_max=sim_max, dt=dt, n_days=64
         )
 
