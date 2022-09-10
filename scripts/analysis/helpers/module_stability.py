@@ -11,6 +11,8 @@ from mdsine2 import Clustering
 from mdsine2.base import _Cluster
 from mdsine2.names import STRNAMES
 
+from tqdm import tqdm
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -95,7 +97,7 @@ def simulate_random_perturbations(
         interactions[:, i, i] = self_interactions[:, i]
 
     for gibbs_idx, alpha, delta in itertools.product(
-            range(0, total_samples, stride),
+            tqdm(range(0, total_samples, stride), total=(total_samples // stride)),
             alphas,
             deltas
     ):
