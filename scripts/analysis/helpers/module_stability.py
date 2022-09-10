@@ -108,7 +108,7 @@ def simulate_random_perturbations(
         )
         x_baseline = run_fwsim_no_pert(
             growth=r, interactions=A,
-            initial=init[: None], sim_max=sim_max, dt=dt, n_days=64
+            initial=init[:, None], sim_max=sim_max, dt=dt, n_days=64
         )
 
         perts = apply_random_perts(r.shape[0], alpha, delta)
