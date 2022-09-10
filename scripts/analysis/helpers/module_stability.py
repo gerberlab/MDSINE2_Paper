@@ -44,6 +44,11 @@ def main():
     modules: Clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
     module_to_remove = modules.clusters[modules.order[module_idx_to_remove]]
 
+    print("Will remove module index {} (ID: {})".format(
+        args.module_remove_idx,
+        module_to_remove.id
+    ))
+
     df_entries = []
     for gibbs_idx, alpha, delta, deviation in simulate_random_perturbations(
             study,
