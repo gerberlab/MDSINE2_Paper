@@ -96,32 +96,32 @@ def simulate_random_perturbations(
     for i in range(self_interactions.shape[1]):
         interactions[:, i, i] = self_interactions[:, i]
 
-    for gibbs_idx, alpha, delta in itertools.product(
-            tqdm(range(0, total_samples, stride), total=(total_samples // stride)),
-            alphas,
-            deltas
-    ):
-        init, r, A = exclude_cluster_from(
-            module,
-            study.taxa,
-            day21_levels,
-            growths[gibbs_idx],
-            interactions[gibbs_idx]
-        )
-        x_baseline = run_fwsim_no_pert(
-            growth=r, interactions=A,
-            initial=init[:, None], sim_max=sim_max, dt=dt, n_days=64
-        )
+    for gibbs_idx in tqdm(range(0, total_samples, stride), total=(total_samples // stride)):
+        for alpha, delta in itertools.product(
+                alphas,
+                deltas
+        ):
+            init, r, A = exclude_cluster_from(
+                module,
+                study.taxa,
+                day21_levels,
+                growths[gibbs_idx],
+                interactions[gibbs_idx]
+            )
+            x_baseline = run_fwsim_no_pert(
+                growth=r, interactions=A,
+                initial=init[:, None], sim_max=sim_max, dt=dt, n_days=64
+            )
 
-        perts = apply_random_perts(r.shape[0], alpha, delta)
-        x_pert = run_fwsim(
-            growth=r, interactions=A, pert_strengths=perts,
-            pert_start=21, pert_end=34,
-            initial=init[:, None],
-            sim_max=sim_max, dt=dt, n_days=64
-        )
+            perts = apply_random_perts(r.shape[0], alpha, delta)
+            x_pert = run_fwsim(
+                growth=r, interactions=A, pert_strengths=perts,
+                pert_start=21, pert_end=34,
+                initial=init[:, None],
+                sim_max=sim_max, dt=dt, n_days=64
+            )
 
-        yield gibbs_idx, alphas, deltas, compute_deviation(x_baseline, x_pert)
+            yield gibbs_idx, alphas, deltas, compute_deviation(x_baseline, x_pert)
 
 
 def compute_deviation(x1: np.ndarray, x2: np.ndarray, eps: float = 1e5) -> float:
