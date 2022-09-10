@@ -121,10 +121,13 @@ def simulate_random_perturbations(
                 sim_max=sim_max, dt=dt, n_days=64
             )
 
-            yield gibbs_idx, alpha, delta, compute_deviation(x_baseline, x_pert)
+            yield gibbs_idx, alpha, delta, compute_deviation(x_baseline, x_pert, dt=dt)
 
 
-def compute_deviation(x1: np.ndarray, x2: np.ndarray, eps: float = 1e5) -> float:
+def compute_deviation(x1_traj: np.ndarray, x2_traj: np.ndarray, dt: float, eps: float = 1e5) -> float:
+    n = int(0.5 / dt)  # number of timepoints to average over.
+    x1 = x1_traj[:, -n:].mean(axis=1)
+    x2 = x2_traj[:, -n:].mean(axis=1)
     return float(np.mean(np.log10(x1 + eps) - np.log10(x2 + eps)))
 
 
