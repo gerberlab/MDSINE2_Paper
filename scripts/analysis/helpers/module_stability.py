@@ -21,8 +21,14 @@ def parse_args() -> argparse.Namespace:
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
     parser.add_argument('--module-remove-idx', '-m', dest='module_remove_idx', type=int,
                         help='Specify which module to remove, specified by index (zero-indexed)')
-    parser.add_argument('--seed', required=False, type=int, default=31415)
+
     parser.add_argument('--out-path', '-o', dest='out_path', required=True, type=str)
+
+    parser.add_argument('--seed', required=False, type=int, default=31415)
+    parser.add_argument('--simulation-dt', '-dt', type=float, dest='dt', required=False,
+                        help='Timesteps we go in during forward simulation', default=0.01)
+    parser.add_argument('--sim-max', dest='sim_max', type=float, required=False,
+                        help='Maximum value of abundance.', default=1e20)
     return parser.parse_args()
 
 
