@@ -3,7 +3,7 @@ set -e
 source analysis/settings.sh
 
 require_program mdsine2
-echo "Evaluating MDSINE2 learned model's eigenvalues (exclude clusters)"
+echo "Plotting forward simulations."
 
 # Healthy cohort
 # --------------
@@ -16,10 +16,11 @@ outdir=${MDSINE2_OUT_DIR}/${study_name}/trajectories
 mkdir -p $outdir
 
 for subj in 2 3 4 5; do
+	subj_outdir=${outdir}/subject_${subj}
 	mdsine2 forward-simulate \
 			--input-mcmc ${mcmc} \
 			--study ${HEALTHY_DSET} \
 			--subject ${subj} \
-			-o ${outdir}/fwsims.npy \
+			-o ${subj_outdir}/fwsims.npy \
 			--plot all
 done
