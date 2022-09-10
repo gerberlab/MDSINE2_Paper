@@ -121,7 +121,7 @@ def simulate_random_perturbations(
                 sim_max=sim_max, dt=dt, n_days=64
             )
 
-            yield gibbs_idx, alphas, deltas, compute_deviation(x_baseline, x_pert)
+            yield gibbs_idx, alpha, delta, compute_deviation(x_baseline, x_pert)
 
 
 def compute_deviation(x1: np.ndarray, x2: np.ndarray, eps: float = 1e5) -> float:
