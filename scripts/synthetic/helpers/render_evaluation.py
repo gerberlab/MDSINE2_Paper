@@ -114,7 +114,7 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
         'medium': 1,
         'high': 2
     })
-    area_df.sort_values('NoiseLevel', key=noise_ordering)
+    area_df = area_df.assign(Ordering=noise_ordering).sort_values('Ordering')
     area_df.loc[:, 'x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
 
     if area_df.shape[0] > 0:
