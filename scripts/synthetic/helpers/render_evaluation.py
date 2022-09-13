@@ -205,7 +205,8 @@ def main():
 
     default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-    method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    # method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    method_order = ['MDSINE2', 'MDSINE1', 'glv-elastic_net', 'glv-ridge']
     color_palette = {method: c for method, c in zip(method_order, default_colors)}
 
     fig = plt.figure(figsize=(args.figure_width, args.figure_height))
