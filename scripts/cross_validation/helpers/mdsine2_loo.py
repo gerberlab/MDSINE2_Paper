@@ -13,6 +13,10 @@ def parse_args() -> argparse.Namespace:
         help='This is the dataset to do inference with.'
     )
     parser.add_argument(
+        '--nomodules', action='store_true', dest='nomodules',
+        help='If flag is provided, then run inference without learning modules.'
+    )
+    parser.add_argument(
         '--exclude-subject', '-e', type=str, dest='exclude_subject',
         required=True,
         help='The name of the subject to exclude.'
@@ -115,6 +119,13 @@ def main():
         basepath=basepath, seed=args.seed,
         burnin=args.burnin, n_samples=args.n_samples, negbin_a1=a1,
         negbin_a0=a0, checkpoint=args.checkpoint)
+
+    if args.nomodules:
+        params.LEARN[STRNAMES.CLUSTERING] = False
+        params.LEARN[STRNAMES.CONCENTRATION] = False
+        params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
+        params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['N'] = 'fixed-clustering'
+        params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['N'] = 'fixed-clustering'
 
     # Set the sparsities
     if args.interaction_prior is None:
