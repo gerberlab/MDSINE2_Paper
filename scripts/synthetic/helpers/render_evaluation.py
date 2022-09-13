@@ -171,7 +171,7 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     # ax0 = fig.add_subplot(spec[2, 2:])
     # ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
 
-    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-ridge', 'glv-ra-ridge']
+    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-elastic_net', 'glv-ridge']
     df = load_df(dataframe_dir / "topology_errors.csv")
     section = df.loc[df['ReadDepth'] == read_depth]
     render_topology_errors(
