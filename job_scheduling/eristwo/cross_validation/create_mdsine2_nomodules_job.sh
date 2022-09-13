@@ -8,7 +8,7 @@ excluded_subj=$1
 require_program mdsine2
 require_variable "excluded_subj" $excluded_subj
 
-job_name="mdsine2_exclude_${excluded_subj}"
+job_name="mdsine2_exclude_${excluded_subj}_nomodules"
 lsf_subdir="${LSF_DIR}/${job_name}"
 lsf_path="${lsf_subdir}/job.lsf"
 log_stdout="${lsf_subdir}/stdout.txt"
