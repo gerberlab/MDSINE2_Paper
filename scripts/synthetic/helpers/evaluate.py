@@ -235,11 +235,11 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             pass
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -298,11 +298,11 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
             pass
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -378,10 +378,10 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
         # _add_regression_entry("lra", "elastic_net")
-        # _add_regression_entry("glv", "elastic_net")
+        _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
         # _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
