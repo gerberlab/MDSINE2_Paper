@@ -108,6 +108,13 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
         )
 
     area_df = df.groupby(['Method', 'ReadDepth', 'Trial', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
+
+    noise_ordering = area_df['NoiseLevel'].map({
+        'low': 0,
+        'medium': 1,
+        'high': 2
+    })
+    area_df.sort_values('NoiseLevel', key=noise_ordering)
     area_df.loc[:, 'x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
 
     if area_df.shape[0] > 0:
