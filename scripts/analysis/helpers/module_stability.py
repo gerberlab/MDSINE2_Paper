@@ -27,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--out-path', '-o', dest='out_path', required=True, type=str)
 
     parser.add_argument('--seed', required=False, type=int, default=31415)
+    parser.add_argument('--num-trials', dest='n_trials', required=False, type=int, default=100)
     parser.add_argument('--simulation-dt', '-dt', type=float, dest='dt', required=False,
                         help='Timesteps we go in during forward simulation', default=0.01)
     parser.add_argument('--sim-max', dest='sim_max', type=float, required=False,
@@ -52,17 +53,21 @@ def main():
     ))
 
     df_entries = []
-    for gibbs_idx, alpha, delta, deviation in simulate_random_perturbations(
+    for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
             study,
             mcmc,
             module_to_remove,
             args.sim_max,
-            args.dt
+            args.dt,
+            args.n_trials
     ):
+        n_perturbed = int(len(study.taxa) * alpha)
         df_entries.append({
             'GibbsIdx': gibbs_idx,
             'Alpha': alpha,
             'Delta': delta,
+            'Trial': trial,
+            'NumPerturbed': n_perturbed,
             'Deviation': deviation
         })
 
@@ -76,8 +81,9 @@ def simulate_random_perturbations(
         mcmc: md2.BaseMCMC,
         module: _Cluster,
         sim_max: float,
-        dt: float
-) -> Iterator[Tuple[int, float, float, float]]:
+        dt: float,
+        n_trials: int
+) -> Iterator[Tuple[int, float, float, int, float]]:
     alphas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
     deltas = [-0.5, -1.0, -1.5, -2.0]
     num_samples = 100
@@ -96,23 +102,25 @@ def simulate_random_perturbations(
     for i in range(self_interactions.shape[1]):
         interactions[:, i, i] = self_interactions[:, i]
 
+    trials = list(range(1, n_trials + 1, 1))
     for gibbs_idx in tqdm(range(0, total_samples, stride), total=(total_samples // stride)):
-        for alpha, delta in itertools.product(
-                alphas,
-                deltas
-        ):
-            init, r, A = exclude_cluster_from(
-                module,
-                study.taxa,
-                day21_levels,
-                growths[gibbs_idx],
-                interactions[gibbs_idx]
-            )
-            x_baseline = run_fwsim_no_pert(
-                growth=r, interactions=A,
-                initial=init[:, None], sim_max=sim_max, dt=dt, n_days=64
-            )
+        init, r, A = exclude_cluster_from(
+            module,
+            study.taxa,
+            day21_levels,
+            growths[gibbs_idx],
+            interactions[gibbs_idx]
+        )
+        x_baseline = run_fwsim_no_pert(
+            growth=r, interactions=A,
+            initial=init[:, None], sim_max=sim_max, dt=dt, n_days=64
+        )
 
+        for alpha, delta, trial in itertools.product(
+                alphas,
+                deltas,
+                trials
+        ):
             perts = apply_random_perts(r.shape[0], alpha, delta)
             x_pert = run_fwsim(
                 growth=r, interactions=A, pert_strengths=perts,
@@ -121,7 +129,7 @@ def simulate_random_perturbations(
                 sim_max=sim_max, dt=dt, n_days=64
             )
 
-            yield gibbs_idx, alpha, delta, compute_deviation(x_baseline, x_pert, dt=dt)
+            yield gibbs_idx, alpha, delta, trial, compute_deviation(x_baseline, x_pert, dt=dt)
 
 
 def compute_deviation(x1_traj: np.ndarray, x2_traj: np.ndarray, dt: float, eps: float = 1e5) -> float:
@@ -132,6 +140,13 @@ def compute_deviation(x1_traj: np.ndarray, x2_traj: np.ndarray, dt: float, eps: 
 
 
 def apply_random_perts(n_taxa: int, fraction: float, strength: float) -> np.ndarray:
+    """
+    Apply the specified perturbation to a random fraction of taxa.
+    :param n_taxa:
+    :param fraction:
+    :param strength:
+    :return:
+    """
     perts = np.zeros(n_taxa, dtype=float)
     n_otus_perturb = max(0, int(n_taxa * fraction))
     selection = np.random.choice(a=n_taxa, size=n_otus_perturb, replace=False)
