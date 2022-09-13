@@ -13,6 +13,10 @@ bash create_mdsine2_job.sh 2
 bash create_mdsine2_job.sh 3
 bash create_mdsine2_job.sh 4
 bash create_mdsine2_job.sh 5
+bash create_mdsine2_nomodules_job.sh 2
+bash create_mdsine2_nomodules_job.sh 3
+bash create_mdsine2_nomodules_job.sh 4
+bash create_mdsine2_nomodules_job.sh 5
 
 
 run_script_path=${LSF_DIR}/submit_all.sh
