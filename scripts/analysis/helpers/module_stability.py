@@ -16,7 +16,8 @@ from tqdm import tqdm
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='mcmc_path',
+    parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
+    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='fixed_mcmc_path',
                         required=True,
                         help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
@@ -42,9 +43,10 @@ def main():
 
     study = md2.Study.load(args.study)
     mcmc = md2.BaseMCMC.load(args.mcmc_path)
+    fixed_mcmc = md2.BaseMCMC.load(args.fixed_mcmc_path)
     module_idx_to_remove = args.module_remove_idx
 
-    modules: Clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    modules: Clustering = fixed_mcmc.graph[STRNAMES.CLUSTERING_OBJ]
     module_to_remove = modules.clusters[modules.order[module_idx_to_remove]]
 
     print("Will remove module index {} (ID: {})".format(
