@@ -11,14 +11,18 @@ require_variable "module_idx_to_remove" $module_idx_to_remove
 
 
 seed=0
-study_name="healthy-seed${seed}-fixed-cluster"
-mcmc=$MDSINE2_OUT_DIR/$study_name/mcmc.pkl
+study="healthy-seed${seed}"
+fixed_module_study="healthy-seed${seed}-fixed-cluster"
 
-outdir=${MDSINE2_OUT_DIR}/${study_name}/stability
+mcmc=$MDSINE2_OUT_DIR/${study}/mcmc.pkl
+fixed_module_mcmc=$MDSINE2_OUT_DIR/${fixed_module_study}/mcmc.pkl
+
+outdir=${MDSINE2_OUT_DIR}/${study}/stability
 mkdir -p $outdir
 
 python analysis/helpers/module_stability.py \
-		--fixed-cluster-mcmc-path ${mcmc} \
+		-m $mcmc \
+		-f $fixed_module_mcmc \
 		--study $HEALTHY_DSET \
 		--module-remove-idx ${module_idx_to_remove} \
 		--seed ${seed} \
