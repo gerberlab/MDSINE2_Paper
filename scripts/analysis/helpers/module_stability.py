@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
                         help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
-    parser.add_argument('--module-remove-idx', '-m', dest='module_remove_idx', type=int,
+    parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int,
                         help='Specify which module to remove, specified by index (zero-indexed)')
 
     parser.add_argument('--out-path', '-o', dest='out_path', required=True, type=str)
