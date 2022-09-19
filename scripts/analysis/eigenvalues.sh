@@ -9,13 +9,18 @@ echo "Evaluating MDSINE2 learned model's eigenvalues (exclude clusters)"
 # --------------
 
 seed=0
-study_name="healthy-seed${seed}-fixed-cluster"
-mcmc=$MDSINE2_OUT_DIR/$study_name/mcmc.pkl
+study="healthy-seed${seed}"
+fixed_module_study="healthy-seed${seed}-fixed-cluster"
 
-outdir=${MDSINE2_OUT_DIR}/${study_name}/eigenvalues
+mcmc=$MDSINE2_OUT_DIR/${study}/mcmc.pkl
+fixed_module_mcmc=$MDSINE2_OUT_DIR/${fixed_module_study}/mcmc.pkl
+
+outdir=${MDSINE2_OUT_DIR}/${study}/eigenvalues
 mkdir -p $outdir
 
 # Note: index 19 = day 20
 python analysis/helpers/calculate_eigenvalues.py \
-		-f $mcmc \
+		-m $mcmc \
+		-f $fixed_module_mcmc \
+		--study $HEALTHY_DSET \
 		-o $outdir

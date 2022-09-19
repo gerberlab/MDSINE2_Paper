@@ -1,7 +1,7 @@
 import argparse
 import itertools
 from pathlib import Path
-from typing import Tuple, Iterator
+from typing import Tuple, Iterator, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,12 +16,13 @@ from tqdm import tqdm
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='mcmc_path',
+    parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
+    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='fixed_mcmc_path',
                         required=True,
                         help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
-    parser.add_argument('--module-remove-idx', '-m', dest='module_remove_idx', type=int,
+    parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=False,
                         help='Specify which module to remove, specified by index (zero-indexed)')
 
     parser.add_argument('--out-path', '-o', dest='out_path', required=True, type=str)
@@ -42,15 +43,18 @@ def main():
 
     study = md2.Study.load(args.study)
     mcmc = md2.BaseMCMC.load(args.mcmc_path)
+    fixed_mcmc = md2.BaseMCMC.load(args.fixed_mcmc_path)
     module_idx_to_remove = args.module_remove_idx
 
-    modules: Clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
-    module_to_remove = modules.clusters[modules.order[module_idx_to_remove]]
-
-    print("Will remove module index {} (ID: {})".format(
-        args.module_remove_idx,
-        module_to_remove.id
-    ))
+    if module_idx_to_remove is None:
+        module_to_remove = None
+    else:
+        modules: Clustering = fixed_mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+        module_to_remove = modules.clusters[modules.order[module_idx_to_remove]]
+        print("Will remove module index {} (ID: {})".format(
+            args.module_remove_idx,
+            module_to_remove.id
+        ))
 
     df_entries = []
     for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
@@ -79,7 +83,7 @@ def main():
 def simulate_random_perturbations(
         study: md2.Study,
         mcmc: md2.BaseMCMC,
-        module: _Cluster,
+        module: Optional[_Cluster],
         sim_max: float,
         dt: float,
         n_trials: int
@@ -211,6 +215,9 @@ def exclude_cluster_from(
         growth_rates: np.ndarray,
         interactions: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    if cluster_to_remove is None:
+        return initial_conditions, growth_rates, interactions
+
     oidx_to_remove = set(oidx for oidx in cluster_to_remove.members)
     oidx_to_keep = [
         oidx

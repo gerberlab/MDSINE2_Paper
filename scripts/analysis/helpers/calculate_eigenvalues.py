@@ -4,7 +4,7 @@ Analyzes a keystonness-like array of eigenvalue decompositions.
 
 import argparse
 from pathlib import Path
-from typing import Iterator, Tuple
+from typing import Iterator, Tuple, Iterable
 
 import numpy as np
 import scipy.linalg
@@ -17,9 +17,11 @@ from mdsine2.base.cluster import _Cluster
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='mcmc_path',
+    parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
+    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='fixed_mcmc_path',
                         required=True,
                         help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
+    parser.add_argument('--study-path', '-s', dest='study_path', required=True, type=str)
     parser.add_argument('--output', '-o', type=str, dest='out_dir',
                         required=True,
                         help='Directory to save desired output eigenvalues (.npy format).')
@@ -45,27 +47,31 @@ def load_interactions(mcmc: md2.BaseMCMC):
     return interactions
 
 
-def compute_eigenvalues(mcmc: md2.BaseMCMC, taxa: TaxaSet) -> Iterator[Tuple[int, int, np.ndarray]]:
+def compute_eigenvalues(mcmc: md2.BaseMCMC,
+                        modules: Iterable[_Cluster],
+                        taxa: TaxaSet) -> Iterator[Tuple[int, int, np.ndarray]]:
     interactions = load_interactions(mcmc)
-    for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
+    for module_idx, module in enumerate(modules):
         eigs = []
-        for interaction_matrix in sub_interaction_matrix(interactions, taxa, excluded_cluster=cluster):
+        for interaction_matrix in sub_interaction_matrix(interactions, taxa, excluded_cluster=module):
             eig = scipy.linalg.eigvals(interaction_matrix)
             eigs.append(eig)
-        yield cluster_idx, cluster.id, np.array(eigs)
+        yield module_idx, module.id, np.array(eigs)
 
 
 def main():
     args = parse_args()
 
-    mcmc_path = Path(args.mcmc_path)
-    mcmc = md2.BaseMCMC.load(str(mcmc_path))
-    study = md2.Study.load(str(mcmc_path.parent / "subjset.pkl"))
+    mcmc = md2.BaseMCMC.load(args.mcmc_path)
+    fixed_cluster_mcmc = md2.BaseMCMC.load(args.fixed_mcmc_path)
+    modules = fixed_cluster_mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+
+    study = md2.Study.load(args.study_path)
     taxa = study.taxa
 
     out_dir = Path(args.out_dir)
     print(f"Output directory: {out_dir}")
-    for cluster_idx, cluster_id, sample_eigs in compute_eigenvalues(mcmc, taxa):
+    for cluster_idx, cluster_id, sample_eigs in compute_eigenvalues(mcmc, modules, taxa):
         print(f"Computed eigenvalues by excluding cluster IDX:{cluster_idx} ID:{cluster_id}")
         out_path = out_dir / f'eigenvalues_exclude_cluster_{cluster_idx}-{cluster_id}.npy'
         np.save(str(out_path), sample_eigs)
