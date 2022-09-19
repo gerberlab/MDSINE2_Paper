@@ -1,0 +1,453 @@
+ko00010, Glycolysis / Gluconeogenesis	eu : 15,pro : 34,both : 56
+ko00071, Fatty acid degradation	eu : 19,pro : 6,both : 32
+ko00350, Tyrosine metabolism	eu : 20,pro : 15,both : 46
+ko00625, Chloroalkane and chloroalkene degradation	eu : 0,pro : 21,both : 22
+ko00626, Naphthalene degradation	eu : 0,pro : 0,both : 29
+ko00830, Retinol metabolism	eu : 34,pro : 0,both : 14
+ko00980, Metabolism of xenobiotics by cytochrome P450	eu : 19,pro : 0,both : 15
+ko00982, Drug metabolism - cytochrome P450	eu : 16,pro : 0,both : 9
+ko01100, Metabolic pathways	eu : 912,pro : 1315,both : 2041
+ko01110, Biosynthesis of secondary metabolites	eu : 327,pro : 409,both : 1170
+ko01120, Microbial metabolism in diverse environments	eu : 58,pro : 538,both : 598
+ko01220, Degradation of aromatic compounds	eu : 2,pro : 83,both : 130
+ko00040, Pentose and glucuronate interconversions	eu : 8,pro : 33,both : 38
+ko00561, Glycerolipid metabolism	eu : 44,pro : 16,both : 30
+ko00930, Caprolactam degradation	eu : 3,pro : 3,both : 16
+ko00260, Glycine	eu : 6,pro : 21,both : 73
+ko00270, Cysteine and methionine metabolism	eu : 20,pro : 35,both : 62
+ko00300, Lysine biosynthesis	eu : 5,pro : 21,both : 21
+ko01230, Biosynthesis of amino acids	eu : 22,pro : 66,both : 149
+ko00650, Butanoate metabolism	eu : 6,pro : 36,both : 57
+ko00640, Propanoate metabolism	eu : 11,pro : 47,both : 52
+ko00564, Glycerophospholipid metabolism	eu : 44,pro : 21,both : 46
+ko04011, koK signaling pathway - yeast	eu : 89,pro : 0,both : 2
+ko00051, Fructose and mannose metabolism	eu : 10,pro : 52,both : 49
+ko00521, Streptomycin biosynthesis	eu : 1,pro : 8,both : 11
+ko00562, Inositol phosphate metabolism	eu : 43,pro : 14,both : 19
+ko00052, Galactose metabolism	eu : 15,pro : 35,both : 27
+ko00790, Folate biosynthesis	eu : 13,pro : 24,both : 44
+ko00053, Ascorbate and aldarate metabolism	eu : 7,pro : 19,both : 24
+ko00520, Amino sugar and nucleotide sugar metabolism	eu : 9,pro : 57,both : 81
+ko00340, Histidine metabolism	eu : 9,pro : 12,both : 26
+ko00400, Phenylalanine	eu : 12,pro : 22,both : 37
+ko00630, Glyoxylate and dicarboxylate metabolism	eu : 6,pro : 38,both : 56
+ko00620, Pyruvate metabolism	eu : 12,pro : 33,both : 62
+ko04066, HIF-1 signaling pathway	eu : 59,pro : 0,both : 17
+ko04922, Glucagon signaling pathway	eu : 41,pro : 0,both : 16
+ko05230, Central carbon metabolism in cancer	eu : 36,pro : 0,both : 13
+ko00680, Methane metabolism	eu : 3,pro : 139,both : 47
+ko01200, Carbon metabolism	eu : 30,pro : 171,both : 155
+ko00072, Synthesis and degradation of ketone bodies	eu : 0,pro : 3,both : 5
+ko00280, Valine	eu : 10,pro : 18,both : 42
+ko00900, Terpenoid backbone biosynthesis	eu : 14,pro : 10,both : 34
+ko04152, AMPK signaling pathway	eu : 70,pro : 0,both : 14
+ko04976, Bile secretion	eu : 55,pro : 0,both : 7
+ko00062, Fatty acid elongation	eu : 17,pro : 0,both : 7
+ko00281, Geraniol degradation	eu : 0,pro : 6,both : 10
+ko00310, Lysine degradation	eu : 45,pro : 16,both : 23
+ko00380, Tryptophan metabolism	eu : 34,pro : 7,both : 37
+ko01212, Fatty acid metabolism	eu : 31,pro : 11,both : 42
+ko00020, Citrate cycle (TCA cycle)	eu : 8,pro : 24,both : 29
+ko00710, Carbon fixation in photosynthetic organisms	eu : 9,pro : 4,both : 23
+ko00720, Carbon fixation pathways in prokaryotes	eu : 0,pro : 68,both : 38
+ko04964, Proximal tubule bicarbonate reclamation	eu : 10,pro : 0,both : 4
+ko02020, Two-component system	eu : 5,pro : 367,both : 123
+ko03320, PPAR signaling pathway	eu : 47,pro : 0,both : 16
+ko01210, 2-Oxocarboxylic acid metabolism	eu : 27,pro : 19,both : 36
+ko00480, Glutathione metabolism	eu : 19,pro : 6,both : 31
+ko04146, Peroxisome	eu : 44,pro : 0,both : 29
+ko00030, Pentose phosphate pathway	eu : 4,pro : 41,both : 39
+ko00120, Primary bile acid biosynthesis	eu : 14,pro : 1,both : 3
+ko00140, Steroid hormone biosynthesis	eu : 34,pro : 2,both : 10
+ko04913, Ovarian steroidogenesis	eu : 32,pro : 0,both : 8
+ko00290, Valine	eu : 3,pro : 4,both : 12
+ko00660, C5-Branched dibasic acid metabolism	eu : 3,pro : 12,both : 14
+ko00770, Pantothenate and CoA biosynthesis	eu : 4,pro : 15,both : 25
+ko00360, Phenylalanine metabolism	eu : 14,pro : 18,both : 45
+ko00622, Xylene degradation	eu : 0,pro : 16,both : 18
+ko00623, Toluene degradation	eu : 0,pro : 1,both : 45
+ko00061, Fatty acid biosynthesis	eu : 8,pro : 8,both : 23
+ko00333, Prodigiosin biosynthesis	eu : 0,pro : 6,both : 14
+ko00780, Biotin metabolism	eu : 2,pro : 7,both : 14
+ko00523, Polyketide sugar unit biosynthesis	eu : 1,pro : 7,both : 51
+ko05202, Transcriptional misregulation in cancer	eu : 157,pro : 0,both : 5
+ko04925, Aldosterone synthesis and secretion	eu : 63,pro : 0,both : 2
+ko04927, Cortisol synthesis and secretion	eu : 53,pro : 0,both : 1
+ko04934, Cushing syndrome	eu : 118,pro : 0,both : 4
+ko04960, Aldosterone-regulated sodium reabsorption	eu : 24,pro : 0,both : 2
+ko00230, Purine metabolism	eu : 59,pro : 51,both : 100
+ko00362, Benzoate degradation	eu : 2,pro : 31,both : 73
+ko00550, Peptidoglycan biosynthesis	eu : 0,pro : 32,both : 19
+ko00121, Secondary bile acid biosynthesis	eu : 0,pro : 3,both : 12
+ko00590, Arachidonic acid metabolism	eu : 27,pro : 1,both : 17
+ko05204, Chemical carcinogenesis	eu : 24,pro : 0,both : 14
+ko00740, Riboflavin metabolism	eu : 9,pro : 20,both : 20
+ko00940, Phenylpropanoid biosynthesis	eu : 22,pro : 0,both : 16
+ko00983, Drug metabolism - other enzymes	eu : 7,pro : 0,both : 25
+ko00750, Vitamin B6 metabolism	eu : 4,pro : 10,both : 10
+ko00232, Caffeine metabolism	eu : 2,pro : 1,both : 13
+ko00330, Arginine and proline metabolism	eu : 20,pro : 37,both : 51
+ko00410, beta-Alanine metabolism	eu : 13,pro : 8,both : 23
+ko00903, Limonene and pinene degradation	eu : 0,pro : 1,both : 11
+ko00981, Insect hormone biosynthesis	eu : 12,pro : 0,both : 6
+ko00261, Monobactam biosynthesis	eu : 0,pro : 4,both : 24
+ko05010, Alzheimer disease	eu : 257,pro : 0,both : 30
+ko05130, Pathogenic Escherichia coli infection	eu : 113,pro : 24,both : 13
+ko05132, Salmonella infection	eu : 154,pro : 25,both : 24
+ko00250, Alanine	eu : 14,pro : 10,both : 46
+ko00760, Nicotinate and nicotinamide metabolism	eu : 17,pro : 15,both : 65
+ko00627, Aminobenzoate degradation	eu : 4,pro : 34,both : 43
+ko00220, Arginine biosynthesis	eu : 11,pro : 18,both : 30
+ko00643, Styrene degradation	eu : 1,pro : 8,both : 16
+ko00332, Carbapenem biosynthesis	eu : 0,pro : 16,both : 3
+ko04630, JAK-STAT signaling pathway	eu : 133,pro : 0,both : 5
+ko00633, Nitrotoluene degradation	eu : 0,pro : 13,both : 9
+ko04310, Wnt signaling pathway	eu : 114,pro : 0,both : 5
+ko04150, mTOR signaling pathway	eu : 109,pro : 0,both : 8
+ko04390, Hippo signaling pathway	eu : 112,pro : 0,both : 3
+ko04550, Signaling pathways regulating pluripotency of stem cells	eu : 111,pro : 0,both : 3
+ko04916, Melanogenesis	eu : 64,pro : 0,both : 3
+ko05165, Human papillomavirus infection	eu : 211,pro : 0,both : 20
+ko05200, Pathways in cancer	eu : 392,pro : 0,both : 25
+ko05205, Proteoglycans in cancer	eu : 156,pro : 0,both : 9
+ko05217, Basal cell carcinoma	eu : 47,pro : 0,both : 1
+ko05224, Breast cancer	eu : 100,pro : 0,both : 5
+ko05225, Hepatocellular carcinoma	eu : 110,pro : 0,both : 6
+ko05226, Gastric cancer	eu : 104,pro : 0,both : 4
+ko00920, Sulfur metabolism	eu : 5,pro : 51,both : 53
+ko00440, Phosphonate and phosphinate metabolism	eu : 3,pro : 13,both : 27
+ko00240, Pyrimidine metabolism	eu : 14,pro : 22,both : 64
+ko00100, Steroid biosynthesis	eu : 15,pro : 0,both : 19
+ko00860, Porphyrin and chlorophyll metabolism	eu : 14,pro : 53,both : 62
+ko01053, Biosynthesis of siderophore group nonribosomal peptides	eu : 0,pro : 34,both : 3
+ko00361, Chlorocyclohexane and chlorobenzene degradation	eu : 0,pro : 12,both : 28
+ko00364, Fluorobenzoate degradation	eu : 0,pro : 4,both : 14
+ko00401, Novobiocin biosynthesis	eu : 2,pro : 2,both : 26
+ko00592, alpha-Linolenic acid metabolism	eu : 11,pro : 1,both : 13
+ko01040, Biosynthesis of unsaturated fatty acids	eu : 19,pro : 3,both : 10
+ko04024, cAMP signaling pathway	eu : 152,pro : 0,both : 11
+ko00190, Oxidative phosphorylation	eu : 96,pro : 57,both : 65
+ko04714, Thermogenesis	eu : 155,pro : 0,both : 32
+ko04932, Non-alcoholic fatty liver disease (NAFLD)	eu : 111,pro : 0,both : 14
+ko05012, Parkinson disease	eu : 161,pro : 0,both : 33
+ko05014, Amyotrophic lateral sclerosis (ALS)	eu : 250,pro : 0,both : 30
+ko05016, Huntington disease	eu : 196,pro : 0,both : 33
+ko05134, Legionellosis	eu : 39,pro : 19,both : 11
+ko00430, Taurine and hypotaurine metabolism	eu : 2,pro : 8,both : 14
+ko00910, Nitrogen metabolism	eu : 7,pro : 24,both : 34
+ko00471, D-Glutamine and D-glutamate metabolism	eu : 0,pro : 4,both : 6
+ko04217, Necroptosis	eu : 81,pro : 0,both : 15
+ko00311, Penicillin and cephalosporin biosynthesis	eu : 1,pro : 5,both : 10
+ko00472, D-Arginine and D-ornithine metabolism	eu : 0,pro : 6,both : 3
+ko00950, Isoquinoline alkaloid biosynthesis	eu : 11,pro : 0,both : 51
+ko04726, Serotonergic synapse	eu : 75,pro : 0,both : 10
+ko04728, Dopaminergic synapse	eu : 75,pro : 0,both : 9
+ko05030, Cocaine addiction	eu : 35,pro : 0,both : 4
+ko05031, Amphetamine addiction	eu : 39,pro : 0,both : 7
+ko05034, Alcoholism	eu : 75,pro : 0,both : 11
+ko00960, Tropane	eu : 8,pro : 3,both : 15
+ko00908, Zeatin biosynthesis	eu : 6,pro : 0,both : 4
+ko00670, One carbon pool by folate	eu : 6,pro : 6,both : 25
+ko01523, Antifolate resistance	eu : 19,pro : 0,both : 7
+ko05206, MicroRNAs in cancer	eu : 230,pro : 0,both : 15
+ko00130, Ubiquinone and other terpenoid-quinone biosynthesis	eu : 10,pro : 16,both : 32
+ko05418, Fluid shear stress and atherosclerosis	eu : 85,pro : 0,both : 14
+ko04918, Thyroid hormone synthesis	eu : 47,pro : 0,both : 6
+ko00450, Selenocompound metabolism	eu : 4,pro : 9,both : 20
+ko04360, Axon guidance	eu : 123,pro : 0,both : 4
+ko04919, Thyroid hormone signaling pathway	eu : 84,pro : 0,both : 7
+ko04260, Cardiac muscle contraction	eu : 60,pro : 0,both : 7
+ko05320, Autoimmune thyroid disease	eu : 23,pro : 0,both : 2
+ko00624, Polycyclic aromatic hydrocarbon degradation	eu : 0,pro : 20,both : 23
+ko00591, Linoleic acid metabolism	eu : 13,pro : 2,both : 10
+ko04750, Inflammatory mediator regulation of TRP channels	eu : 64,pro : 0,both : 4
+ko04216, Ferroptosis	eu : 29,pro : 0,both : 4
+ko04664, Fc epsilon RI signaling pathway	eu : 44,pro : 0,both : 3
+ko05145, Toxoplasmosis	eu : 88,pro : 0,both : 7
+ko00621, Dioxin degradation	eu : 0,pro : 11,both : 20
+ko05143, African trypanosomiasis	eu : 36,pro : 0,both : 5
+ko00941, Flavonoid biosynthesis	eu : 8,pro : 0,both : 19
+ko04020, Calcium signaling pathway	eu : 149,pro : 0,both : 9
+ko00945, Stilbenoid	eu : 4,pro : 0,both : 8
+ko04979, Cholesterol metabolism	eu : 45,pro : 0,both : 4
+ko02024, Quorum sensing	eu : 0,pro : 221,both : 61
+ko00460, Cyanoamino acid metabolism	eu : 13,pro : 4,both : 19
+ko04917, Prolactin signaling pathway	eu : 48,pro : 0,both : 9
+ko04361, Axon regeneration	eu : 52,pro : 0,both : 7
+ko00965, Betalain biosynthesis	eu : 0,pro : 0,both : 7
+ko04212, Longevity regulating pathway - worm	eu : 44,pro : 0,both : 13
+ko04611, Platelet activation	eu : 84,pro : 0,both : 6
+ko04923, Regulation of lipolysis in adipocytes	eu : 38,pro : 0,both : 8
+ko04978, Mineral absorption	eu : 30,pro : 0,both : 6
+ko00909, Sesquiterpenoid and triterpenoid biosynthesis	eu : 26,pro : 8,both : 39
+ko00906, Carotenoid biosynthesis	eu : 10,pro : 17,both : 22
+ko03015, mRNA surveillance pathway	eu : 56,pro : 0,both : 7
+ko04122, Sulfur relay system	eu : 3,pro : 9,both : 16
+ko02030, Bacterial chemotaxis	eu : 0,pro : 9,both : 17
+ko00970, Aminoacyl-tRNA biosynthesis	eu : 3,pro : 9,both : 54
+ko01051, Biosynthesis of ansamycins	eu : 0,pro : 29,both : 3
+ko04725, Cholinergic synapse	eu : 83,pro : 0,both : 7
+ko04975, Fat digestion and absorption	eu : 23,pro : 0,both : 5
+ko00642, Ethylbenzene degradation	eu : 0,pro : 11,both : 5
+ko05111, Biofilm formation - Vibrio cholerae	eu : 0,pro : 91,both : 15
+ko00600, Sphingolipid metabolism	eu : 22,pro : 3,both : 19
+ko04071, Sphingolipid signaling pathway	eu : 67,pro : 0,both : 13
+ko04138, Autophagy - yeast	eu : 73,pro : 0,both : 4
+ko04712, Circadian rhythm - plant	eu : 26,pro : 0,both : 1
+ko04910, Insulin signaling pathway	eu : 73,pro : 0,both : 15
+ko00540, Lipopolysaccharide biosynthesis	eu : 0,pro : 35,both : 24
+ko01503, Cationic antimicrobial peptide (CAMP) resistance	eu : 0,pro : 39,both : 15
+ko04977, Vitamin digestion and absorption	eu : 18,pro : 0,both : 5
+ko01501, beta-Lactam resistance	eu : 0,pro : 40,both : 72
+ko00500, Starch and sucrose metabolism	eu : 18,pro : 31,both : 56
+ko02026, Biofilm formation - Escherichia coli	eu : 0,pro : 41,both : 20
+ko04931, Insulin resistance	eu : 64,pro : 1,both : 9
+ko04151, PI3K-Akt signaling pathway	eu : 248,pro : 0,both : 15
+ko00601, Glycosphingolipid biosynthesis - lacto and neolacto series	eu : 22,pro : 0,both : 5
+ko00512, Mucin type O-glycan biosynthesis	eu : 9,pro : 0,both : 2
+ko00514, Other types of O-glycan biosynthesis	eu : 28,pro : 0,both : 3
+ko00604, Glycosphingolipid biosynthesis - ganglio series	eu : 13,pro : 0,both : 1
+ko00510, N-Glycan biosynthesis	eu : 31,pro : 0,both : 14
+ko00513, Various types of N-glycan biosynthesis	eu : 39,pro : 0,both : 13
+ko00533, Glycosaminoglycan biosynthesis - keratan sulfate	eu : 11,pro : 0,both : 3
+ko00603, Glycosphingolipid biosynthesis - globo and isoglobo series	eu : 10,pro : 1,both : 4
+ko00515, Mannose type O-glycan biosynthesis	eu : 18,pro : 0,both : 3
+ko04141, Protein processing in endoplasmic reticulum	eu : 122,pro : 0,both : 19
+ko00532, Glycosaminoglycan biosynthesis - chondroitin sulfate / dermatan sulfate	eu : 12,pro : 0,both : 6
+ko00534, Glycosaminoglycan biosynthesis - heparan sulfate / heparin	eu : 17,pro : 0,both : 5
+ko05219, Bladder cancer	eu : 35,pro : 0,both : 3
+ko03013, RNA transport	eu : 121,pro : 0,both : 21
+ko05164, Influenza A	eu : 110,pro : 0,both : 18
+ko05166, Human T-cell leukemia virus 1 infection	eu : 167,pro : 0,both : 15
+ko00730, Thiamine metabolism	eu : 8,pro : 7,both : 21
+ko01524, Platinum drug resistance	eu : 40,pro : 0,both : 6
+ko00565, Ether lipid metabolism	eu : 14,pro : 2,both : 15
+ko00473, D-Alanine metabolism	eu : 0,pro : 3,both : 3
+ko00966, Glucosinolate biosynthesis	eu : 17,pro : 0,both : 4
+ko00524, Neomycin	eu : 1,pro : 0,both : 56
+ko04930, Type II diabetes mellitus	eu : 33,pro : 0,both : 4
+ko04973, Carbohydrate digestion and absorption	eu : 19,pro : 0,both : 3
+ko05131, Shigellosis	eu : 159,pro : 27,both : 17
+ko03018, RNA degradation	eu : 46,pro : 2,both : 31
+ko04622, RIG-I-like receptor signaling pathway	eu : 51,pro : 0,both : 2
+ko04626, Plant-pathogen interaction	eu : 47,pro : 12,both : 27
+ko05203, Viral carcinogenesis	eu : 126,pro : 0,both : 48
+ko02060, Phosphotransferase system (PTS)	eu : 0,pro : 59,both : 12
+ko04070, Phosphatidylinositol signaling system	eu : 47,pro : 0,both : 8
+ko04072, Phospholipase D signaling pathway	eu : 99,pro : 0,both : 9
+ko04139, Mitophagy - yeast	eu : 32,pro : 0,both : 2
+ko04144, Endocytosis	eu : 148,pro : 0,both : 18
+ko04510, Focal adhesion	eu : 140,pro : 0,both : 9
+ko04666, Fc gamma R-mediated phagocytosis	eu : 57,pro : 0,both : 5
+ko04810, Regulation of actin cytoskeleton	eu : 153,pro : 0,both : 8
+ko05135, Yersinia infection	eu : 102,pro : 10,both : 5
+ko05231, Choline metabolism in cancer	eu : 51,pro : 0,both : 10
+ko04022, cGMP-PKG signaling pathway	eu : 113,pro : 0,both : 8
+ko04270, Vascular smooth muscle contraction	eu : 90,pro : 0,both : 5
+ko04371, Apelin signaling pathway	eu : 97,pro : 0,both : 7
+ko04921, Oxytocin signaling pathway	eu : 104,pro : 0,both : 8
+ko04971, Gastric acid secretion	eu : 48,pro : 0,both : 2
+ko04062, Chemokine signaling pathway	eu : 156,pro : 0,both : 3
+ko04744, Phototransduction	eu : 17,pro : 0,both : 1
+ko04340, Hedgehog signaling pathway	eu : 37,pro : 0,both : 2
+ko04724, Glutamatergic synapse	eu : 82,pro : 0,both : 6
+ko04740, Olfactory transduction	eu : 21,pro : 0,both : 4
+ko04745, Phototransduction - fly	eu : 17,pro : 0,both : 1
+ko05032, Morphine addiction	eu : 59,pro : 0,both : 5
+ko04136, Autophagy - other	eu : 23,pro : 0,both : 0
+ko04140, Autophagy - animal	eu : 100,pro : 0,both : 9
+ko04145, Phagosome	eu : 86,pro : 0,both : 9
+ko05017, Spinocerebellar ataxia	eu : 101,pro : 0,both : 8
+ko05152, Tuberculosis	eu : 115,pro : 6,both : 10
+ko05167, Kaposi sarcoma-associated herpesvirus infection	eu : 132,pro : 0,both : 32
+ko01521, EGFR tyrosine kinase inhibitor resistance	eu : 63,pro : 0,both : 4
+ko01522, Endocrine resistance	eu : 72,pro : 0,both : 5
+ko04012, ErbB signaling pathway	eu : 66,pro : 0,both : 3
+ko04014, Ras signaling pathway	eu : 169,pro : 0,both : 11
+ko04015, Rap1 signaling pathway	eu : 156,pro : 0,both : 6
+ko04068, FoxO signaling pathway	eu : 96,pro : 0,both : 6
+ko04210, Apoptosis	eu : 98,pro : 0,both : 12
+ko04211, Longevity regulating pathway	eu : 65,pro : 0,both : 3
+ko04213, Longevity regulating pathway - multiple species	eu : 52,pro : 0,both : 6
+ko04218, Cellular senescence	eu : 113,pro : 0,both : 4
+ko04370, VEGF signaling pathway	eu : 34,pro : 0,both : 5
+ko04380, Osteoclast differentiation	eu : 92,pro : 0,both : 7
+ko04620, Toll-like receptor signaling pathway	eu : 72,pro : 0,both : 4
+ko04625, C-type lectin receptor signaling pathway	eu : 79,pro : 0,both : 3
+ko04650, Natural killer cell mediated cytotoxicity	eu : 90,pro : 0,both : 3
+ko04660, T cell receptor signaling pathway	eu : 84,pro : 0,both : 2
+ko04662, B cell receptor signaling pathway	eu : 56,pro : 0,both : 2
+ko04668, TNF signaling pathway	eu : 86,pro : 0,both : 6
+ko04670, Leukocyte transendothelial migration	eu : 74,pro : 0,both : 1
+ko04722, Neurotrophin signaling pathway	eu : 86,pro : 0,both : 4
+ko04914, Progesterone-mediated oocyte maturation	eu : 60,pro : 0,both : 4
+ko04915, Estrogen signaling pathway	eu : 70,pro : 0,both : 7
+ko04926, Relaxin signaling pathway	eu : 87,pro : 0,both : 9
+ko04929, GnRH secretion	eu : 49,pro : 0,both : 2
+ko04933, AGE-RAGE signaling pathway in diabetic complications	eu : 70,pro : 0,both : 6
+ko04935, Growth hormone synthesis	eu : 86,pro : 0,both : 5
+ko05100, Bacterial invasion of epithelial cells	eu : 54,pro : 17,both : 3
+ko05142, Chagas disease (American trypanosomiasis)	eu : 80,pro : 0,both : 5
+ko05146, Amoebiasis	eu : 77,pro : 0,both : 10
+ko05160, Hepatitis C	eu : 97,pro : 0,both : 14
+ko05161, Hepatitis B	eu : 122,pro : 0,both : 10
+ko05162, Measles	eu : 104,pro : 0,both : 13
+ko05163, Human cytomegalovirus infection	eu : 166,pro : 0,both : 26
+ko05168, Herpes simplex virus 1 infection	eu : 121,pro : 0,both : 26
+ko05169, Epstein-Barr virus infection	eu : 146,pro : 0,both : 26
+ko05170, Human immunodeficiency virus 1 infection	eu : 150,pro : 0,both : 13
+ko05210, Colorectal cancer	eu : 67,pro : 0,both : 5
+ko05211, Renal cell carcinoma	eu : 52,pro : 0,both : 4
+ko05212, Pancreatic cancer	eu : 60,pro : 0,both : 3
+ko05213, Endometrial cancer	eu : 43,pro : 0,both : 2
+ko05214, Glioma	eu : 51,pro : 0,both : 3
+ko05215, Prostate cancer	eu : 75,pro : 0,both : 6
+ko05218, Melanoma	eu : 48,pro : 0,both : 2
+ko05220, Chronic myeloid leukemia	eu : 59,pro : 0,both : 4
+ko05221, Acute myeloid leukemia	eu : 55,pro : 0,both : 2
+ko05222, Small cell lung cancer	eu : 67,pro : 0,both : 7
+ko05223, Non-small cell lung cancer	eu : 57,pro : 0,both : 1
+ko05235, PD-L1 expression and PD-1 checkpoint pathway in cancer	eu : 71,pro : 0,both : 2
+ko04016, koK signaling pathway - plant	eu : 46,pro : 0,both : 8
+ko00525, Acarbose and validamycin biosynthesis	eu : 0,pro : 19,both : 8
+ko03450, Non-homologous end-joining	eu : 16,pro : 0,both : 3
+ko04640, Hematopoietic cell lineage	eu : 79,pro : 0,both : 1
+ko01502, Vancomycin resistance	eu : 0,pro : 14,both : 8
+ko04972, Pancreatic secretion	eu : 59,pro : 0,both : 10
+ko04142, Lysosome	eu : 75,pro : 0,both : 30
+ko04723, Retrograde endocannabinoid signaling	eu : 102,pro : 0,both : 17
+ko04920, Adipocytokine signaling pathway	eu : 49,pro : 0,both : 4
+ko04115, p53 signaling pathway	eu : 62,pro : 0,both : 5
+ko04912, GnRH signaling pathway	eu : 58,pro : 0,both : 6
+ko04928, Parathyroid hormone synthesis	eu : 77,pro : 0,both : 8
+ko04064, NF-kappa B signaling pathway	eu : 93,pro : 0,both : 4
+ko04658, Th1 and Th2 cell differentiation	eu : 64,pro : 0,both : 3
+ko04659, Th17 cell differentiation	eu : 84,pro : 0,both : 2
+ko05110, Vibrio cholerae infection	eu : 29,pro : 10,both : 10
+ko05120, Epithelial cell signaling in Helicobacter pylori infection	eu : 51,pro : 38,both : 2
+ko00563, Glycosylphosphatidylinositol (GPI)-anchor biosynthesis	eu : 23,pro : 0,both : 3
+ko00531, Glycosaminoglycan degradation	eu : 2,pro : 0,both : 13
+ko03430, Mismatch repair	eu : 14,pro : 5,both : 25
+ko03410, Base excision repair	eu : 18,pro : 4,both : 21
+ko03440, Homologous recombination	eu : 39,pro : 10,both : 23
+ko03008, Ribosome biogenesis in eukaryotes	eu : 61,pro : 0,both : 21
+ko04621, NOD-like receptor signaling pathway	eu : 128,pro : 3,both : 11
+ko04970, Salivary secretion	eu : 57,pro : 0,both : 7
+ko00511, Other glycan degradation	eu : 6,pro : 4,both : 12
+ko00944, Flavone and flavonol biosynthesis	eu : 6,pro : 0,both : 9
+ko04614, Renin-angiotensin system	eu : 19,pro : 0,both : 3
+ko04974, Protein digestion and absorption	eu : 46,pro : 0,both : 13
+ko04924, Renin secretion	eu : 46,pro : 0,both : 4
+ko05410, Hypertrophic cardiomyopathy (HCM)	eu : 77,pro : 0,both : 2
+ko04940, Type I diabetes mellitus	eu : 22,pro : 0,both : 3
+ko04610, Complement and coagulation cascades	eu : 80,pro : 0,both : 1
+ko04080, Neuroactive ligand-receptor interaction	eu : 298,pro : 0,both : 12
+ko05150, Staphylococcus aureus infection	eu : 47,pro : 22,both : 5
+ko05322, Systemic lupus erythematosus	eu : 41,pro : 0,both : 4
+ko04961, Endocrine and other factor-regulated calcium reabsorption	eu : 31,pro : 0,both : 2
+ko05133, Pertussis	eu : 53,pro : 16,both : 10
+ko04112, Cell cycle - Caulobacter	eu : 0,pro : 19,both : 12
+ko05330, Allograft rejection	eu : 22,pro : 0,both : 0
+ko05332, Graft-versus-host disease	eu : 22,pro : 0,both : 0
+ko04612, Antigen processing and presentation	eu : 44,pro : 0,both : 2
+ko05323, Rheumatoid arthritis	eu : 61,pro : 0,both : 6
+ko04623, Cytosolic DNA-sensing pathway	eu : 46,pro : 0,both : 5
+ko04657, IL-17 signaling pathway	eu : 77,pro : 0,both : 4
+ko05140, Leishmaniasis	eu : 55,pro : 0,both : 4
+ko04727, GABAergic synapse	eu : 59,pro : 0,both : 10
+ko00791, Atrazine degradation	eu : 2,pro : 4,both : 10
+ko04624, Toll and Imd signaling pathway	eu : 55,pro : 0,both : 2
+ko05340, Primary immunodeficiency	eu : 35,pro : 0,both : 2
+ko04742, Taste transduction	eu : 40,pro : 0,both : 1
+ko04214, Apoptosis - fly	eu : 51,pro : 0,both : 5
+ko04721, Synaptic vesicle cycle	eu : 48,pro : 0,both : 7
+ko04261, Adrenergic signaling in cardiomyocytes	eu : 89,pro : 0,both : 6
+ko04911, Insulin secretion	eu : 66,pro : 0,both : 2
+ko04966, Collecting duct acid secretion	eu : 16,pro : 0,both : 1
+ko00901, Indole alkaloid biosynthesis	eu : 6,pro : 0,both : 24
+ko00405, Phenazine biosynthesis	eu : 0,pro : 11,both : 5
+ko02025, Biofilm formation - Pseudomonas aeruginosa	eu : 0,pro : 79,both : 11
+ko01055, Biosynthesis of vancomycin group antibiotics	eu : 0,pro : 15,both : 14
+ko04113, Meiosis - yeast	eu : 98,pro : 0,both : 5
+ko01054, Nonribosomal peptide structures	eu : 0,pro : 25,both : 29
+ko00984, Steroid degradation	eu : 0,pro : 13,both : 2
+ko00998, Biosynthesis of various secondary metabolites - part 2	eu : 9,pro : 9,both : 37
+ko00254, Aflatoxin biosynthesis	eu : 6,pro : 0,both : 7
+ko00997, Biosynthesis of various secondary metabolites - part 3	eu : 0,pro : 21,both : 12
+ko03030, DNA replication	eu : 24,pro : 11,both : 25
+ko03420, Nucleotide excision repair	eu : 31,pro : 0,both : 16
+ko03010, Ribosome	eu : 48,pro : 6,both : 89
+ko03060, Protein export	eu : 13,pro : 4,both : 22
+ko02010, ABC transporters	eu : 47,pro : 326,both : 142
+ko04215, Apoptosis - multiple species	eu : 37,pro : 0,both : 3
+ko04110, Cell cycle	eu : 106,pro : 0,both : 4
+ko04114, Oocyte meiosis	eu : 72,pro : 0,both : 7
+ko04540, Gap junction	eu : 54,pro : 0,both : 6
+ko04530, Tight junction	eu : 98,pro : 0,both : 3
+ko00196, Photosynthesis - antenna proteins	eu : 12,pro : 23,both : 7
+ko04320, Dorso-ventral axis formation	eu : 24,pro : 0,both : 4
+ko04013, koK signaling pathway - fly	eu : 79,pro : 0,both : 5
+ko04520, Adherens junction	eu : 62,pro : 0,both : 1
+ko05216, Thyroid cancer	eu : 32,pro : 0,both : 2
+ko05412, Arrhythmogenic right ventricular cardiomyopathy (ARVC)	eu : 68,pro : 0,both : 0
+ko00195, Photosynthesis	eu : 8,pro : 5,both : 50
+ko05020, Prion diseases	eu : 28,pro : 0,both : 3
+ko04111, Cell cycle - yeast	eu : 124,pro : 0,both : 2
+ko04713, Circadian entrainment	eu : 76,pro : 0,both : 3
+ko04720, Long-term potentiation	eu : 40,pro : 0,both : 3
+ko04010, koK signaling pathway	eu : 225,pro : 0,both : 10
+ko05416, Viral myocarditis	eu : 37,pro : 0,both : 2
+ko03022, Basal transcription factors	eu : 30,pro : 0,both : 6
+ko04120, Ubiquitin mediated proteolysis	eu : 117,pro : 0,both : 14
+ko04392, Hippo signaling pathway - multiple species	eu : 24,pro : 0,both : 1
+ko04710, Circadian rhythm	eu : 23,pro : 0,both : 1
+ko04711, Circadian rhythm - fly	eu : 11,pro : 0,both : 0
+ko04391, Hippo signaling pathway - fly	eu : 50,pro : 0,both : 3
+ko03460, Fanconi anemia pathway	eu : 50,pro : 0,both : 4
+ko04330, Notch signaling pathway	eu : 30,pro : 0,both : 3
+ko02040, Flagellar assembly	eu : 0,pro : 18,both : 22
+ko03070, Bacterial secretion system	eu : 0,pro : 46,both : 28
+ko05321, Inflammatory bowel disease (IBD)	eu : 54,pro : 0,both : 0
+ko04060, Cytokine-cytokine receptor interaction	eu : 267,pro : 0,both : 4
+ko04730, Long-term depression	eu : 41,pro : 0,both : 4
+ko03050, Proteasome	eu : 43,pro : 4,both : 2
+ko04137, Mitophagy - animal	eu : 56,pro : 0,both : 4
+ko00572, Arabinogalactan biosynthesis - Mycobacterium	eu : 0,pro : 11,both : 1
+ko03020, RNA polymerase	eu : 23,pro : 16,both : 12
+ko04341, Hedgehog signaling pathway - fly	eu : 22,pro : 0,both : 2
+ko04350, TGF-beta signaling pathway	eu : 79,pro : 0,both : 4
+ko04061, Viral protein interaction with cytokine and cytokine receptor	eu : 89,pro : 0,both : 32
+ko05144, Malaria	eu : 66,pro : 0,both : 1
+ko05310, Asthma	eu : 20,pro : 0,both : 0
+ko05414, Dilated cardiomyopathy (DCM)	eu : 86,pro : 0,both : 1
+ko04672, Intestinal immune network for IgA production	eu : 37,pro : 0,both : 0
+ko04514, Cell adhesion molecules (CAMs)	eu : 101,pro : 0,both : 0
+ko03040, Spliceosome	eu : 114,pro : 0,both : 9
+ko00785, Lipoic acid metabolism	eu : 4,pro : 3,both : 4
+ko04512, ECM-receptor interaction	eu : 61,pro : 0,both : 4
+ko00904, Diterpenoid biosynthesis	eu : 26,pro : 0,both : 40
+ko04962, Vasopressin-regulated water reabsorption	eu : 28,pro : 0,both : 5
+ko05033, Nicotine addiction	eu : 22,pro : 0,both : 5
+ko04950, Maturity onset diabetes of the young	eu : 25,pro : 0,both : 1
+ko04130, SNARE interactions in vesicular transport	eu : 34,pro : 0,both : 1
+ko00943, Isoflavonoid biosynthesis	eu : 7,pro : 1,both : 9
+ko00902, Monoterpenoid biosynthesis	eu : 5,pro : 0,both : 36
+ko00253, Tetracycline biosynthesis	eu : 0,pro : 0,both : 17
+ko01056, Biosynthesis of type II polyketide backbone	eu : 0,pro : 2,both : 7
+ko01057, Biosynthesis of type II polyketide products	eu : 0,pro : 17,both : 55
+ko00363, Bisphenol degradation	eu : 0,pro : 0,both : 2
+ko00571, Lipoarabinomannan (LAM) biosynthesis	eu : 0,pro : 14,both : 0
+ko00905, Brassinosteroid biosynthesis	eu : 10,pro : 0,both : 1
+ko00522, Biosynthesis of 12-	eu : 0,pro : 8,both : 28
+ko01052, Type I polyketide structures	eu : 0,pro : 32,both : 83
+ko04075, Plant hormone signal transduction	eu : 40,pro : 0,both : 5
+ko00999, Biosynthesis of various secondary metabolites - part 1	eu : 0,pro : 6,both : 17
+ko00942, Anthocyanin biosynthesis	eu : 2,pro : 0,both : 14
+ko01058, Acridone alkaloid biosynthesis	eu : 1,pro : 0,both : 1
+ko00331, Clavulanic acid biosynthesis	eu : 0,pro : 2,both : 3
+ko00402, Benzoxazinoid biosynthesis	eu : 4,pro : 0,both : 4
+ko00073, Cutin	eu : 10,pro : 0,both : 4
+ko00404, Staurosporine biosynthesis	eu : 15,pro : 5,both : 20
+ko01059, Biosynthesis of enediyne antibiotics	eu : 0,pro : 7,both : 66
+ko00365, Furfural degradation	eu : 0,pro : 0,both : 8
+ko00403, Indole diterpene alkaloid biosynthesis	eu : 6,pro : 0,both : 7
