@@ -136,7 +136,13 @@ def compute_deviation(x1_traj: np.ndarray, x2_traj: np.ndarray, dt: float, eps: 
     n = int(0.5 / dt)  # number of timepoints to average over.
     x1 = x1_traj[:, -n:].mean(axis=1)
     x2 = x2_traj[:, -n:].mean(axis=1)
-    return float(np.mean(np.abs(np.log10(x1 + eps) - np.log10(x2 + eps))))
+    return float(
+        np.mean(
+            np.abs(
+                np.log10(x1 + eps) - np.log10(x2 + eps)
+            )
+        )
+    )
 
 
 def apply_random_perts(n_taxa: int, fraction: float, strength: float) -> np.ndarray:
@@ -158,7 +164,7 @@ def run_fwsim(growth, interactions, pert_strengths, pert_start, pert_end, initia
     dyn = md2.model.gLVDynamicsSingleClustering(
         growth=growth,
         interactions=interactions,
-        perturbations=pert_strengths,
+        perturbations=[pert_strengths],
         perturbation_starts=[pert_start],
         perturbation_ends=[pert_end],
         start_day=0,
