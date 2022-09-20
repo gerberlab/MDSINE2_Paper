@@ -1,4 +1,4 @@
-'''Preprocess (aggregate and filter) the Gibson dataset for Healthy cohort, 
+'''Preprocess (aggregate and filter) the Gibson dataset for Healthy cohort,
 Ulcerative Colitis cohort, inoculum, and replicate read datasets.
 
 Author: David Kaplan
@@ -8,19 +8,19 @@ MDSINE2 version: 4.0.6
 Methodology
 -----------
 1) Load the dataset
-2) Aggregate the ASVs into OTUs using the aligned 16S v4 rRNA sequences in 
-   `files/gibson_16S_rRNA_v4_seqs_aligned_filtered.fa` given a hamming-distance. 
-   Once we agglomerate them together we set the sequences to the original sequence 
+2) Aggregate the ASVs into OTUs using the aligned 16S v4 rRNA sequences in
+   `files/gibson_16S_rRNA_v4_seqs_aligned_filtered.fa` given a hamming-distance.
+   Once we agglomerate them together we set the sequences to the original sequence
    (unaligned).
 3) Calculate the consensus sequences
 4) Rename the taxa to OTUs
 5) Remove selected timepoints
 
-The file `paper_files/preprocessing/gibson_16S_rRNA_v4_seqs_aligned_filtered.fa` 
-was prepared by first aligning the ASV sequences to the reference sequeunces in the 
-phylogenetic tree. Once aligned, Taxa were manually filtered out if they had poor alignment 
-within the 16S rRNA v4 region. A fasta file of the Taxa removed as well as their alignments 
-can be found in `paper_files/preprocessing/prefiltered_asvs.fa`. 
+The file `paper_files/preprocessing/gibson_16S_rRNA_v4_seqs_aligned_filtered.fa`
+was prepared by first aligning the ASV sequences to the reference sequeunces in the
+phylogenetic tree. Once aligned, Taxa were manually filtered out if they had poor alignment
+within the 16S rRNA v4 region. A fasta file of the Taxa removed as well as their alignments
+can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 
 '''
 import argparse
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         help='This is the fasta file location of the aligned sequences for each taxon' \
             ' that was used for placement in the phylogenetic tree. If nothing is ' \
             'provided, then do not replace them.')
-    parser.add_argument('--remove-timepoints', dest='remove_timepoints', nargs='+', default=None, 
+    parser.add_argument('--remove-timepoints', dest='remove_timepoints', nargs='+', default=None,
         type=float, help='Which times to remove')
     parser.add_argument('--max-n-species', '-ms', dest='max_n_species', type=int, default=2,
         help='Maximum number of species assignments to have in the name')
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                         help='The directory containing the input dataset (A collection of TSV files).')
     parser.add_argument('--trim-option', dest='trim_option', type=str, required=False, default='ALL_GAPS',
                         help='Specify how to trim columns with gaps in the alignment.')
-    parser.add_argument('--sort-order', dest='sort_order', type=str, required=False, default='SIZE',
+    parser.add_argument('--sort_order', dest='sort_order', type=str, required=False, default='SIZE',
                         help='Specify how to order the agglomerations. '
                              'Options: [\"SIZE\", \"MIN_ASV_IDX\"]')
     parser.add_argument('--naming-scheme', dest='naming_scheme', type=str, required=False, default='DEFAULT',

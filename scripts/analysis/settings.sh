@@ -14,9 +14,9 @@ export REPLICATE_DSET=${DATASET_DIR}/preprocessed/gibson_replicates_agg_filtered
 export REPLICATE_MCMC=${NEGBIN_OUT_DIR}/replicates/mcmc.pkl
 export REPLICATE_PLOTS=${NEGBIN_OUT_DIR}/replicates/posterior
 
-export BURNIN=5000
-export N_SAMPLES=15000
-export CHECKPOINT=100
+export BURNIN=50
+export N_SAMPLES=150
+export CHECKPOINT=10
 export MULTIPROCESSING=0
 export INTERACTION_IND_PRIOR="strong-sparse"
 export PERTURBATION_IND_PRIOR="weak-agnostic"

@@ -1,9 +1,9 @@
 rm(list=ls())
 
-#if (!requireNamespace("BiocManager", quietly = TRUE))
-#  install.packages("BiocManager")
-#BiocManager::install("apeglm")
-#BiocManager::install("DESeq2")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("apeglm")
+BiocManager::install("DESeq2")
 library("DESeq2") #v1.32.0 was used for this paper
 
 
@@ -24,7 +24,7 @@ for (cohort in cohort_name)
 
   coldata$window<- factor(coldata$window)
 
-  dds <- DESeqDataSetFromMatrix(countData =pwd cts,
+  dds <- DESeqDataSetFromMatrix(countData = cts,
                               colData = coldata,
                               design = ~window)
                           
