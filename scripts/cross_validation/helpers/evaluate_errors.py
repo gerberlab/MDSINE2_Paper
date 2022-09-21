@@ -34,6 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--study', type=str, required=True)
     parser.add_argument('--regression_inputs_dir', type=str, required=True)
     parser.add_argument('--mdsine_outdir', type=str, required=True)
+    parser.add_argument('--mdsine_nomodule_outdir', type=str, required=True)
     parser.add_argument('--clv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_ra_elastic_outdir', type=str, required=True)
@@ -43,6 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--plot_dir', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
+    parser.add_argument('--subsample_every', type=int, required=False, default=1)
     parser.add_argument('--recompute_cache', action='store_true')
     return parser.parse_args()
 
@@ -257,6 +259,7 @@ def forward_sim_glv(data_path: Path,
 @dataclass
 class HeldoutInferences:
     mdsine2: Path
+    mdsine2_nomodule: Path
     clv_elastic: Path
     glv_elastic: Path
     glv_ra_elastic: Path
@@ -271,6 +274,7 @@ class HeldoutInferences:
                 raise FileNotFoundError(f"{path} not found!")
 
         _require_file(self.mdsine2)
+        _require_file(self.mdsine2_nomodule)
         _require_file(self.clv_elastic)
         _require_file(self.glv_elastic)
         _require_file(self.glv_ra_elastic)
@@ -278,8 +282,13 @@ class HeldoutInferences:
         _require_file(self.glv_ridge)
         _require_file(self.lra_elastic)
 
-    def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
+    def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
         return forward_sim_mdsine2(data_path=self.mdsine2,
+                                   recompute_cache=self.recompute_cache,
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
+
+    def mdsine2_nomodule_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
+        return forward_sim_mdsine2(data_path=self.mdsine2_nomodule,
                                    recompute_cache=self.recompute_cache,
                                    heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
 
@@ -315,6 +324,7 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
     for subject_idx, subject_id in enumerate(SUBJECT_IDS):
         yield subject_idx, subject_id, HeldoutInferences(
             mdsine2=directories.mdsine2 / subject_id / "healthy" / "mcmc.pkl",
+            mdsine2_nomodule=directories.mdsine2_nomodule / subject_id / "healthy" / "mcmc.pkl",
             clv_elastic=directories.clv_elastic / f'clv-{subject_idx}-model.pkl',
             glv_elastic=directories.glv_elastic / f'glv-elastic-net-{subject_idx}-model.pkl',
             glv_ra_elastic=directories.glv_ra_elastic / f'glv-ra-elastic-net-{subject_idx}-model.pkl',
@@ -331,7 +341,8 @@ def evaluate_all(regression_inputs_dir: Path,
                  sim_dt: float,
                  sim_max: float,
                  abs_lower_bound: float = 1e5,
-                 rel_lower_bound: float = 1e-6):
+                 rel_lower_bound: float = 1e-6,
+                 mdsine2_subsample_every: int = 1):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
         Y = pickle.load(f)
@@ -378,7 +389,25 @@ def evaluate_all(regression_inputs_dir: Path,
         # Absolute abundance
         add_absolute_entry(
             'MDSINE2',
-            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
+            heldout_data.evaluate_absolute(
+                np.median(
+                    inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                    axis=0
+                ),
+                upper_bound=sim_max,
+                lower_bound=abs_lower_bound
+            )
+        )
+        add_absolute_entry(
+            'MDSINE2 (No Modules)',
+            heldout_data.evaluate_absolute(
+                np.median(
+                    inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                    axis=0
+                ),
+                upper_bound=sim_max,
+                lower_bound=abs_lower_bound
+            )
         )
         add_absolute_entry(
             'gLV-elastic net',
@@ -540,6 +569,7 @@ def main():
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
         mdsine2=Path(args.mdsine_outdir),
+        mdsine2_nomodule=Path(args.mdsine_nomodule_outdir),
         clv_elastic=Path(args.clv_elastic_outdir),
         glv_elastic=Path(args.glv_elastic_outdir),
         glv_ra_elastic=Path(args.glv_ra_elastic_outdir),
@@ -555,7 +585,8 @@ def main():
         directories,
         complete_study,
         args.sim_dt,
-        args.sim_max
+        args.sim_max,
+        args.subsample_every
     )
 
     # ==================== Plot settings.
