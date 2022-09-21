@@ -62,7 +62,6 @@ class HoldoutData:
     def initial_conditions(self, lower_bound: float) -> np.ndarray:
         x2 = np.copy(self.trajectories[:, 0])
         x2[x2 < lower_bound] = lower_bound
-        print(x2)
         return x2
 
     def trajectory_subset(self, start: float, end: float) -> np.ndarray:
@@ -397,7 +396,6 @@ def evaluate_all(regression_inputs_dir: Path,
                 inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                 axis=0
             )
-            print(traj)
             add_absolute_entry(
                 'MDSINE2',
                 heldout_data.evaluate_absolute(
