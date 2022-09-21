@@ -392,13 +392,15 @@ def evaluate_all(regression_inputs_dir: Path,
 
         # Absolute abundance
         try:
+            traj = np.median(
+                inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                axis=0
+            )
+            print(traj)
             add_absolute_entry(
                 'MDSINE2',
                 heldout_data.evaluate_absolute(
-                    np.median(
-                        inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                        axis=0
-                    ),
+                    traj,
                     upper_bound=sim_max,
                     lower_bound=abs_lower_bound
                 )
