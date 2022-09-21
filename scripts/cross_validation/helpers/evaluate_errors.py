@@ -127,7 +127,7 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
 
 
 @cached_forward_simulation
-def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float) -> np.ndarray:
+def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float, subsample_every: int) -> np.ndarray:
     logger.info(f"Evaluating forward simulation using mdsine2 MCMC samples ({data_path})")
     mcmc = md2.BaseMCMC.load(str(data_path))
 
@@ -180,7 +180,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
     n_samples = growth.shape[0]
     n_taxa = growth.shape[1]
     pred_matrix = np.empty(shape=(n_samples, n_taxa, len(times)))
-    for sample_idx in tqdm(range(n_samples), desc="MDSINE2 fwsim"):
+    for sample_idx in tqdm(range(0, n_samples, subsample_every), desc="MDSINE2 fwsim"):
         dyn.growth = growth[sample_idx]
         dyn.interactions = interactions[sample_idx]
         if perts is not None:
@@ -285,12 +285,14 @@ class HeldoutInferences:
     def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
         return forward_sim_mdsine2(data_path=self.mdsine2,
                                    recompute_cache=self.recompute_cache,
-                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
+                                   subsample_every=subsample_every)
 
     def mdsine2_nomodule_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
         return forward_sim_mdsine2(data_path=self.mdsine2_nomodule,
                                    recompute_cache=self.recompute_cache,
-                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
+                                   subsample_every=subsample_every)
 
     def clv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
