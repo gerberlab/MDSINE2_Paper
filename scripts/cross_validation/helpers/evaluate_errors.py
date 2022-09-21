@@ -404,7 +404,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 )
             )
         except FileNotFoundError:
-            print(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
 
         try:
             add_absolute_entry(
@@ -419,7 +419,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 )
             )
         except FileNotFoundError:
-            print(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
 
         try:
             add_absolute_entry(
@@ -427,7 +427,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate glv-elastic Net output: Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate glv-elastic Net output: Holdout Subject {sid}.")
 
         try:
             add_absolute_entry(
@@ -435,7 +435,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
 
         # Relative abundance
         try:
@@ -450,7 +450,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 )
             )
         except FileNotFoundError:
-            print(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -464,7 +464,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 )
             )
         except FileNotFoundError:
-            print(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -472,7 +472,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate clv output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate clv output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -480,7 +480,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -488,7 +488,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate glv-RA-ridge output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate glv-RA-ridge output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -496,7 +496,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate glv-elastic net output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate glv-elastic net output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -504,7 +504,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate glv-ridge output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate glv-ridge output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -512,7 +512,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
             )
         except FileNotFoundError:
-            print(f"Couldn't locate LRA output (relabund): Holdout Subject {sid}.")
+            logger.error(f"Couldn't locate LRA output (relabund): Holdout Subject {sid}.")
 
     absolute_results = pd.DataFrame(absolute_df_entries)
     relative_results = pd.DataFrame(relative_df_entries)
