@@ -179,10 +179,11 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
 
     n_samples = growth.shape[0]
     n_taxa = growth.shape[1]
-    pred_matrix = np.empty(shape=(n_samples, n_taxa, len(times)))
 
     gibbs_indices = list(range(0, n_samples, subsample_every))
-    for sample_idx in tqdm(gibbs_indices, desc="MDSINE2 fwsim"):
+    pred_matrix = np.empty(shape=(len(gibbs_indices), n_taxa, len(times)))
+
+    for pred_idx, sample_idx in tqdm(enumerate(gibbs_indices), desc="MDSINE2 fwsim"):
         dyn.growth = growth[sample_idx]
         dyn.interactions = interactions[sample_idx]
         if perts is not None:
@@ -193,7 +194,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
             init = init.reshape(-1, 1)
         x = md2.integrate(dynamics=dyn, initial_conditions=init,
                           dt=sim_dt, n_days=times[-1] + sim_dt, subsample=True, times=times)
-        pred_matrix[sample_idx] = x['X']
+        pred_matrix[pred_idx] = x['X']
     return pred_matrix
 
 
