@@ -2,12 +2,15 @@ from maps import *
 import argparse
 import mdsine2 as md2
 import copy
+import pickle
 
 from pathlib import Path
 from mdsine2.names import STRNAMES
 from scipy.special import comb
 from scipy.stats import hypergeom
 from statsmodels.stats import multitest as mtest
+from pathway_module_scraper import PathwayModule
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -23,8 +26,10 @@ def parse_arguments():
     parser.add_argument("-f3", "--filter3", type = int, required=True,
                         help="minimum number of KOs/ECs that must be associated with a functional\
                         unit to be considered valid for enrichment")
-    parser.add_argument("--names_folder_loc", help="name of the folder where the files "
+    parser.add_argument("--names_file_loc", help="name of the folder where the files "
                         "containing the names of functional units are located")
+    parser.add_argument("--pathway_module_pkl_file", default=None, help="location of the pickle file"
+                        "containing details about pathway or module")
     parser.add_argument("--funit_type", help="pathway/module/Cazyme, the functional unit being"
                                              "tested for enrichment")
     parser.add_argument("--save_loc", help="location where the data frames are saved")
@@ -122,28 +127,16 @@ def perform_enrichment_analysis(cluster_dict, funit_bug_dict, funit_trait_dict,
         return cluster_enriched_p, cluster_enriched_funit, cluster_all_p, cluster_all_funit
 
 
-def get_names(loc, funit_type):
+def get_names(csv_file):
 
     """
     get the names of the pathway or module or cazyme
-    :param (Path) loc: location of the folder containing csv files that include the names
-                       of functional units
-    :param (str) funit_type: the type of functional unit we are testing
+    :param (Path) csv_file: location + name pf the csv file
 
     return: (dict) (str) KM/KP/Cazy code -> (str) name
     """
-    file_name = ""
-    if funit_type == "kegg_modules":
-        file_name = loc / "module_names.csv"
-    elif funit_type == "kegg_pathways":
-        file_name = loc / "pathway_names.csv"
-    elif funit_type == "cazymes":
-        file_name = loc / "cazyme_names.csv"
-    else:
-        raise Exception("funit_type has to be one of kegg_modules, kegg_pathways"
-                        " or cazymes")
 
-    name_file = pd.read_csv(file_name, sep=",", header=None).values
+    name_file = pd.read_csv(csv_file, sep=",", header=None).values
     name_dict = {}
     for row in name_file:
         name_dict[row[0]] = row[0] + ", " + row[1].split(",")[0]
@@ -171,7 +164,6 @@ def pivot_df(values_dict, funit_dict, enriched_res, names, loc, f_name):
     for keys in funit_dict:
         for i in range(len(funit_dict[keys])):
             if enriched_res[1][count] < 0.05:
-                print(funit_dict[keys][i])
                 module_names.append(names[funit_dict[keys][i]])
                 values.append(enriched_res[1][count])
                 cluster_row.append("Cluster " + str(keys))
@@ -195,9 +187,14 @@ if __name__ == "__main__":
     bugs_mcmc_idx = {taxas[i].name.replace("OTU", "ASV") : i  for i in range(len(taxas))}
     dict_trait_asv = map_traits_to_sequence_units(Path(args.trait_table_path),
                                                   bugs_mcmc_idx, "\t")
+    pathway_module_info=None
+    if args.pathway_module_pkl_file is not None:
+        pathway_module_info = pickle.load(open(args.pathway_module_pkl_file, "rb"))
+
     funit_trait_path = Path(args.funit_trait_path) if ".txt" in args.funit_trait_path else \
         Path(args.funit_trait_path) + ".txt"
-    dict_funit_trait = map_functional_units_to_traits(funit_trait_path)
+    dict_funit_trait = map_functional_units_to_traits(funit_trait_path, dict_trait_asv,
+                                                      funit_info_dict=pathway_module_info)
     dict_funit_asv = map_two_dicts(dict_funit_trait, dict_trait_asv)
     cluster = extract_cluster_information(mcmc)
 
@@ -221,9 +218,13 @@ if __name__ == "__main__":
     else:
         print("corrected p is of size 0")
 
-    funit_names = get_names(Path(args.names_folder_loc), args.funit_type)
+    funit_names = get_names(args.names_file_loc)
     path = Path(args.save_loc)
     path.mkdir(exist_ok=True, parents=True)
     pivoted_df = pivot_df(valid_p, valid_funits, adjusted_p, funit_names, path,
                           "df_{}".format(args.funit_type))
     print(pivoted_df)
+    export_results(adjusted_p, all_valid_p, all_valid_funits, funit_names, path,
+                   "kegg_{}".format(args.funit_type))
+    with open(path/"enrichment_results_{}".format(args.funit_type), "wb") as f:
+        pickle.dump(pivoted_df, f)

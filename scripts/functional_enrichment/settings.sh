@@ -6,7 +6,7 @@ _THIS_PATH="${PROJECT_DIR}/scripts/functional_enrichment/settings.sh"
 echo "[*] Using additional settings from ${_THIS_PATH}"
 
 
-export PICRUST_OUTPUT_DIR="${OUTPUT_DIR}/functional_enrichment/picrust"
+export PICRUST_OUTPUT_DIR="${OUTPUT_DIR}/functional_enrichment"
 mkdir -p ${PICRUST_OUTPUT_DIR}
 export SEQUENCES_DIR="${DATASET_DIR}/metadata_ASV/asv_sequences.fa"
 export COUNTS_DIR="${DATASET_DIR}/raw_tables/counts.tsv"
