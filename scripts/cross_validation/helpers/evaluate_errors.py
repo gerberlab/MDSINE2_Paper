@@ -590,7 +590,7 @@ def main():
         complete_study,
         args.sim_dt,
         args.sim_max,
-        args.subsample_every
+        mdsine2_subsample_every=args.subsample_every
     )
 
     # ==================== Plot settings.
