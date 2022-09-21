@@ -180,7 +180,9 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
     n_samples = growth.shape[0]
     n_taxa = growth.shape[1]
     pred_matrix = np.empty(shape=(n_samples, n_taxa, len(times)))
-    for sample_idx in tqdm(range(0, n_samples, subsample_every), desc="MDSINE2 fwsim"):
+
+    gibbs_indices = list(range(0, n_samples, subsample_every))
+    for sample_idx in tqdm(gibbs_indices, desc="MDSINE2 fwsim"):
         dyn.growth = growth[sample_idx]
         dyn.interactions = interactions[sample_idx]
         if perts is not None:
