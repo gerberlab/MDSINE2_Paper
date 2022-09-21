@@ -62,6 +62,7 @@ class HoldoutData:
     def initial_conditions(self, lower_bound: float) -> np.ndarray:
         x2 = np.copy(self.trajectories[:, 0])
         x2[x2 < lower_bound] = lower_bound
+        print(x2)
         return x2
 
     def trajectory_subset(self, start: float, end: float) -> np.ndarray:
