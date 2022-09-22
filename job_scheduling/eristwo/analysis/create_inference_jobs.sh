@@ -16,7 +16,7 @@ for seed in 10 11 12 13 14; do
     echo
     cat <<- EOFDOC > $LSF_PATH
 #!/bin/bash
-#BSUB -g mdsine2_inference
+#BSUB -g /mdsine2_inference
 #BSUB -J seed-${seed}
 #BSUB -o ${LOG_DIR}/${model}_${reg}.out
 #BSUB -e ${LOG_DIR}/${model}_${reg}.err
