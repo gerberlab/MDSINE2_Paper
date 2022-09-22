@@ -27,7 +27,6 @@ for reg in "${regression_types[@]}"; do
 
 source activate mdsine2
 cd ${PROJECT_DIR}/scripts
-pwd
 
 bash cv_comparator_methods/run_${model}.sh $reg
 EOFDOC

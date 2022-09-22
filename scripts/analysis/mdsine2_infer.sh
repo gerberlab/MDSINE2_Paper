@@ -8,7 +8,10 @@ echo "Writing files to ${MDSINE2_OUT_DIR}"
 # Healthy cohort
 # --------------
 
-seed=0
+seed=$1
+require_variable "seed" $seed
+
+
 study_name="healthy-seed${seed}"
 
 # Seed 0
