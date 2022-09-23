@@ -101,7 +101,9 @@ def find_ko_category(ko_gene_list, ko, gene_info=None):
     except KeyError:
         print("issue with gene: {}, KO:{}".format(gene, ko))
 
-    if is_prokar:
+    if is_prokar and is_eukar:
+        return "both"
+    elif is_prokar:
         return "prokaryote"
     else:
         return "eukaryote"
@@ -209,8 +211,8 @@ if __name__ == "__main__":
         ko_obj.update_ko_category(gene_type_info)
         i += 1
         ko_details_dict[ko] = ko_obj
-        #if i == 20:
-         #   break
+        #if i == 1000:
+        #    break
 
     args = parse_arguments()
     save_path = Path(args.save_loc)

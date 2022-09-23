@@ -58,6 +58,10 @@ def export_csv(hash_table, loc, name):
     :param (str) name: name of the csv file
     """
 
+    new_hash_table = {}
+    for keys in hash_table:
+        new_hash_table[keys.replace("map", "ko")] = hash_table[keys]
+    hash_table = new_hash_table
     df = pd.Series(hash_table)
     df.to_csv(loc/"{}.csv".format(name), header=False)
 
@@ -113,4 +117,8 @@ if __name__ == "__main__":
                 all_pathway_modules[funit] = PathwayModule(funit)
             all_pathway_modules[funit].add_ko(ko)
             all_pathway_modules[funit].increase_count(ko_obj.get_ko_category())
+
+    with open(save_loc/"{}_details.pkl".format(args.kegg_type), "wb") as f:
+        pickle.dump(all_pathway_modules, f)
+
     export_count_info(all_pathway_modules, save_loc, "{}_category_counts".format(args.kegg_type))
