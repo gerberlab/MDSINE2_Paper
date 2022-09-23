@@ -21,8 +21,6 @@ for seed in 10 11 12 13 14; do
 #BSUB -o ${LOG_DIR}/${model}_${reg}.out
 #BSUB -e ${LOG_DIR}/${model}_${reg}.err
 #BSUB -q ${LSF_QUEUE}
-#BSUB -n ${LSF_CORES}
-#BSUB -R rusage[mem=${LSF_MEM}]
 
 source activate mdsine2
 cd ${PROJECT_DIR}/scripts
