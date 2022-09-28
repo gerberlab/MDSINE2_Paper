@@ -1,14 +1,13 @@
 import argparse
 import itertools
 from pathlib import Path
-from typing import Tuple, Iterator, Optional
+from typing import Tuple, Iterator, Optional, Set
 
 import numpy as np
 import pandas as pd
 
 import mdsine2 as md2
 from mdsine2 import Clustering
-from mdsine2.base import _Cluster
 from mdsine2.names import STRNAMES
 
 from tqdm import tqdm
@@ -24,6 +23,8 @@ def parse_args() -> argparse.Namespace:
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
     parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=False,
                         help='Specify which module to remove, specified by index (zero-indexed)')
+    parser.add_argument('--n_module_replicates', '-n', type=int, required=True,
+                        help='Specify the number of replicate modules to use.')
 
     parser.add_argument('--out-path', '-o', dest='out_path', required=True, type=str)
 
@@ -60,13 +61,15 @@ def main():
     for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
             study,
             mcmc,
-            module_to_remove,
+            set(oidx for oidx in module_to_remove.members),
             args.sim_max,
             args.dt,
             args.n_trials
     ):
         n_perturbed = int(len(study.taxa) * alpha)
         df_entries.append({
+            'ModuleType': 'Fixed',
+            'ModuleId': f'F{module_idx_to_remove}',
             'GibbsIdx': gibbs_idx,
             'Alpha': alpha,
             'Delta': delta,
@@ -74,6 +77,32 @@ def main():
             'NumPerturbed': n_perturbed,
             'Deviation': deviation
         })
+
+    for replicate_idx in tqdm(range(args.n_module_replicates)):
+        module_random = np.random.choice(
+            a=len(study.taxa),
+            size=len(module_to_remove.members),
+            replace=False
+        )
+        for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
+                study,
+                mcmc,
+                module_random,
+                args.sim_max,
+                args.dt,
+                args.n_trials
+        ):
+            n_perturbed = int(len(study.taxa) * alpha)
+            df_entries.append({
+                'ModuleType': 'Random',
+                'ModuleId': f'R{replicate_idx}',
+                'GibbsIdx': gibbs_idx,
+                'Alpha': alpha,
+                'Delta': delta,
+                'Trial': trial,
+                'NumPerturbed': n_perturbed,
+                'Deviation': deviation
+            })
 
     out_path = Path(args.out_path)
     out_path.parent.mkdir(exist_ok=True, parents=True)
@@ -83,7 +112,7 @@ def main():
 def simulate_random_perturbations(
         study: md2.Study,
         mcmc: md2.BaseMCMC,
-        module: Optional[_Cluster],
+        module: Optional[Set[int]],
         sim_max: float,
         dt: float,
         n_trials: int
@@ -209,7 +238,7 @@ def run_fwsim_no_pert(growth, interactions, initial, sim_max, dt, n_days):
 
 
 def exclude_cluster_from(
-        cluster_to_remove: _Cluster,
+        cluster_to_remove: Optional[Set[int]],
         taxa: md2.TaxaSet,
         initial_conditions: np.ndarray,
         growth_rates: np.ndarray,
@@ -218,11 +247,10 @@ def exclude_cluster_from(
     if cluster_to_remove is None:
         return initial_conditions, growth_rates, interactions
 
-    oidx_to_remove = set(oidx for oidx in cluster_to_remove.members)
     oidx_to_keep = [
         oidx
         for oidx in range(len(taxa))
-        if oidx not in oidx_to_remove
+        if oidx not in cluster_to_remove
     ]
 
     return (
