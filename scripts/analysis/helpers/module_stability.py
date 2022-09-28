@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 import mdsine2 as md2
-from mdsine2 import Clustering
+from mdsine2 import Clustering, generate_cluster_assignments_posthoc
 from mdsine2.names import STRNAMES
 
 from tqdm import tqdm
@@ -16,9 +16,6 @@ from tqdm import tqdm
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
-    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='fixed_mcmc_path',
-                        required=True,
-                        help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
     parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=False,
@@ -44,13 +41,12 @@ def main():
 
     study = md2.Study.load(args.study)
     mcmc = md2.BaseMCMC.load(args.mcmc_path)
-    fixed_mcmc = md2.BaseMCMC.load(args.fixed_mcmc_path)
     module_idx_to_remove = args.module_remove_idx
 
     if module_idx_to_remove is None:
         module_to_remove = None
     else:
-        modules: Clustering = fixed_mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+        modules: Clustering = load_modal_clustering(mcmc)
         module_to_remove = modules.clusters[modules.order[module_idx_to_remove]]
         print("Will remove module index {} (ID: {})".format(
             args.module_remove_idx,
@@ -107,6 +103,13 @@ def main():
     out_path = Path(args.out_path)
     out_path.parent.mkdir(exist_ok=True, parents=True)
     pd.DataFrame(df_entries).to_csv(out_path, index=False, sep='\t')
+
+
+def load_modal_clustering(mcmc) -> Clustering:
+    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    ret = generate_cluster_assignments_posthoc(clustering, n_clusters='mode', set_as_value=False)
+    clustering.from_array(ret)
+    return clustering
 
 
 def simulate_random_perturbations(
