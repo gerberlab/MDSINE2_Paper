@@ -23,7 +23,6 @@ mkdir -p $outdir
 if [ "$module_idx_to_remove" == "None" ]; then
 	python analysis/helpers/module_stability.py \
 			-m $mcmc \
-			-f $fixed_module_mcmc \
 			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--seed ${seed} \
@@ -32,7 +31,6 @@ if [ "$module_idx_to_remove" == "None" ]; then
 else
 	python analysis/helpers/module_stability.py \
 			-m $mcmc \
-			-f $fixed_module_mcmc \
 			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--module-remove-idx ${module_idx_to_remove} \
