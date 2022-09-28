@@ -54,6 +54,7 @@ def main():
         ))
 
     df_entries = []
+    print("Computing sims for module.")
     for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
             study,
             mcmc,
@@ -74,6 +75,7 @@ def main():
             'Deviation': deviation
         })
 
+    print("Computing sims for random replicates.")
     for replicate_idx in tqdm(range(args.n_module_replicates)):
         module_random = np.random.choice(
             a=len(study.taxa),
