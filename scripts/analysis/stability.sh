@@ -24,6 +24,7 @@ if [ "$module_idx_to_remove" == "None" ]; then
 	python analysis/helpers/module_stability.py \
 			-m $mcmc \
 			-f $fixed_module_mcmc \
+			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--seed ${seed} \
 			-o $outdir/stability_${module_idx_to_remove}.tsv \
@@ -32,6 +33,7 @@ else
 	python analysis/helpers/module_stability.py \
 			-m $mcmc \
 			-f $fixed_module_mcmc \
+			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--module-remove-idx ${module_idx_to_remove} \
 			--seed ${seed} \
