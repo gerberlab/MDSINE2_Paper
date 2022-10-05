@@ -54,7 +54,7 @@ def main():
 
     df_entries = []
     print("Computing sims for module.")
-    for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
+    for alpha, delta, trial, gibbs_idx, deviation in simulate_random_perturbations(
             study,
             inputs_dir,
             set(oidx for oidx in module_to_remove),
@@ -81,7 +81,7 @@ def main():
             size=len(module_to_remove),
             replace=False
         )
-        for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
+        for alpha, delta, trial, gibbs_idx, deviation in simulate_random_perturbations(
                 study,
                 inputs_dir,
                 module_random,
@@ -144,20 +144,19 @@ def simulate_random_perturbations(
         sim_max: float,
         dt: float,
         n_trials: int
-) -> Iterator[Tuple[int, float, float, int, float]]:
+) -> Iterator[Tuple[float, float, int, int, float]]:
     alphas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
     deltas = [-0.5, -1.0, -1.5, -2.0]
-    num_samples = 100
 
     growths, interactions = load_parameters(inputs_dir)
     total_samples = growths.shape[0]
-    stride = total_samples // num_samples
 
     M = study.matrix(dtype='abs', agg='mean', times='intersection', qpcr_unnormalize=True)
     day21_levels = M[:, 19]
 
     trials = list(range(1, n_trials + 1, 1))
-    for gibbs_idx in tqdm(range(0, total_samples, stride), total=(total_samples // stride)):
+    for trial in trials:
+        gibbs_idx = np.random.choice(total_samples)
         init, r, A = exclude_cluster_from(
             module,
             study.taxa,
@@ -170,10 +169,9 @@ def simulate_random_perturbations(
             initial=init[:, None], sim_max=sim_max, dt=dt, n_days=64
         )
 
-        for alpha, delta, trial in itertools.product(
+        for alpha, delta in itertools.product(
                 alphas,
-                deltas,
-                trials
+                deltas
         ):
             perts = apply_random_perts(r.shape[0], alpha, delta)
             x_pert = run_fwsim(
@@ -183,7 +181,7 @@ def simulate_random_perturbations(
                 sim_max=sim_max, dt=dt, n_days=64
             )
 
-            yield gibbs_idx, alpha, delta, trial, compute_deviation(x_baseline, x_pert, dt=dt)
+            yield alpha, delta, trial, gibbs_idx, compute_deviation(x_baseline, x_pert, dt=dt)
 
 
 def compute_deviation(x1_traj: np.ndarray, x2_traj: np.ndarray, dt: float, eps: float = 1e5) -> float:
