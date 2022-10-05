@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--inputs-dir', '-i', type=str, dest='inputs_dir', required=True)
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
-    parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=True,
+    parser.add_argument('--module-remove-idx', '-m', dest='module_remove_idx', type=int, required=True,
                         help='Specify which module to remove, specified by index (zero-indexed)')
     parser.add_argument('--n_module_replicates', '-n', type=int, required=True,
                         help='Specify the number of replicate modules to use.')
