@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--inputs-dir', '-i', type=str, dest='inputs_dir', required=True)
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
-    parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=False,
+    parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=True,
                         help='Specify which module to remove, specified by index (zero-indexed)')
     parser.add_argument('--n_module_replicates', '-n', type=int, required=True,
                         help='Specify the number of replicate modules to use.')
@@ -42,15 +42,12 @@ def main():
     inputs_dir = Path(args.inputs_dir)
     module_idx_to_remove = args.module_remove_idx
 
-    if module_idx_to_remove is None:
-        module_to_remove = None
-    else:
-        modules: List[List[int]] = load_modal_clustering(inputs_dir)
-        module_to_remove = modules[module_idx_to_remove]
-        print("Will remove module index {} (Size {})".format(
-            args.module_remove_idx,
-            len(module_to_remove)
-        ))
+    modules: List[List[int]] = load_modal_clustering(inputs_dir)
+    module_to_remove = modules[module_idx_to_remove]
+    print("Will remove module index {} (Size {})".format(
+        args.module_remove_idx,
+        len(module_to_remove)
+    ))
 
     df_entries = []
     print("Computing sims for module.")
