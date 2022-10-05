@@ -1,21 +1,20 @@
 import argparse
 import itertools
 from pathlib import Path
-from typing import Tuple, Iterator, Optional, Set
+from typing import Tuple, Iterator, Optional, Set, List
 
 import numpy as np
+import scipy.stats
 import pandas as pd
+from sklearn.cluster import AgglomerativeClustering
 
 import mdsine2 as md2
-from mdsine2 import Clustering, generate_cluster_assignments_posthoc
-from mdsine2.names import STRNAMES
-
 from tqdm import tqdm
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
+    parser.add_argument('--inputs-dir', '-i', type=str, dest='inputs_dir', required=True)
     parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                         help="The path to the relevant Study object containing the input data (subjects, taxa).")
     parser.add_argument('--module-remove-idx', '-i', dest='module_remove_idx', type=int, required=False,
@@ -40,25 +39,25 @@ def main():
     np.random.seed(args.seed)
 
     study = md2.Study.load(args.study)
-    mcmc = md2.BaseMCMC.load(args.mcmc_path)
+    inputs_dir = Path(args.inputs_dir)
     module_idx_to_remove = args.module_remove_idx
 
     if module_idx_to_remove is None:
         module_to_remove = None
     else:
-        modules: Clustering = load_modal_clustering(mcmc)
-        module_to_remove = modules.clusters[modules.order[module_idx_to_remove]]
-        print("Will remove module index {} (ID: {})".format(
+        modules: List[List[int]] = load_modal_clustering(inputs_dir)
+        module_to_remove = modules[module_idx_to_remove]
+        print("Will remove module index {} (Size {})".format(
             args.module_remove_idx,
-            module_to_remove.id
+            len(module_to_remove)
         ))
 
     df_entries = []
     print("Computing sims for module.")
     for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
             study,
-            mcmc,
-            set(oidx for oidx in module_to_remove.members),
+            inputs_dir,
+            set(oidx for oidx in module_to_remove),
             args.sim_max,
             args.dt,
             args.n_trials
@@ -79,12 +78,12 @@ def main():
     for replicate_idx in tqdm(range(args.n_module_replicates)):
         module_random = np.random.choice(
             a=len(study.taxa),
-            size=len(module_to_remove.members),
+            size=len(module_to_remove),
             replace=False
         )
         for gibbs_idx, alpha, delta, trial, deviation in simulate_random_perturbations(
                 study,
-                mcmc,
+                inputs_dir,
                 module_random,
                 args.sim_max,
                 args.dt,
@@ -107,16 +106,40 @@ def main():
     pd.DataFrame(df_entries).to_csv(out_path, index=False, sep='\t')
 
 
-def load_modal_clustering(mcmc) -> Clustering:
-    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
-    ret = generate_cluster_assignments_posthoc(clustering, n_clusters='mode', set_as_value=False)
-    clustering.from_array(ret)
-    return clustering
+def load_modal_clustering(inputs_dir: Path) -> List[List[int]]:
+    agglomeration_file = inputs_dir / "agglomeration.npy"
+    if agglomeration_file.exists():
+        agglom = np.load(str(agglomeration_file))
+    else:
+        A = 1 - np.load(str(inputs_dir / "coclusters.npy"))
+        n = scipy.stats.mode(np.load(str(inputs_dir / "n_clusters.npy")))[0][0]
+
+        linkage = 'average'
+        c = AgglomerativeClustering(
+            n_clusters=n,
+            affinity='precomputed',
+            linkage=linkage
+        )
+
+        agglom = c.fit_predict(A)
+        np.save(str(agglomeration_file), agglom)
+
+    clusters = []
+    for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
+        cluster = list(np.where(agglom == cidx)[0])
+        clusters.append(cluster)
+    return clusters
+
+
+def load_parameters(inputs_dir: Path):
+    growths = np.load(str(inputs_dir / "growth.npy"))
+    interactions = np.load(str(inputs_dir / "interactions.npy"))
+    return growths, interactions
 
 
 def simulate_random_perturbations(
         study: md2.Study,
-        mcmc: md2.BaseMCMC,
+        inputs_dir: Path,
         module: Optional[Set[int]],
         sim_max: float,
         dt: float,
@@ -126,19 +149,12 @@ def simulate_random_perturbations(
     deltas = [-0.5, -1.0, -1.5, -2.0]
     num_samples = 100
 
-    total_samples = mcmc.n_samples - mcmc.burnin
+    growths, interactions = load_parameters(inputs_dir)
+    total_samples = growths.shape[0]
     stride = total_samples // num_samples
 
     M = study.matrix(dtype='abs', agg='mean', times='intersection', qpcr_unnormalize=True)
     day21_levels = M[:, 19]
-
-    growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section="posterior")
-    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section="posterior")
-    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section="posterior")
-    interactions[np.isnan(interactions)] = 0
-    self_interactions = -np.absolute(self_interactions)
-    for i in range(self_interactions.shape[1]):
-        interactions[:, i, i] = self_interactions[:, i]
 
     trials = list(range(1, n_trials + 1, 1))
     for gibbs_idx in tqdm(range(0, total_samples, stride), total=(total_samples // stride)):

@@ -9,20 +9,12 @@ source analysis/settings.sh
 module_idx_to_remove=$1
 require_variable "module_idx_to_remove" $module_idx_to_remove
 
-
-seed=0
-study="healthy-seed${seed}"
-fixed_module_study="healthy-seed${seed}-fixed-cluster"
-
-mcmc=$MDSINE2_OUT_DIR/${study}/mcmc.pkl
-fixed_module_mcmc=$MDSINE2_OUT_DIR/${fixed_module_study}/mcmc.pkl
-
-outdir=${MDSINE2_OUT_DIR}/${study}/stability
+outdir=${MDSINE2_OUT_DIR}/merged_studies
 mkdir -p $outdir
 
 if [ "$module_idx_to_remove" == "None" ]; then
 	python analysis/helpers/module_stability.py \
-			-m $mcmc \
+			-i $MDSINE2_OUT_DIR/merged_studies \
 			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--seed ${seed} \
@@ -30,11 +22,11 @@ if [ "$module_idx_to_remove" == "None" ]; then
 			--num-trials 10
 else
 	python analysis/helpers/module_stability.py \
-			-m $mcmc \
+			-i $MDSINE2_OUT_DIR/merged_studies \
 			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
-			--module-remove-idx ${module_idx_to_remove} \
 			--seed ${seed} \
 			-o $outdir/stability_${module_idx_to_remove}.tsv \
-			--num-trials 10
+			--num-trials 10 \
+			--module-remove-idx ${module_idx_to_remove}
 fi
