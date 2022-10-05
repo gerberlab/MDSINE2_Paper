@@ -49,15 +49,19 @@ def main():
         len(module_to_remove)
     ))
 
+    growths, interactions = load_parameters(inputs_dir)
+    n_samples = growths[0]
+    sample_indices = np.random.choice(n_samples, size=args.n_trials, replace=True)
+
     df_entries = []
     print("Computing sims for module.")
     for alpha, delta, trial, gibbs_idx, deviation in simulate_random_perturbations(
             study,
-            inputs_dir,
+            growths, interactions,
             set(oidx for oidx in module_to_remove),
             args.sim_max,
             args.dt,
-            args.n_trials
+            sample_indices
     ):
         n_perturbed = int(len(study.taxa) * alpha)
         df_entries.append({
@@ -80,11 +84,11 @@ def main():
         )
         for alpha, delta, trial, gibbs_idx, deviation in simulate_random_perturbations(
                 study,
-                inputs_dir,
+                growths, interactions,
                 module_random,
                 args.sim_max,
                 args.dt,
-                args.n_trials
+                sample_indices
         ):
             n_perturbed = int(len(study.taxa) * alpha)
             df_entries.append({
@@ -136,24 +140,20 @@ def load_parameters(inputs_dir: Path):
 
 def simulate_random_perturbations(
         study: md2.Study,
-        inputs_dir: Path,
+        growths: np.ndarray,
+        interactions: np.ndarray,
         module: Optional[Set[int]],
         sim_max: float,
         dt: float,
-        n_trials: int
+        sample_indices: List[int]
 ) -> Iterator[Tuple[float, float, int, int, float]]:
     alphas = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
     deltas = [-0.5, -1.0, -1.5, -2.0]
 
-    growths, interactions = load_parameters(inputs_dir)
-    total_samples = growths.shape[0]
-
     M = study.matrix(dtype='abs', agg='mean', times='intersection', qpcr_unnormalize=True)
     day21_levels = M[:, 19]
 
-    trials = list(range(1, n_trials + 1, 1))
-    for trial in trials:
-        gibbs_idx = np.random.choice(total_samples)
+    for trial, gibbs_idx in tqdm(enumerate(sample_indices), total=len(sample_indices)):
         init, r, A = exclude_cluster_from(
             module,
             study.taxa,
