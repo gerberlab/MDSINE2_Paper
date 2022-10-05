@@ -52,6 +52,7 @@ def main():
     growths, interactions = load_parameters(inputs_dir)
     n_samples = growths[0]
     sample_indices = np.random.choice(n_samples, size=args.n_trials, replace=True)
+    print(sample_indices)
 
     df_entries = []
     print("Computing sims for module.")
