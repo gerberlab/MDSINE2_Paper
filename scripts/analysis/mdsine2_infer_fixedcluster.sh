@@ -39,7 +39,7 @@ python analysis/helpers/mdsine2_fixed_module_multiseed.py \
 		--input $HEALTHY_DSET \
 		--multiseed-dir $MDSINE2_OUT_DIR/merged_studies \
 		--negbin $REPLICATE_MCMC \
-		--seed $seed \
+		--seed 0 \
 		--burnin $BURNIN \
 		--n-samples $N_SAMPLES \
 		--checkpoint $CHECKPOINT \
