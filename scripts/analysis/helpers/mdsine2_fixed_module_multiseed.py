@@ -110,7 +110,7 @@ def agglomerate_from_cocluster(multiseed_dir: Path) -> List[List[int]]:
     clusters = []
     for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
         cluster = list(np.where(agglom == cidx)[0])
-        clusters.append(cluster)
+        clusters.append([oidx for oidx in cluster])
     return clusters
 
 
