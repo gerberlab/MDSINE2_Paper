@@ -15,7 +15,7 @@ fixed_module_study="healthy-seed${seed}-fixed-cluster"
 mcmc=$MDSINE2_OUT_DIR/${study}/mcmc.pkl
 fixed_module_mcmc=$MDSINE2_OUT_DIR/${fixed_module_study}/mcmc.pkl
 
-outdir=${MDSINE2_OUT_DIR}/${study}/keystoneness
+outdir=$MDSINE2_OUT_DIR/merged_studies/keystoneness
 mkdir -p $outdir
 
 # Note: index 19 = day 20
