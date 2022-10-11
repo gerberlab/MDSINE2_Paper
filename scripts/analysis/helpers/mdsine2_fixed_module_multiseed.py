@@ -96,22 +96,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def agglomerate_from_cocluster(multiseed_dir: Path) -> List[List[int]]:
-    A = 1 - np.load(str(multiseed_dir / "coclusters.npy"))
-    n = scipy.stats.mode(np.load(str(multiseed_dir / "n_clusters.npy")))[0][0]
-
-    linkage = 'complete'
-    c = AgglomerativeClustering(
-        n_clusters=n,
-        affinity='precomputed',
-        linkage=linkage
-    )
-
-    agglom = c.fit_predict(A)
-    clusters = []
+    agglom = np.load(str(multiseed_dir / 'agglomeration.npy'))
+    modules = []
     for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
-        cluster = list(np.where(agglom == cidx)[0])
-        clusters.append([int(oidx) for oidx in cluster])
-    return clusters
+        module = [oidx for oidx in np.where(agglom == cidx)[0]]
+        modules.append(module)
+    return modules
 
 
 def main():
