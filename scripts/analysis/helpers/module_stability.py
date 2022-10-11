@@ -108,22 +108,7 @@ def main():
 
 
 def load_modal_clustering(inputs_dir: Path) -> List[List[int]]:
-    agglomeration_file = inputs_dir / "agglomeration.npy"
-    if agglomeration_file.exists():
-        agglom = np.load(str(agglomeration_file))
-    else:
-        A = 1 - np.load(str(inputs_dir / "coclusters.npy"))
-        n = scipy.stats.mode(np.load(str(inputs_dir / "n_clusters.npy")))[0][0]
-
-        linkage = 'average'
-        c = AgglomerativeClustering(
-            n_clusters=n,
-            affinity='precomputed',
-            linkage=linkage
-        )
-
-        agglom = c.fit_predict(A)
-        np.save(str(agglomeration_file), agglom)
+    agglom = np.load(str(inputs_dir / "agglomeration.npy"))
 
     clusters = []
     for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
