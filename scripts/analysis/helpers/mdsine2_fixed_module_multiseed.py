@@ -99,7 +99,7 @@ def agglomerate_from_cocluster(multiseed_dir: Path) -> List[List[int]]:
     A = 1 - np.load(str(multiseed_dir / "coclusters.npy"))
     n = scipy.stats.mode(np.load(str(multiseed_dir / "n_clusters.npy")))[0][0]
 
-    linkage = 'average'
+    linkage = 'complete'
     c = AgglomerativeClustering(
         n_clusters=n,
         affinity='precomputed',
