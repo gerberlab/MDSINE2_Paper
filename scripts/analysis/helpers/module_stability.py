@@ -76,7 +76,7 @@ def main():
         })
 
     print("Computing sims for random replicates.")
-    for replicate_idx in tqdm(range(args.n_module_replicates)):
+    for replicate_idx in tqdm(range(args.n_module_replicates), desc='Replicate'):
         module_random = np.random.choice(
             a=len(study.taxa),
             size=len(module_to_remove),

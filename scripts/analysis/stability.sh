@@ -21,7 +21,7 @@ if [ "$module_idx_to_remove" == "None" ]; then
 			--study $HEALTHY_DSET \
 			--seed ${sim_seed} \
 			-o $outdir/stability_${module_idx_to_remove}.tsv \
-			--num-trials 1000
+			--num-trials 500
 else
 	python analysis/helpers/module_stability.py \
 			-i $MDSINE2_OUT_DIR/merged_studies \
@@ -29,6 +29,6 @@ else
 			--study $HEALTHY_DSET \
 			--seed ${sim_seed} \
 			-o $outdir/stability_${module_idx_to_remove}.tsv \
-			--num-trials 1000 \
+			--num-trials 500 \
 			--module-remove-idx ${module_idx_to_remove}
 fi
