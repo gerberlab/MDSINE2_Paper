@@ -25,4 +25,4 @@ mdsine2 evaluate-keystoneness \
 		-it 19 \
 		-o $outdir \
 		--n-days 100 \
-		--simulate-every-n 1
+		--simulate-every-n 100
