@@ -4,9 +4,7 @@ from pathlib import Path
 from typing import Tuple, Iterator, Optional, Set, List
 
 import numpy as np
-import scipy.stats
 import pandas as pd
-from sklearn.cluster import AgglomerativeClustering
 
 import mdsine2 as md2
 from tqdm import tqdm
@@ -51,7 +49,7 @@ def main():
 
     growths, interactions = load_parameters(inputs_dir)
     n_samples = growths.shape[0]
-    sample_indices = [int(a) for a in np.linspace(0, n_samples, num=args.n_trials)]
+    sample_indices = [int(a) for a in np.linspace(0, n_samples-1, num=args.n_trials)]
 
     df_entries = []
     print("Computing sims for module.")
