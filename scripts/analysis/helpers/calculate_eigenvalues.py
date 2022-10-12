@@ -48,10 +48,11 @@ def load_consensus_clustering(inputs_dir: Path) -> List[Set[int]]:
 def main():
     args = parse_args()
     inputs_dir = Path(args.inputs_dir)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(exist_ok=True, parents=True)
+
     modules: List[Set[int]] = load_consensus_clustering(inputs_dir)
     interactions = np.load(str(inputs_dir / "interactions.npy"))
-
-    out_dir = Path(args.out_dir)
     print(f"Output directory: {out_dir}")
     for cluster_idx, sample_eigs in compute_eigenvalues(interactions, modules):
         print(f"Computed eigenvalues by excluding cluster IDX:{cluster_idx}")
