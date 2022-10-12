@@ -16,7 +16,7 @@ sim_seed=31415
 
 if [ "$module_idx_to_remove" == "None" ]; then
 	python analysis/helpers/module_stability.py \
-			-i $MDSINE2_OUT_DIR/merged_studies \
+			-i $MDSINE2_OUT_DIR/merged_studies/stability \
 			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--seed ${sim_seed} \
@@ -24,7 +24,7 @@ if [ "$module_idx_to_remove" == "None" ]; then
 			--num-trials 500
 else
 	python analysis/helpers/module_stability.py \
-			-i $MDSINE2_OUT_DIR/merged_studies \
+			-i $MDSINE2_OUT_DIR/merged_studies/stability \
 			--n_module_replicates 10 \
 			--study $HEALTHY_DSET \
 			--seed ${sim_seed} \

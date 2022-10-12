@@ -42,7 +42,7 @@ def main():
     inputs_dir = Path(args.inputs_dir)
     module_idx_to_remove = args.module_remove_idx
 
-    modules: List[List[int]] = load_modal_clustering(inputs_dir)
+    modules: List[List[int]] = load_consensus_clustering(inputs_dir)
     module_to_remove = modules[module_idx_to_remove]
     print("Will remove module index {} (Size {})".format(
         args.module_remove_idx,
@@ -107,7 +107,7 @@ def main():
     pd.DataFrame(df_entries).to_csv(out_path, index=False, sep='\t')
 
 
-def load_modal_clustering(inputs_dir: Path) -> List[List[int]]:
+def load_consensus_clustering(inputs_dir: Path) -> List[List[int]]:
     agglom = np.load(str(inputs_dir / "agglomeration.npy"))
 
     clusters = []

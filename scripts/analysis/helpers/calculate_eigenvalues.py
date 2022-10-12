@@ -4,76 +4,56 @@ Analyzes a keystonness-like array of eigenvalue decompositions.
 
 import argparse
 from pathlib import Path
-from typing import Iterator, Tuple, Iterable
+from typing import Iterator, Tuple, Set, List
 
 import numpy as np
 import scipy.linalg
 
-import mdsine2 as md2
-from mdsine2 import TaxaSet
-from mdsine2.names import STRNAMES
-from mdsine2.base.cluster import _Cluster
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
-    parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='fixed_mcmc_path',
-                        required=True,
-                        help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
-    parser.add_argument('--study-path', '-s', dest='study_path', required=True, type=str)
-    parser.add_argument('--output', '-o', type=str, dest='out_dir',
-                        required=True,
-                        help='Directory to save desired output eigenvalues (.npy format).')
     return parser.parse_args()
 
 
-def sub_interaction_matrix(interactions: np.ndarray, taxaset: TaxaSet, excluded_cluster: _Cluster) -> Iterator[np.ndarray]:
-    excluded_indices = set(oidx for oidx in excluded_cluster.members)
-    remaining_indices = [i for i in range(len(taxaset)) if i not in excluded_indices]
+def sub_interaction_matrix(interactions: np.ndarray, excluded_module: Set[int]) -> Iterator[np.ndarray]:
+    n_taxa = interactions.shape[1]
+    remaining_indices = [i for i in range(n_taxa) if i not in excluded_module]
     rows, cols = np.ix_(remaining_indices, remaining_indices)
 
     for interaction_sample in interactions:
         yield interaction_sample[rows, cols]
 
 
-def load_interactions(mcmc: md2.BaseMCMC):
-    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section="posterior")
-    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section="posterior")
-    interactions[np.isnan(interactions)] = 0
-    self_interactions = -np.absolute(self_interactions)
-    for i in range(self_interactions.shape[1]):
-        interactions[:, i, i] = self_interactions[:, i]
-    return interactions
-
-
-def compute_eigenvalues(mcmc: md2.BaseMCMC,
-                        modules: Iterable[_Cluster],
-                        taxa: TaxaSet) -> Iterator[Tuple[int, int, np.ndarray]]:
-    interactions = load_interactions(mcmc)
+def compute_eigenvalues(interactions: np.ndarray, modules: List[Set[int]]) -> Iterator[Tuple[int, int, np.ndarray]]:
     for module_idx, module in enumerate(modules):
         eigs = []
-        for interaction_matrix in sub_interaction_matrix(interactions, taxa, excluded_cluster=module):
+        for interaction_matrix in sub_interaction_matrix(interactions, excluded_module=module):
             eig = scipy.linalg.eigvals(interaction_matrix)
             eigs.append(eig)
-        yield module_idx, module.id, np.array(eigs)
+        yield module_idx, np.array(eigs)
+
+
+def load_consensus_clustering(inputs_dir: Path) -> List[Set[int]]:
+    agglom = np.load(str(inputs_dir / "agglomeration.npy"))
+
+    clusters = []
+    for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
+        cluster = set(int(x) for x in np.where(agglom == cidx)[0])
+        clusters.append(cluster)
+    return clusters
 
 
 def main():
     args = parse_args()
-
-    mcmc = md2.BaseMCMC.load(args.mcmc_path)
-    fixed_cluster_mcmc = md2.BaseMCMC.load(args.fixed_mcmc_path)
-    modules = fixed_cluster_mcmc.graph[STRNAMES.CLUSTERING_OBJ]
-
-    study = md2.Study.load(args.study_path)
-    taxa = study.taxa
+    inputs_dir = Path(args.inputs_dir)
+    modules: List[Set[int]] = load_consensus_clustering(inputs_dir)
+    interactions = np.load(str(inputs_dir / "interactions.npy"))
 
     out_dir = Path(args.out_dir)
     print(f"Output directory: {out_dir}")
-    for cluster_idx, cluster_id, sample_eigs in compute_eigenvalues(mcmc, modules, taxa):
-        print(f"Computed eigenvalues by excluding cluster IDX:{cluster_idx} ID:{cluster_id}")
-        out_path = out_dir / f'eigenvalues_exclude_cluster_{cluster_idx}-{cluster_id}.npy'
+    for cluster_idx, sample_eigs in compute_eigenvalues(interactions, modules):
+        print(f"Computed eigenvalues by excluding cluster IDX:{cluster_idx}")
+        out_path = out_dir / f'eigenvalues_exclude_cluster_{cluster_idx}.npy'
         np.save(str(out_path), sample_eigs)
 
 
