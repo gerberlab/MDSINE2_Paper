@@ -20,7 +20,5 @@ mkdir -p $outdir
 
 # Note: index 19 = day 20
 python analysis/helpers/calculate_eigenvalues.py \
-		-m $mcmc \
-		-f $fixed_module_mcmc \
-		--study $HEALTHY_DSET \
+		-i $MDSINE2_OUT_DIR/merged_studies \
 		-o $outdir

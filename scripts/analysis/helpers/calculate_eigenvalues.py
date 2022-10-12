@@ -12,6 +12,8 @@ import scipy.linalg
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument('--inputs-dir', '-i', type=str, dest='inputs_dir', required=True)
+    parser.add_argument('--out-dir', '-o', type=str, dest='out_dir', required=True)
     return parser.parse_args()
 
 
