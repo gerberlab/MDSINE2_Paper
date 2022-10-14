@@ -35,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--regression_inputs_dir', type=str, required=True)
     parser.add_argument('--mdsine_outdir', type=str, required=True)
     parser.add_argument('--mdsine_nomodule_outdir', type=str, required=True)
+    parser.add_argument('--mdsine_weak_prior_outdir', type=str, required=True)
     parser.add_argument('--clv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_ra_elastic_outdir', type=str, required=True)
@@ -263,6 +264,7 @@ def forward_sim_glv(data_path: Path,
 class HeldoutInferences:
     mdsine2: Path
     mdsine2_nomodule: Path
+    mdsine2_weakprior: Path
     clv_elastic: Path
     glv_elastic: Path
     glv_ra_elastic: Path
@@ -278,6 +280,7 @@ class HeldoutInferences:
 
         _require_file(self.mdsine2)
         _require_file(self.mdsine2_nomodule)
+        _require_file(self.mdsine2_weakprior)
         _require_file(self.clv_elastic)
         _require_file(self.glv_elastic)
         _require_file(self.glv_ra_elastic)
@@ -293,6 +296,12 @@ class HeldoutInferences:
 
     def mdsine2_nomodule_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
         return forward_sim_mdsine2(data_path=self.mdsine2_nomodule,
+                                   recompute_cache=self.recompute_cache,
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
+                                   subsample_every=subsample_every)
+
+    def mdsine2_weakprior_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
+        return forward_sim_mdsine2(data_path=self.mdsine2_weakprior,
                                    recompute_cache=self.recompute_cache,
                                    heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
                                    subsample_every=subsample_every)
@@ -424,6 +433,22 @@ def evaluate_all(regression_inputs_dir: Path,
             logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
 
         try:
+            traj = np.median(
+                inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                axis=0
+            )
+            add_absolute_entry(
+                'MDSINE2 (Weak Interaction Prior)',
+                heldout_data.evaluate_absolute(
+                    traj,
+                    upper_bound=sim_max,
+                    lower_bound=abs_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 (weak interaction prior) output: Holdout Subject {sid}.")
+
+        try:
             add_absolute_entry(
                 'gLV-elastic net',
                 heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
@@ -467,6 +492,20 @@ def evaluate_all(regression_inputs_dir: Path,
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'MDSINE2 (Weak Interaction Prior)',
+                heldout_data.evaluate_relative(
+                    np.median(
+                        inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                        axis=0
+                    ),
+                    lower_bound=rel_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 (weak interaction prior) output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -638,6 +677,7 @@ def main():
     directories = HeldoutInferences(
         mdsine2=Path(args.mdsine_outdir),
         mdsine2_nomodule=Path(args.mdsine_nomodule_outdir),
+        mdsine2_weakprior=Path(args.mdsine_weak_prior_outdir),
         clv_elastic=Path(args.clv_elastic_outdir),
         glv_elastic=Path(args.glv_elastic_outdir),
         glv_ra_elastic=Path(args.glv_ra_elastic_outdir),

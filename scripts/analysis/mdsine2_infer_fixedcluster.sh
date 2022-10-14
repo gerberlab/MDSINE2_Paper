@@ -32,8 +32,7 @@ echo "Writing files to ${MDSINE2_OUT_DIR}"
 #		| tee ${MDSINE2_OUT_DIR}/log_mdsine2_inference_fixedcluster.txt
 
 
-old_study_name="healthy-seed${seed}"
-study_name="healthy-seed${seed}-fixed-cluster"
+study_name="merged_studies_fixed_cluster"
 
 python analysis/helpers/mdsine2_fixed_module_multiseed.py \
 		--input $HEALTHY_DSET \
