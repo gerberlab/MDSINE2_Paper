@@ -339,6 +339,7 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
         yield subject_idx, subject_id, HeldoutInferences(
             mdsine2=directories.mdsine2 / subject_id / "healthy" / "mcmc.pkl",
             mdsine2_nomodule=directories.mdsine2_nomodule / subject_id / "healthy" / "mcmc.pkl",
+            mdsine2_weakprior=directories.mdsine2_weakprior / subject_id / "healthy" / "mcmc.pkl",
             clv_elastic=directories.clv_elastic / f'clv-{subject_idx}-model.pkl',
             glv_elastic=directories.glv_elastic / f'glv-elastic-net-{subject_idx}-model.pkl',
             glv_ra_elastic=directories.glv_ra_elastic / f'glv-ra-elastic-net-{subject_idx}-model.pkl',
