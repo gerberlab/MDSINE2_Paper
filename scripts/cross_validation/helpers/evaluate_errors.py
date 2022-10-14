@@ -717,8 +717,6 @@ def main():
 
     make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
     make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
-    ax[0].get_legend().remove()
-    ax[1].get_legend().remove()
     plt.savefig(plot_dir / "overall.pdf")
     plt.close(fig)
 
