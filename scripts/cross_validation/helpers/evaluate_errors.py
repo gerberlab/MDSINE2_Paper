@@ -699,7 +699,7 @@ def main():
     )
 
     # ==================== Plot settings.
-    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']
+    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'MDSINE2 (Weak Interaction Prior)', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']
     palette_tab20 = sns.color_palette("tab10", len(methods))
     method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
 
