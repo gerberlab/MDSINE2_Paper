@@ -9,7 +9,7 @@ source analysis/settings.sh
 module_idx_to_remove=$1
 require_variable "module_idx_to_remove" $module_idx_to_remove
 
-outdir=${MDSINE2_OUT_DIR}/merged_studies
+outdir=${MDSINE2_OUT_DIR}/merged_studies/stability
 mkdir -p $outdir
 
 sim_seed=31415

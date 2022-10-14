@@ -7,7 +7,7 @@ require_program python
 cd synthetic/helpers
 
 
-for read_depth in 1000 25000; do
+for read_depth in 25000; do
 	for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 		seed=$trial
 		python create_datasets.py \

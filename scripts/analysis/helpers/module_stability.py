@@ -4,9 +4,7 @@ from pathlib import Path
 from typing import Tuple, Iterator, Optional, Set, List
 
 import numpy as np
-import scipy.stats
 import pandas as pd
-from sklearn.cluster import AgglomerativeClustering
 
 import mdsine2 as md2
 from tqdm import tqdm
@@ -42,7 +40,7 @@ def main():
     inputs_dir = Path(args.inputs_dir)
     module_idx_to_remove = args.module_remove_idx
 
-    modules: List[List[int]] = load_modal_clustering(inputs_dir)
+    modules: List[List[int]] = load_consensus_clustering(inputs_dir)
     module_to_remove = modules[module_idx_to_remove]
     print("Will remove module index {} (Size {})".format(
         args.module_remove_idx,
@@ -51,7 +49,7 @@ def main():
 
     growths, interactions = load_parameters(inputs_dir)
     n_samples = growths.shape[0]
-    sample_indices = np.random.choice(n_samples, size=args.n_trials, replace=True)
+    sample_indices = [int(a) for a in np.linspace(0, n_samples-1, num=args.n_trials)]
 
     df_entries = []
     print("Computing sims for module.")
@@ -107,7 +105,7 @@ def main():
     pd.DataFrame(df_entries).to_csv(out_path, index=False, sep='\t')
 
 
-def load_modal_clustering(inputs_dir: Path) -> List[List[int]]:
+def load_consensus_clustering(inputs_dir: Path) -> List[List[int]]:
     agglom = np.load(str(inputs_dir / "agglomeration.npy"))
 
     clusters = []
