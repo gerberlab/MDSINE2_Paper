@@ -1,7 +1,15 @@
 import os
+import time
 import argparse
+from pathlib import Path
+from typing import List
+
+import numpy as np
+import scipy.stats
+from sklearn.cluster import AgglomerativeClustering
 
 import mdsine2 as md2
+from mdsine2.logger import logger
 from mdsine2.names import STRNAMES
 
 
@@ -11,6 +19,11 @@ def parse_args() -> argparse.Namespace:
         '--input', '-i', type=str, dest='input',
         required=True,
         help='This is the dataset to do inference with.'
+    )
+    parser.add_argument(
+        '--multiseed-dir', '-m', type=str, dest='multiseed_dir',
+        required=True,
+        help='The directory containing the .npy files for the combined seeds. Requires the '
     )
     parser.add_argument(
         '--negbin', type=str, dest='negbin', nargs='+',
@@ -49,6 +62,16 @@ def parse_args() -> argparse.Namespace:
         help='This is folder to save the output of inference'
     )
     parser.add_argument(
+        '--multiprocessing', '-mp', type=int, dest='mp',
+        help='If 1, run the inference with multiprocessing. Else run on a single process',
+        default=0
+    )
+    parser.add_argument(
+        '--rename-study', type=str, dest='rename_study',
+        required=False, default=None,
+        help='Specify the name of the study to set'
+    )
+    parser.add_argument(
         '--interaction-ind-prior', '-ip', type=str, dest='interaction_prior',
         required=True,
         help='Prior of the indicator of the interactions.'
@@ -60,23 +83,32 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '--rename-study', type=str, dest='rename_study',
-        required=False, default=None,
-        help='Specify the name of the study to set'
-    )
-    parser.add_argument(
-        '--log-every', type=int, default=100,
+        '--log-every', type=int, default=100, dest='log_every',
         required=False,
         help='<Optional> Tells the inference loop to print debug messages every k iterations.'
     )
+
+    parser.add_argument(
+        '--benchmark', action='store_true', dest='benchmark',
+        help='If flag is set, then logs (at INFO level) the update() runtime of each component at the end.'
+    )
     return parser.parse_args()
+
+
+def agglomerate_from_cocluster(multiseed_dir: Path) -> List[List[int]]:
+    agglom = np.load(str(multiseed_dir / 'agglomeration.npy'))
+    modules = []
+    for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
+        module = [int(oidx) for oidx in np.where(agglom == cidx)[0]]
+        modules.append(module)
+    return modules
 
 
 def main():
     args = parse_args()
 
     # 1) load dataset
-    print('Loading dataset {}'.format(args.input))
+    logger.info('Loading dataset {}'.format(args.input))
     study = md2.Study.load(args.input)
     if args.rename_study is not None:
         if args.rename_study.lower() != 'none':
@@ -100,35 +132,55 @@ def main():
     else:
         raise ValueError('Argument `negbin`: there must be only one or two arguments.')
 
-    print('Setting a0 = {:.4E}, a1 = {:.4E}'.format(a0, a1))
+    logger.info('Setting a0 = {:.4E}, a1 = {:.4E}'.format(a0, a1))
+
+    # 2.5) Load agglomerated modules
+    agglomerated_modules = agglomerate_from_cocluster(Path(args.multiseed_dir))
 
     # 3) Begin inference
     params = md2.config.MDSINE2ModelConfig(
         basepath=basepath, seed=args.seed,
         burnin=args.burnin, n_samples=args.n_samples, negbin_a1=a1,
         negbin_a0=a0, checkpoint=args.checkpoint)
+    # Run with multiprocessing if necessary
+    if args.mp:
+        params.MP_FILTERING = 'full'
+        params.MP_CLUSTERING = 'full-4'
 
+    # Load fixed clustering structure
     params.LEARN[STRNAMES.CLUSTERING] = False
     params.LEARN[STRNAMES.CONCENTRATION] = False
-    params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
+    params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'manual'
+    params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value'] = agglomerated_modules
     params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['N'] = 'fixed-clustering'
     params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['N'] = 'fixed-clustering'
 
     # Set the sparsities
-    if args.interaction_prior is None:
-        raise ValueError('Must specify `--interaction-ind-prior`')
     params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['hyperparam_option'] = \
         args.interaction_prior
-    if args.perturbation_prior is None:
-        raise ValueError('Must specify `--perturbation-ind-prior`')
     params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = \
         args.perturbation_prior
+
+    # Change the cluster initialization to no clustering if there are less than 30 clusters
+    if len(study.taxa) <= 30:
+        logger.info(
+            'Since there is less than 30 taxa, we set the initialization of the clustering to `no-clusters`')
+        params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
 
     mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study)
     mdata_fname = os.path.join(params.MODEL_PATH, 'metadata.txt')
     params.make_metadata_file(fname=mdata_fname)
 
-    _ = md2.run_graph(mcmc, crash_if_error=True, log_every=args.log_every)
+    start_time = time.time()
+    mcmc = md2.run_graph(mcmc, crash_if_error=True, log_every=args.log_every, benchmarking=args.benchmark)
+
+    # Record how much time inference took
+    t = time.time() - start_time
+    t = t / 3600  # Convert to hours
+
+    f = open(mdata_fname, 'a')
+    f.write('\n\nTime for inference: {} hours'.format(t))
+    f.close()
 
 
 if __name__ == "__main__":

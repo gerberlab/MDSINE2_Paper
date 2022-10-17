@@ -7,7 +7,7 @@ excluded_subj=$1
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/mdsine2-modules/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/mdsine2-nomodules/${excluded_subj}
 mkdir -p ${inference_out_dir}
 
 echo "[*] Running cross-validation run for MDSINE2 (Excluding subject: ${excluded_subj})"
@@ -23,4 +23,5 @@ python cross_validation/helpers/mdsine2_loo.py \
 		--perturbation-ind-prior $MDSINE2_PERTURBATION_INDICATOR_PRIOR \
 		--log-every 100 \
 		--exclude-subject $excluded_subj \
+		--nomodules
 		| tee ${inference_out_dir}/log.txt

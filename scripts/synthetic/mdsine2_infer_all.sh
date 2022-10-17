@@ -2,7 +2,7 @@
 set -e
 source synthetic/settings.sh
 
-for read_depth in 1000 25000; do
+for read_depth in 25000; do
 	for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 		for noise_level in "low" "medium" "high"; do
 			negbin_seed=123
@@ -30,7 +30,7 @@ for read_depth in 1000 25000; do
 					--checkpoint 1000 \
 					--multiprocessing 0 \
 					--basepath $inference_out_dir \
-					--interaction-ind-prior "strong-sparse" \
+					--interaction-ind-prior "weak-agnostic" \
 					--perturbation-ind-prior "weak-agnostic" \
 					--time_mask ${DATASET_DIR}/time_mask.tsv
 			echo "[*] Finished mdsine2 inference."

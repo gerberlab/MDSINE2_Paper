@@ -108,6 +108,13 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
         )
 
     area_df = df.groupby(['Method', 'ReadDepth', 'Trial', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
+
+    noise_ordering = area_df['NoiseLevel'].map({
+        'low': 0,
+        'medium': 1,
+        'high': 2
+    })
+    area_df = area_df.assign(Ordering=noise_ordering).sort_values('Ordering')
     area_df.loc[:, 'x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
 
     if area_df.shape[0] > 0:
@@ -171,7 +178,7 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     # ax0 = fig.add_subplot(spec[2, 2:])
     # ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
 
-    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-ridge', 'glv-ra-ridge']
+    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-elastic_net', 'glv-ridge']
     df = load_df(dataframe_dir / "topology_errors.csv")
     section = df.loc[df['ReadDepth'] == read_depth]
     render_topology_errors(
@@ -205,7 +212,8 @@ def main():
 
     default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-    method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    # method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    method_order = ['MDSINE2', 'MDSINE1', 'glv-elastic_net', 'glv-ridge']
     color_palette = {method: c for method, c in zip(method_order, default_colors)}
 
     fig = plt.figure(figsize=(args.figure_width, args.figure_height))

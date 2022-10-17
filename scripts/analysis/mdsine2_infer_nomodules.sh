@@ -8,7 +8,9 @@ echo "Writing files to ${MDSINE2_OUT_DIR}"
 # Healthy cohort
 # --------------
 
-seed=0
+seed=$1
+require_variable "seed" $seed
+
 study_name="healthy-seed${seed}-nomodule"
 
 # Seed 0
@@ -16,7 +18,7 @@ echo "[*] Performing MDSINE2 inference on ${study_name}"
 export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/analysis/logging_to_file.ini"
 export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_inference_${study_name}_NOMODULE.log"
 mkdir -p ${MDSINE2_OUT_DIR}
-python analysis/helpers/mdsine2_nomodules.py \
+mdsine2 infer \
 		--input $HEALTHY_DSET \
 		--negbin $REPLICATE_MCMC \
 		--seed $seed \
@@ -26,7 +28,8 @@ python analysis/helpers/mdsine2_nomodules.py \
 		--rename-study $study_name \
 		--basepath $MDSINE2_OUT_DIR \
 		--interaction-ind-prior $INTERACTION_IND_PRIOR \
-		--perturbation-ind-prior $PERTURBATION_IND_PRIOR
+		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
+		--nomodules
 
 echo "[*] Visualizing output of ${study_name}"
 export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_visualization_${study_name}_NOMODULE.log"

@@ -235,11 +235,11 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             pass
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -298,11 +298,11 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
             pass
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -378,10 +378,10 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
         # _add_regression_entry("lra", "elastic_net")
-        # _add_regression_entry("glv", "elastic_net")
+        _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
         # _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -614,23 +614,23 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    # print("Evaluating growth rate errors.")
-    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    # out_path = output_dir / "growth_rate_errors.csv"
-    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    # print(f"Wrote growth rate errors to {out_path.name}.")
-    #
-    # print("Evaluating interaction strength errors.")
-    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    # out_path = output_dir / "interaction_strength_errors.csv"
-    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    # print(f"Wrote interaction strength errors to {out_path.name}.")
-    #
-    # print("Evaluating interaction topology errors.")
-    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    # out_path = output_dir / "topology_errors.csv"
-    # topology_errors.to_csv(output_dir / "topology_errors.csv")
-    # print(f"Wrote interaction topology errors to {out_path.name}.")
+    print("Evaluating growth rate errors.")
+    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    out_path = output_dir / "growth_rate_errors.csv"
+    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    print(f"Wrote growth rate errors to {out_path.name}.")
+
+    print("Evaluating interaction strength errors.")
+    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    out_path = output_dir / "interaction_strength_errors.csv"
+    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    print(f"Wrote interaction strength errors to {out_path.name}.")
+
+    print("Evaluating interaction topology errors.")
+    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    out_path = output_dir / "topology_errors.csv"
+    topology_errors.to_csv(output_dir / "topology_errors.csv")
+    print(f"Wrote interaction topology errors to {out_path.name}.")
 
     print("Evaluating holdout trajectory errors.")
     init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)

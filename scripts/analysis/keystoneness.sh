@@ -9,16 +9,20 @@ echo "Evaluating MDSINE2 learned model's keystonenss"
 # --------------
 
 seed=0
-study_name="healthy-seed${seed}-fixed-cluster"
-mcmc=$MDSINE2_OUT_DIR/$study_name/mcmc.pkl
+study="healthy-seed${seed}"
+fixed_module_study="healthy-seed${seed}-fixed-cluster"
 
-outdir=${MDSINE2_OUT_DIR}/${study_name}/keystoneness
+mcmc=$MDSINE2_OUT_DIR/${study}/mcmc.pkl
+fixed_module_mcmc=$MDSINE2_OUT_DIR/${fixed_module_study}/mcmc.pkl
+
+outdir=$MDSINE2_OUT_DIR/merged_studies/keystoneness
 mkdir -p $outdir
 
 # Note: index 19 = day 20
 mdsine2 evaluate-keystoneness \
-		-f $mcmc \
+		-e $MDSINE2_OUT_DIR/merged_studies \
 		-s $HEALTHY_DSET \
 		-it 19 \
 		-o $outdir \
-		--n-days 100
+		--n-days 100 \
+		--simulate-every-n 100

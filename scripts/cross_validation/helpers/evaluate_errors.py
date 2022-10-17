@@ -34,6 +34,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--study', type=str, required=True)
     parser.add_argument('--regression_inputs_dir', type=str, required=True)
     parser.add_argument('--mdsine_outdir', type=str, required=True)
+    parser.add_argument('--mdsine_nomodule_outdir', type=str, required=True)
+    parser.add_argument('--mdsine_weak_prior_outdir', type=str, required=True)
     parser.add_argument('--clv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_elastic_outdir', type=str, required=True)
     parser.add_argument('--glv_ra_elastic_outdir', type=str, required=True)
@@ -43,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--plot_dir', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
+    parser.add_argument('--subsample_every', type=int, required=False, default=1)
     parser.add_argument('--recompute_cache', action='store_true')
     return parser.parse_args()
 
@@ -125,7 +128,7 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
 
 
 @cached_forward_simulation
-def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float) -> np.ndarray:
+def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float, subsample_every: int) -> np.ndarray:
     logger.info(f"Evaluating forward simulation using mdsine2 MCMC samples ({data_path})")
     mcmc = md2.BaseMCMC.load(str(data_path))
 
@@ -177,8 +180,11 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
 
     n_samples = growth.shape[0]
     n_taxa = growth.shape[1]
-    pred_matrix = np.empty(shape=(n_samples, n_taxa, len(times)))
-    for sample_idx in tqdm(range(n_samples), desc="MDSINE2 fwsim"):
+
+    gibbs_indices = list(range(0, n_samples, subsample_every))
+    pred_matrix = np.empty(shape=(len(gibbs_indices), n_taxa, len(times)))
+
+    for pred_idx, sample_idx in tqdm(enumerate(gibbs_indices), desc="MDSINE2 fwsim", total=len(pred_matrix)):
         dyn.growth = growth[sample_idx]
         dyn.interactions = interactions[sample_idx]
         if perts is not None:
@@ -189,7 +195,7 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
             init = init.reshape(-1, 1)
         x = md2.integrate(dynamics=dyn, initial_conditions=init,
                           dt=sim_dt, n_days=times[-1] + sim_dt, subsample=True, times=times)
-        pred_matrix[sample_idx] = x['X']
+        pred_matrix[pred_idx] = x['X']
     return pred_matrix
 
 
@@ -257,6 +263,8 @@ def forward_sim_glv(data_path: Path,
 @dataclass
 class HeldoutInferences:
     mdsine2: Path
+    mdsine2_nomodule: Path
+    mdsine2_weakprior: Path
     clv_elastic: Path
     glv_elastic: Path
     glv_ra_elastic: Path
@@ -271,6 +279,8 @@ class HeldoutInferences:
                 raise FileNotFoundError(f"{path} not found!")
 
         _require_file(self.mdsine2)
+        _require_file(self.mdsine2_nomodule)
+        _require_file(self.mdsine2_weakprior)
         _require_file(self.clv_elastic)
         _require_file(self.glv_elastic)
         _require_file(self.glv_ra_elastic)
@@ -278,10 +288,23 @@ class HeldoutInferences:
         _require_file(self.glv_ridge)
         _require_file(self.lra_elastic)
 
-    def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float) -> np.ndarray:
+    def mdsine2_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
         return forward_sim_mdsine2(data_path=self.mdsine2,
                                    recompute_cache=self.recompute_cache,
-                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5)
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
+                                   subsample_every=subsample_every)
+
+    def mdsine2_nomodule_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
+        return forward_sim_mdsine2(data_path=self.mdsine2_nomodule,
+                                   recompute_cache=self.recompute_cache,
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
+                                   subsample_every=subsample_every)
+
+    def mdsine2_weakprior_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
+        return forward_sim_mdsine2(data_path=self.mdsine2_weakprior,
+                                   recompute_cache=self.recompute_cache,
+                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
+                                   subsample_every=subsample_every)
 
     def clv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
@@ -315,6 +338,8 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
     for subject_idx, subject_id in enumerate(SUBJECT_IDS):
         yield subject_idx, subject_id, HeldoutInferences(
             mdsine2=directories.mdsine2 / subject_id / "healthy" / "mcmc.pkl",
+            mdsine2_nomodule=directories.mdsine2_nomodule / subject_id / "healthy" / "mcmc.pkl",
+            mdsine2_weakprior=directories.mdsine2_weakprior / subject_id / "healthy" / "mcmc.pkl",
             clv_elastic=directories.clv_elastic / f'clv-{subject_idx}-model.pkl',
             glv_elastic=directories.glv_elastic / f'glv-elastic-net-{subject_idx}-model.pkl',
             glv_ra_elastic=directories.glv_ra_elastic / f'glv-ra-elastic-net-{subject_idx}-model.pkl',
@@ -331,7 +356,8 @@ def evaluate_all(regression_inputs_dir: Path,
                  sim_dt: float,
                  sim_max: float,
                  abs_lower_bound: float = 1e5,
-                 rel_lower_bound: float = 1e-6):
+                 rel_lower_bound: float = 1e-6,
+                 mdsine2_subsample_every: int = 1):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
         Y = pickle.load(f)
@@ -376,48 +402,159 @@ def evaluate_all(regression_inputs_dir: Path,
                 })
 
         # Absolute abundance
-        add_absolute_entry(
-            'MDSINE2',
-            heldout_data.evaluate_absolute(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), upper_bound=sim_max, lower_bound=abs_lower_bound)
-        )
-        add_absolute_entry(
-            'gLV-elastic net',
-            heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
-        )
-        add_absolute_entry(
-            'gLV-ridge',
-            heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
-        )
+        try:
+            traj = np.median(
+                inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                axis=0
+            )
+            add_absolute_entry(
+                'MDSINE2',
+                heldout_data.evaluate_absolute(
+                    traj,
+                    upper_bound=sim_max,
+                    lower_bound=abs_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
+
+        try:
+            add_absolute_entry(
+                'MDSINE2 (No Modules)',
+                heldout_data.evaluate_absolute(
+                    np.median(
+                        inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                        axis=0
+                    ),
+                    upper_bound=sim_max,
+                    lower_bound=abs_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
+
+        try:
+            traj = np.median(
+                inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                axis=0
+            )
+            add_absolute_entry(
+                'MDSINE2 (Weak Interaction Prior)',
+                heldout_data.evaluate_absolute(
+                    traj,
+                    upper_bound=sim_max,
+                    lower_bound=abs_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 (weak interaction prior) output: Holdout Subject {sid}.")
+
+        try:
+            add_absolute_entry(
+                'gLV-elastic net',
+                heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate glv-elastic Net output: Holdout Subject {sid}.")
+
+        try:
+            add_absolute_entry(
+                'gLV-ridge',
+                heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
 
         # Relative abundance
-        add_relative_entry(
-            'MDSINE2',
-            heldout_data.evaluate_relative(np.median(inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max), axis=0), lower_bound=rel_lower_bound)
-        )
-        add_relative_entry(
-            'cLV',
-            heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
-        )
-        add_relative_entry(
-            'gLV-RA-elastic net',
-            heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
-        )
-        add_relative_entry(
-            'gLV-RA-ridge',
-            heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
-        )
-        add_relative_entry(
-            'gLV-elastic net',
-            heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
-        )
-        add_relative_entry(
-            'gLV-ridge',
-            heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
-        )
-        add_relative_entry(
-            'LRA',
-            heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
-        )
+        try:
+            add_relative_entry(
+                'MDSINE2',
+                heldout_data.evaluate_relative(
+                    np.median(
+                        inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                        axis=0
+                    ),
+                    lower_bound=rel_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'MDSINE2 (No Modules)',
+                heldout_data.evaluate_relative(
+                    np.median(
+                        inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                        axis=0
+                    ),
+                    lower_bound=rel_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'MDSINE2 (Weak Interaction Prior)',
+                heldout_data.evaluate_relative(
+                    np.median(
+                        inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
+                        axis=0
+                    ),
+                    lower_bound=rel_lower_bound
+                )
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate MDSINE2 (weak interaction prior) output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'cLV',
+                heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate clv output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'gLV-RA-elastic net',
+                heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'gLV-RA-ridge',
+                heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate glv-RA-ridge output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'gLV-elastic net',
+                heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate glv-elastic net output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'gLV-ridge',
+                heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate glv-ridge output (relabund): Holdout Subject {sid}.")
+
+        try:
+            add_relative_entry(
+                'LRA',
+                heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
+            )
+        except FileNotFoundError:
+            logger.error(f"Couldn't locate LRA output (relabund): Holdout Subject {sid}.")
 
     absolute_results = pd.DataFrame(absolute_df_entries)
     relative_results = pd.DataFrame(relative_df_entries)
@@ -540,6 +677,8 @@ def main():
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
         mdsine2=Path(args.mdsine_outdir),
+        mdsine2_nomodule=Path(args.mdsine_nomodule_outdir),
+        mdsine2_weakprior=Path(args.mdsine_weak_prior_outdir),
         clv_elastic=Path(args.clv_elastic_outdir),
         glv_elastic=Path(args.glv_elastic_outdir),
         glv_ra_elastic=Path(args.glv_ra_elastic_outdir),
@@ -555,11 +694,12 @@ def main():
         directories,
         complete_study,
         args.sim_dt,
-        args.sim_max
+        args.sim_max,
+        mdsine2_subsample_every=args.subsample_every
     )
 
     # ==================== Plot settings.
-    methods = ['MDSINE2', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']
+    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'MDSINE2 (Weak Interaction Prior)', 'cLV', 'LRA', 'gLV-RA-elastic net', 'gLV-RA-ridge', 'gLV-ridge', 'gLV-elastic net']
     palette_tab20 = sns.color_palette("tab10", len(methods))
     method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
 
@@ -598,6 +738,10 @@ def main():
 
     make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, lb=1e5, error_ylabel='RMSE (log Abs abundance)')
     make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, lb=1e-6, error_ylabel='RMSE (log Rel abundance)')
+    ax[0, 0].get_legend().remove()
+    ax[1, 0].get_legend().remove()
+    ax[0, 1].get_legend().remove()
+    ax[1, 1].get_legend().remove()
     draw_method_legend(fig, methods, method_colors, position=(0.5, 0.1))
     fig.tight_layout()
     plt.savefig(plot_dir / "binned.pdf")
