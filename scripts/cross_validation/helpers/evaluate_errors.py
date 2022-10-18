@@ -633,8 +633,11 @@ def make_boxplot(ax, df: pd.DataFrame,
 
     def line_break(x: str):
         break_point = x.find('(')
-        tokens = [x[:break_point].strip(), x[break_point:].strip()]
-        return '\n'.join(tokens)
+        if break_point >= 0:
+            tokens = [x[:break_point].strip(), x[break_point:].strip()]
+            return '\n'.join(tokens)
+        else:
+            return x
 
     labels = [
         line_break(item.get_text())
@@ -643,9 +646,9 @@ def make_boxplot(ax, df: pd.DataFrame,
     ax.set_xticklabels(labels)
 
     if xlabel is not None:
-        ax.set_xlabel(xlabel, fontsize=20)
+        ax.set_xlabel(xlabel, fontsize=15)
     if ylabel is not None:
-        ax.set_ylabel(ylabel, fontsize=20)
+        ax.set_ylabel(ylabel, fontsize=15)
 
 
 def make_grouped_boxplot(abund_ax, error_ax,
@@ -759,7 +762,7 @@ def main():
     fig, ax = plt.subplots(
         nrows=1,
         ncols=2,
-        figsize=(12, 5),
+        figsize=(14, 5),
         gridspec_kw={
             'width_ratios': [1, 2],
             'right': 0.92,
@@ -769,6 +772,7 @@ def main():
 
     make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
     make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
+    fig.tight_layout()
     plt.savefig(plot_dir / "overall.pdf")
     plt.close(fig)
 
