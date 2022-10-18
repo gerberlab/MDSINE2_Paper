@@ -1,4 +1,5 @@
 import argparse
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple, Iterator, Callable, Any, Optional, List, Dict
@@ -449,7 +450,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 axis=0
             )
             add_absolute_entry(
-                'MDSINE2 (Weak Interaction Prior)',
+                'MDSINE2 (Weak Prior)',
                 heldout_data.evaluate_absolute(
                     traj,
                     upper_bound=sim_max,
@@ -465,7 +466,7 @@ def evaluate_all(regression_inputs_dir: Path,
                 axis=0
             )
             add_absolute_entry(
-                'MDSINE2 (No Modules, Weak Interaction Prior)',
+                'MDSINE2 (No Modules, Weak Prior)',
                 heldout_data.evaluate_absolute(
                     traj,
                     upper_bound=sim_max,
@@ -522,7 +523,7 @@ def evaluate_all(regression_inputs_dir: Path,
 
         try:
             add_relative_entry(
-                'MDSINE2 (Weak Interaction Prior)',
+                'MDSINE2 (Weak Prior)',
                 heldout_data.evaluate_relative(
                     np.median(
                         inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
@@ -536,7 +537,7 @@ def evaluate_all(regression_inputs_dir: Path,
 
         try:
             add_relative_entry(
-                'MDSINE2 (No Modules, Weak Interaction Prior)',
+                'MDSINE2 (No Modules, Weak Prior)',
                 heldout_data.evaluate_relative(
                     np.median(
                         inferences.mdsine2_nomodule_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
@@ -632,12 +633,8 @@ def make_boxplot(ax, df: pd.DataFrame,
     )
 
     def line_break(x: str):
-        break_point = x.find('(')
-        if break_point >= 0:
-            tokens = [x[:break_point].strip(), x[break_point:].strip()]
-            return '\n'.join(tokens)
-        else:
-            return x
+        break_at_chars = ['(', ',', '/']
+        return '\n'.join(re.split('[\(,/]', x))
 
     labels = [
         line_break(item.get_text())
@@ -754,7 +751,7 @@ def main():
     )
 
     # ==================== Plot settings.
-    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'MDSINE2 (Weak Interaction Prior)', 'MDSINE2 (No Modules, Weak Interaction Prior)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
+    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'MDSINE2 (Weak Prior)', 'MDSINE2 (No Modules, Weak Prior)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
     palette_tab20 = sns.color_palette("tab10", len(methods))
     method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
 
