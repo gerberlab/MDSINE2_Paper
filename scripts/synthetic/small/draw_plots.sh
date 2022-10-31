@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source synthetic/settings.sh
+source synthetic/small/settings.sh
 
 
 echo "[*] Running plotting script."

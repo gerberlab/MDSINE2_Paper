@@ -37,6 +37,7 @@ def parse_args() -> argparse.Namespace:
                              'C. diff data (Default: 286, carry-over from MDSINE1)')
     parser.add_argument('-q', '--qpcr_noise', type=float, required=False, default=0.01)
     parser.add_argument('-r', '--read_depth', type=int, required=False, default=50000)
+    parser.add_argument('-in', '--intervene_day', dest='intervene_day', type=float, required=False, default=0.0)
 
     # VARIANCE SCALING (noise levels)
     parser.add_argument('--low_noise', type=float, required=False, default=0.5)
@@ -265,7 +266,7 @@ def main():
         init_dist=variables.Normal(initial_cond_mean, np.power(initial_cond_std, 2)),
         processvar=process_var,
         initial_min_value=100.0,
-        intervene_day=10.0
+        intervene_day=args.intervene_day
     )
 
     # Plot the trajectories.

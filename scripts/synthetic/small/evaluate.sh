@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source synthetic/settings.sh
+source synthetic/small/settings.sh
 
 
 export PYTHONPATH=${CLV_DIR}
