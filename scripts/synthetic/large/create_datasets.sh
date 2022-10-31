@@ -20,5 +20,6 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	--read_depth $READ_DEPTH \
 	--low_noise ${LOW_NOISE_SCALE} \
 	--medium_noise ${MEDIUM_NOISE_SCALE} \
-	--high_noise ${HIGH_NOISE_SCALE}
+	--high_noise ${HIGH_NOISE_SCALE} \
+	--initial_min_value 1e5
 done
