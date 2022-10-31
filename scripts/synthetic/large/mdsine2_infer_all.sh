@@ -31,8 +31,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 				--multiprocessing 0 \
 				--basepath $inference_out_dir \
 				--interaction-ind-prior "weak-agnostic" \
-				--perturbation-ind-prior "weak-agnostic" \
-				--time_mask ${DATASET_DIR}/time_mask.tsv
+				--perturbation-ind-prior "weak-agnostic"
 		echo "[*] Finished mdsine2 inference."
 	done
 done
