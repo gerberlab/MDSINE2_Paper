@@ -30,7 +30,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 				--checkpoint 1000 \
 				--multiprocessing 0 \
 				--basepath $inference_out_dir \
-				--interaction-ind-prior "weak-agnostic" \
+				--interaction-ind-prior "strong-sparse" \
 				--perturbation-ind-prior "weak-agnostic" \
 				--time_mask ${DATASET_DIR}/time_mask.tsv
 		echo "[*] Finished mdsine2 inference."
