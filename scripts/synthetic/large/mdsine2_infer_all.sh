@@ -21,7 +21,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 
 		# ======= Run inference
 		echo "[*] Running non-clustered mdsine2 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
-		python synthetic/helpers/inference.py \
+		mdsine2 infer \
 				--input $dataset \
 				--negbin ${negbin_out_dir}/replicate-${noise_level}/mcmc.pkl \
 				--seed 0 \
