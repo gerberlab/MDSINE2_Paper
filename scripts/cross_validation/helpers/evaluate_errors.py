@@ -607,7 +607,9 @@ def make_boxplot(ax, df: pd.DataFrame,
                  method_colors: Dict[str, np.ndarray],
                  xlabel: Optional[str] = None,
                  ylabel: Optional[str] = None):
-    df = df.sort_values(
+    df = df.loc[
+        df['Method'].isin(method_order)
+    ].sort_values(
         by='Method',
         key=lambda col: col.map({m: i for i, m in enumerate(method_order)})
     )
@@ -656,7 +658,9 @@ def make_grouped_boxplot(abund_ax, error_ax,
                          num_quantiles: int = 10,
                          error_ylabel: Optional[str] = None):
     # Divide taxa based on abundance quantiles.
-    df = df.assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_quantiles))
+    df = df.loc[
+        df['Method'].isin(method_order)
+    ].assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_quantiles))
     log_lb = np.log10(lb)
 
     # ============ Render bin counts.
