@@ -678,8 +678,8 @@ def main():
         mdsine2_subsample_every=args.subsample_every
     )
 
-    absolute_results.to_csv(plot_dir / "absolute_cv.tsv", sep='\t')
-    relative_results.to_csv(plot_dir / "relative_cv.tsv", sep='\t')
+    absolute_results.to_csv(plot_dir / "absolute_cv.tsv", sep='\t', index=False)
+    relative_results.to_csv(plot_dir / "relative_cv.tsv", sep='\t', index=False)
 
     # ==================== Plot settings.
     methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
