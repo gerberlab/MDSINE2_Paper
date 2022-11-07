@@ -544,7 +544,8 @@ def make_boxplot(ax, df: pd.DataFrame,
         x='Method',
         y='Error',
         showfliers=False,
-        palette=method_colors
+        palette=method_colors,
+        whis=(2.5, 97.5)
     )
 
     sns.stripplot(
@@ -625,7 +626,8 @@ def make_grouped_boxplot(abund_ax, error_ax,
         x='BinLabel',
         y='Error',
         hue='Method', hue_order=method_order, palette=method_colors,
-        showfliers=False
+        showfliers=False,
+        whis=(2.5, 97.5)
     )
     error_ax.set_axisbelow(True)
     error_ax.yaxis.grid(True, 'major', linewidth=1, color='#e6e6e6')
