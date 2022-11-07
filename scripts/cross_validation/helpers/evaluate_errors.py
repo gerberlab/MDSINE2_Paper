@@ -8,6 +8,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import scipy.special
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import seaborn as sns
@@ -23,6 +24,9 @@ from lv_forward_sims import \
     forward_sim_single_subj_lra, \
     forward_sim_single_subj_glv
 
+# Make font editable in AI
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 """
 MDSINE2 uses subject names, but clv code uses subject index.
