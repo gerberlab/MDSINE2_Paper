@@ -270,8 +270,6 @@ def forward_sim_glv(data_path: Path,
 class HeldoutInferences:
     mdsine2: Path
     mdsine2_nomodule: Path
-    mdsine2_weakprior: Path
-    mdsine2_nomodule_weakprior: Path
     clv_elastic: Path
     glv_elastic: Path
     glv_ra_elastic: Path
@@ -287,8 +285,6 @@ class HeldoutInferences:
 
         _require_file(self.mdsine2)
         _require_file(self.mdsine2_nomodule)
-        _require_file(self.mdsine2_weakprior)
-        _require_file(self.mdsine2_nomodule_weakprior)
         _require_file(self.clv_elastic)
         _require_file(self.glv_elastic)
         _require_file(self.glv_ra_elastic)
@@ -304,18 +300,6 @@ class HeldoutInferences:
 
     def mdsine2_nomodule_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
         return forward_sim_mdsine2(data_path=self.mdsine2_nomodule,
-                                   recompute_cache=self.recompute_cache,
-                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
-                                   subsample_every=subsample_every)
-
-    def mdsine2_weakprior_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
-        return forward_sim_mdsine2(data_path=self.mdsine2_weakprior,
-                                   recompute_cache=self.recompute_cache,
-                                   heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
-                                   subsample_every=subsample_every)
-
-    def mdsine2_nomodule_weakprior_fwsim(self, heldout: HoldoutData, sim_dt: float, sim_max: float, subsample_every: int = 1) -> np.ndarray:
-        return forward_sim_mdsine2(data_path=self.mdsine2_nomodule_weakprior,
                                    recompute_cache=self.recompute_cache,
                                    heldout=heldout, sim_dt=sim_dt, sim_max=sim_max, init_limit_of_detection=1e5,
                                    subsample_every=subsample_every)
@@ -353,8 +337,6 @@ def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[i
         yield subject_idx, subject_id, HeldoutInferences(
             mdsine2=directories.mdsine2 / subject_id / "healthy" / "mcmc.pkl",
             mdsine2_nomodule=directories.mdsine2_nomodule / subject_id / "healthy" / "mcmc.pkl",
-            mdsine2_weakprior=directories.mdsine2_weakprior / subject_id / "healthy" / "mcmc.pkl",
-            mdsine2_nomodule_weakprior=directories.mdsine2_nomodule_weakprior / subject_id / "healthy" / "mcmc.pkl",
             clv_elastic=directories.clv_elastic / f'clv-{subject_idx}-model.pkl',
             glv_elastic=directories.glv_elastic / f'glv-elastic-net-{subject_idx}-model.pkl',
             glv_ra_elastic=directories.glv_ra_elastic / f'glv-ra-elastic-net-{subject_idx}-model.pkl',
@@ -449,38 +431,6 @@ def evaluate_all(regression_inputs_dir: Path,
             logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
 
         try:
-            traj = np.median(
-                inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                axis=0
-            )
-            add_absolute_entry(
-                'MDSINE2 (Weak Prior)',
-                heldout_data.evaluate_absolute(
-                    traj,
-                    upper_bound=sim_max,
-                    lower_bound=abs_lower_bound
-                )
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 (weak interaction prior) output: Holdout Subject {sid}.")
-
-        try:
-            traj = np.median(
-                inferences.mdsine2_nomodule_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                axis=0
-            )
-            add_absolute_entry(
-                'MDSINE2 (No Modules, Weak Prior)',
-                heldout_data.evaluate_absolute(
-                    traj,
-                    upper_bound=sim_max,
-                    lower_bound=abs_lower_bound
-                )
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 (nomodule, weak interaction prior) output: Holdout Subject {sid}.")
-
-        try:
             add_absolute_entry(
                 'gLV (elastic net)',
                 heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
@@ -524,34 +474,6 @@ def evaluate_all(regression_inputs_dir: Path,
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
-
-        try:
-            add_relative_entry(
-                'MDSINE2 (Weak Prior)',
-                heldout_data.evaluate_relative(
-                    np.median(
-                        inferences.mdsine2_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                        axis=0
-                    ),
-                    lower_bound=rel_lower_bound
-                )
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 (weak interaction prior) output (relabund): Holdout Subject {sid}.")
-
-        try:
-            add_relative_entry(
-                'MDSINE2 (No Modules, Weak Prior)',
-                heldout_data.evaluate_relative(
-                    np.median(
-                        inferences.mdsine2_nomodule_weakprior_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                        axis=0
-                    ),
-                    lower_bound=rel_lower_bound
-                )
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 (nomodule, weak interaction prior) output (relabund): Holdout Subject {sid}.")
 
         try:
             add_relative_entry(
@@ -640,7 +562,7 @@ def make_boxplot(ax, df: pd.DataFrame,
 
     def line_break(x: str):
         break_at_chars = ['(', ',', '/', ')']
-        return '\n'.join(re.split('[\(,/]', x))
+        return '\n'.join(re.split('[(,/]', x))
 
     labels = [
         line_break(item.get_text())
@@ -737,8 +659,6 @@ def main():
     directories = HeldoutInferences(
         mdsine2=Path(args.mdsine_outdir),
         mdsine2_nomodule=Path(args.mdsine_nomodule_outdir),
-        mdsine2_weakprior=Path(args.mdsine_weak_prior_outdir),
-        mdsine2_nomodule_weakprior=Path(args.mdsine_nomodule_weak_prior_outdir),
         clv_elastic=Path(args.clv_elastic_outdir),
         glv_elastic=Path(args.glv_elastic_outdir),
         glv_ra_elastic=Path(args.glv_ra_elastic_outdir),
@@ -759,8 +679,7 @@ def main():
     )
 
     # ==================== Plot settings.
-    # methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'MDSINE2 (Weak Prior)', 'MDSINE2 (No Modules, Weak Prior)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
-    methods = ['MDSINE2 (Weak Prior)', 'MDSINE2 (No Modules, Weak Prior)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
+    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
     palette_tab20 = sns.color_palette("tab10", len(methods))
     method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
 
