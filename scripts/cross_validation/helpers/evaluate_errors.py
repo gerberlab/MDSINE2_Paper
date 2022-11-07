@@ -560,8 +560,8 @@ def make_boxplot(ax, df: pd.DataFrame,
     )
 
     def line_break(x: str):
-        break_at_chars = ['(', ',', '/', ')']
-        return '\n'.join(re.split('[(,/]', x))
+        break_at_chars = ''.join(['(', ',', '/', ')'])
+        return '\n'.join(re.split(f'[{break_at_chars}]', x))
 
     labels = [
         line_break(item.get_text())
