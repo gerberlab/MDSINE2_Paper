@@ -224,7 +224,8 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
             _add_entry('MDSINE2', float(np.median(errors)))
         except FileNotFoundError:
-            print("Skipping MDSINE2 (read depth={}, trial={}, noise={}), dir = {}".format(read_depth, trial_num, noise_level. result_dir))
+            print("Skipping MDSINE2 (read depth={}, trial={}, noise={}), dir = {}".format(read_depth, trial_num, noise_level, result_dir))
+            pass
 
         # MDSINE1 error
         try:
