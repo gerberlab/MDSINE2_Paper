@@ -121,7 +121,7 @@ def mdsine2_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
     Parser which extracts glv params from the specified results directory.
     :return:
     """
-    mcmc = md2.BaseMCMC.load(str(result_dir / "mdsine2" / "mcmc.pkl"))
+    mcmc = md2.BaseMCMC.load(str(result_dir / "mcmc.pkl"))
     growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
     interaction_indicators = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR].get_trace_from_disk(section='posterior')
     self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section='posterior')
@@ -220,7 +220,7 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
 
         # MDSINE2 inference error eval
         try:
-            _, growths, _ = mdsine2_output(result_dir)
+            _, growths, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
             errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
             _add_entry('MDSINE2', float(np.median(errors)))
         except FileNotFoundError:

@@ -107,7 +107,7 @@ def main():
 
     # 3) Begin inference
     params = md2.config.MDSINE2ModelConfig(
-        basepath=str(basepath), seed=args.seed,
+        basepath=str(output_dir), seed=args.seed,
         burnin=args.burnin, n_samples=args.n_samples, negbin_a1=a1,
         negbin_a0=a0, checkpoint=args.checkpoint)
     params.LEARN[STRNAMES.CLUSTERING] = False
