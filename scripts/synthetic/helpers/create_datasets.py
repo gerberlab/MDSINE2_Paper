@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
 @dataclass
 class ParsedPerturbation(object):
     name: str
-    strength: List[float]
+    strength: np.ndarray
     start: float
     end: float
 
@@ -257,7 +257,7 @@ def parse_perturbations(pert_path: Path) -> List[ParsedPerturbation]:
         return [
             ParsedPerturbation(
                 name=obj['name'],
-                strength=obj['strength'],
+                strength=np.array(obj['strength']),
                 start=obj['start'],
                 end=obj['end']
             )
