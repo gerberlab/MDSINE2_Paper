@@ -93,15 +93,26 @@ def make_synthetic(
     return syn
 
 
-def parse_glv_params(params_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], np.ndarray, np.ndarray]:
+def parse_glv_params(params_path: Path, num_subjs: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[str], List[np.ndarray]]:
     params = np.load(str(params_path))
     growth = params['growth_rates']
     interactions = params['interactions']
-    initial_cond_mean = params['initial_mean'] * np.ones(len(growth), dtype=float)
-    initial_cond_std = params['initial_std'] * np.ones(len(growth), dtype=float)
     indicators = (interactions != 0.0)
     taxa_names = [f'TAXA_{i+1}' for i in range(len(growth))]
-    return growth, interactions, indicators, taxa_names, initial_cond_mean, initial_cond_std
+
+    if 'initial_mean' in params.keys():
+        initial_cond_mean = params['initial_mean'] * np.ones(len(growth), dtype=float)
+        initial_cond_std = params['initial_std'] * np.ones(len(growth), dtype=float)
+        init_abunds = []
+        init_dist = variables.Normal(initial_cond_mean, np.power(initial_cond_std, 2))
+        for _ in range(num_subjs):
+            init_abund = init_dist.sample(size=len(taxa_names))
+            init_abunds.append(init_abund)
+    elif 'initial_abunds' in params.keys():
+        init_abunds = params['initial_abunds']
+    else:
+        raise Exception(f"Either `initial_mean` or `initial_abunds` must be present in glv param file `{params_path.name}`")
+    return growth, interactions, indicators, taxa_names, init_abunds
 
 
 def parse_time_points(time_points_path: Path) -> np.ndarray:
@@ -196,19 +207,15 @@ def dirichlet_multinomial(alpha: np.ndarray, n: int) -> np.ndarray:
 
 
 def simulate_trajectories(synth: Synthetic,
-                          init_dist: Variable,
-                          taxa: TaxaSet,
-                          initial_min_value: float,
+                          init_abunds: List[np.ndarray],
                           dt: float,
                           processvar: model.MultiplicativeGlobal,
                           intervene_day: float = 0.0,
                           limit_of_detection: float = 1e5):
     raw_trajs = {}
 
-    for subj in synth.subjs:
+    for subj, init_abund in zip(synth.subjs, init_abunds):
         print('Forward simulating {}'.format(subj))
-        init_abund = init_dist.sample(size=len(taxa))
-        init_abund[init_abund < initial_min_value] = initial_min_value
 
         if intervene_day == 0:
             total_n_days = synth.times[-1]
@@ -271,7 +278,14 @@ def parse_perturbations(pert_path: Path) -> List[ParsedPerturbation]:
 
 def main():
     args = parse_args()
-    growth_rates, interactions, interaction_indicators, taxa_names, initial_cond_mean, initial_cond_std = parse_glv_params(Path(args.input_glv_params))
+    growth_rates, interactions, interaction_indicators, taxa_names, init_abunds = parse_glv_params(
+        Path(args.input_glv_params), args.num_subjects
+    )
+
+    initial_min_value = args.initial_min_value
+    for init_abund in init_abunds:
+        init_abund[init_abund < initial_min_value] = initial_min_value
+
     perturbations = parse_perturbations(Path(args.perturbations_file))
     time_points = parse_time_points(args.time_points_file)
     seed = args.seed
@@ -297,11 +311,9 @@ def main():
     # Generate the trajectories.
     raw_trajs = simulate_trajectories(
         synth=synthetic,
-        taxa=taxa,
         dt=args.sim_dt,
-        init_dist=variables.Normal(initial_cond_mean, np.power(initial_cond_std, 2)),
+        init_abunds=init_abunds,
         processvar=process_var,
-        initial_min_value=args.initial_min_value,
         intervene_day=args.intervene_day,
         limit_of_detection=args.limit_of_detection
     )
