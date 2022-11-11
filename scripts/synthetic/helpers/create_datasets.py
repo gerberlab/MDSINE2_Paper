@@ -109,7 +109,9 @@ def parse_glv_params(params_path: Path, num_subjs: int) -> Tuple[np.ndarray, np.
             init_abund = init_dist.sample(size=len(taxa_names))
             init_abunds.append(init_abund)
     elif 'initial_abunds' in params.keys():
-        init_abunds = params['initial_abunds']
+        init_abunds = [a for a in params['initial_abunds']]
+        if len(init_abunds) != num_subjs:
+            raise RuntimeError("Initialization doesn't match target # of subjects.")
     else:
         raise Exception(f"Either `initial_mean` or `initial_abunds` must be present in glv param file `{params_path.name}`")
     return growth, interactions, indicators, taxa_names, init_abunds

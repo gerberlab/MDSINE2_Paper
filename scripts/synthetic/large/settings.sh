@@ -13,7 +13,7 @@ export TIME_POINTS=${DATASET_DIR}/time_points.txt
 
 export READ_DEPTH=25000
 export NUM_SAMPLE_TRIALS=5
-export COHORT_SIZE=5
+export COHORT_SIZE=4
 export PROCESS_VAR=0.00
 export SIMULATION_DT=0.01
 export LOW_NOISE_SCALE=0.5
