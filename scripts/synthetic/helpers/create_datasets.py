@@ -43,6 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-r', '--read_depth', type=int, required=False, default=50000)
     parser.add_argument('-in', '--intervene_day', dest='intervene_day', type=float, required=False, default=0.0)
     parser.add_argument('-min', '--initial_min_value', type=float, required=False, default=100.0)
+    parser.add_argument('-lod', '--limit_of_detection', type=float, required=False, default=100.0)
 
     # VARIANCE SCALING (noise levels)
     parser.add_argument('--low_noise', type=float, required=False, default=0.5)
@@ -199,7 +200,8 @@ def simulate_trajectories(synth: Synthetic,
                           initial_min_value: float,
                           dt: float,
                           processvar: model.MultiplicativeGlobal,
-                          intervene_day: float = 0.0):
+                          intervene_day: float = 0.0,
+                          limit_of_detection: float = 1e5):
     raw_trajs = {}
 
     for subj in synth.subjs:
@@ -242,6 +244,7 @@ def simulate_trajectories(synth: Synthetic,
         steps_per_day = int(np.ceil(total_n_days / dt) / total_n_days)
         idxs = [int(steps_per_day * t) for t in synth.times]
         X = d['X']
+        X[X < limit_of_detection] = 0.0
         synth._data[subj] = X[:, idxs]
         raw_trajs[subj] = d
     return raw_trajs
@@ -298,7 +301,8 @@ def main():
         init_dist=variables.Normal(initial_cond_mean, np.power(initial_cond_std, 2)),
         processvar=process_var,
         initial_min_value=args.initial_min_value,
-        intervene_day=args.intervene_day
+        intervene_day=args.intervene_day,
+        limit_of_detection=args.limit_of_detection
     )
 
     # Plot the trajectories.
