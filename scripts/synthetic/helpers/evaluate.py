@@ -633,19 +633,19 @@ def main():
     topology_errors.to_csv(output_dir / "topology_errors.csv")
     print(f"Wrote interaction topology errors to {out_path.name}.")
 
-    print("Evaluating holdout trajectory errors.")
-    init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
-        growth,
-        interactions,
-        init_dist,
-        100.0,
-        results_base_dir,
-        args.subsample_fwsim
-    )
-    out_path = output_dir / "holdout_trajectory_errors.csv"
-    holdout_trajectory_errors.to_csv(out_path)
-    print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
+    # print("Evaluating holdout trajectory errors.")
+    # init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
+    # holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
+    #     growth,
+    #     interactions,
+    #     init_dist,
+    #     100.0,
+    #     results_base_dir,
+    #     args.subsample_fwsim
+    # )
+    # out_path = output_dir / "holdout_trajectory_errors.csv"
+    # holdout_trajectory_errors.to_csv(out_path)
+    # print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
 if __name__ == "__main__":

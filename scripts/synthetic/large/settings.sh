@@ -8,6 +8,7 @@ echo "[*] Using additional settings from ${_THIS_PATH}"
 export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/synthetic/logging.ini"
 
 export GLV_PARAMS=${DATASET_DIR}/glv.npz
+export PERTURBATIONS=${DATASET_DIR}/perturbations.json
 export TIME_POINTS=${DATASET_DIR}/time_points.txt
 
 export READ_DEPTH=25000

@@ -10,6 +10,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 	seed=$trial
 	python synthetic/helpers/create_datasets.py \
 	-i ${GLV_PARAMS} \
+	--perturbations_file ${PERTURBATIONS} \
 	-t ${TIME_POINTS} \
 	-n ${COHORT_SIZE} \
 	-o ${DATASET_DIR}/data/trial_${trial} \

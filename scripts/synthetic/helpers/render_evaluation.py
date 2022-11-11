@@ -142,8 +142,8 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     # ax0 = fig.add_subplot(spec[0, :2])
     # ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
 
-    spec = fig.add_gridspec(ncols=5, nrows=1, width_ratios=[1, 1, 1, 1, 0.08], wspace=0.6)
-    axes = [fig.add_subplot(spec[0, i]) for i in range(4)]
+    spec = fig.add_gridspec(ncols=4, nrows=1, width_ratios=[1, 1, 1, 0.08], wspace=0.6)
+    axes = [fig.add_subplot(spec[0, i]) for i in range(3)]
     df = load_df(dataframe_dir / "growth_rate_errors.csv")
     section = df.loc[df['ReadDepth'] == read_depth]
     render_growth_rate_errors(
@@ -164,16 +164,16 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
         palette=palette
     )
 
-    # ax0 = fig.add_subplot(spec[2, :2])
-    # ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
-    df = load_df(dataframe_dir / 'holdout_trajectory_errors.csv')
-    section = df.loc[df['ReadDepth'] == read_depth]
-    render_holdout_trajectory_errors(
-        section,
-        ax=axes[2],
-        order=method_order,
-        palette=palette
-    )
+    # # ax0 = fig.add_subplot(spec[2, :2])
+    # # ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
+    # df = load_df(dataframe_dir / 'holdout_trajectory_errors.csv')
+    # section = df.loc[df['ReadDepth'] == read_depth]
+    # render_holdout_trajectory_errors(
+    #     section,
+    #     ax=axes[2],
+    #     order=method_order,
+    #     palette=palette
+    # )
 
     # ax0 = fig.add_subplot(spec[2, 2:])
     # ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
@@ -183,7 +183,7 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     section = df.loc[df['ReadDepth'] == read_depth]
     render_topology_errors(
         section,
-        ax=axes[3],
+        ax=axes[2],
         order=topology_method_order,
         palette=palette
     )
