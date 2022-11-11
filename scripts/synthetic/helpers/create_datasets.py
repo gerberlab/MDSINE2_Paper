@@ -331,6 +331,7 @@ def main():
         study = simulate_reads_dmd(
             synth=synthetic,
             study_name=f'simulated-{noise_level_name}',
+            perts=perturbations,
             alpha_scale=dmd_scale,
             num_reads=args.read_depth,
             qpcr_noise_scale=args.qpcr_noise
