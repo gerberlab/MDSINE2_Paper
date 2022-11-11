@@ -247,7 +247,6 @@ def simulate_trajectories(synth: Synthetic,
         X[X < limit_of_detection] = 0.0
         synth._data[subj] = X[:, idxs]
         raw_trajs[subj] = d
-        print(d['times'])
     return raw_trajs
 
 
