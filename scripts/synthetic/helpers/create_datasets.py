@@ -84,6 +84,7 @@ def make_synthetic(
         interaction.value = interaction_values[tcidx, scidx]
         interaction.indicator = interaction_indicators[tcidx, scidx]
 
+    syn.model.sim_max = 1e10
     syn.model.interactions = interaction_values
     syn.model.growth = growth_rate_values
     syn.model.perturbations = [pert.strength for pert in perturbations]
@@ -217,7 +218,6 @@ def simulate_trajectories(synth: Synthetic,
                 dt=dt,
                 n_days=total_n_days + dt,
                 processvar=processvar,
-                sim_max=1e10,
                 subsample=False
             )
         else:
