@@ -309,6 +309,10 @@ def main():
     for subj in synthetic.subjs:
         fig, ax = plt.subplots(figsize=(10, 8))
         trajs = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
+
+        print(times)
+        print(trajs)
+
         times = raw_trajs[subj]['times']
         for taxa_traj in trajs:
             ax.plot(times, taxa_traj, marker=None)
