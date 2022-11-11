@@ -217,6 +217,7 @@ def simulate_trajectories(synth: Synthetic,
                 dt=dt,
                 n_days=total_n_days + dt,
                 processvar=processvar,
+                sim_max=1e10,
                 subsample=False
             )
         else:
