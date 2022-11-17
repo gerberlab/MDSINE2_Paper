@@ -70,17 +70,21 @@ class HoldoutData:
         return x2
 
     def trajectory_subset(self, start: float, end: float) -> np.ndarray:
+        """
+        A (n_taxa) x (n_timepoints) matrix, confined to the time interval [start, end] (inclusive).
+        """
         times = self.subject.times
         t_inside_range = (times >= start) & (times <= end)
         t_subset_indices, = np.where(t_inside_range)
         trajs = np.copy(self.trajectories[:, t_subset_indices])
         return trajs
 
-    def evaluate_absolute(self, pred: np.ndarray, upper_bound: float, lower_bound: float) -> np.ndarray:
+    def evaluate_absolute(self, pred: np.ndarray, upper_bound: float, lower_bound: float, mask_zeros: bool = True) -> np.ndarray:
         """Compute RMS error metric between prediction and truth, one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         truth = np.where(truth < lower_bound, lower_bound, truth)
         truth = np.where(truth > upper_bound, upper_bound, truth)
+        mask = pred > 0
 
         pred = np.where(pred < lower_bound, lower_bound, pred)
         pred = np.where(pred > upper_bound, upper_bound, pred)
@@ -89,14 +93,18 @@ class HoldoutData:
 
         truth = np.log10(truth)
         pred = np.log10(pred)
-        return np.sqrt(np.mean(np.square(pred - truth), axis=1))  # RMS
+        if mask_zeros:
+            return np.sqrt(np.mean(np.square(pred - truth)[mask], axis=1))  # RMS
+        else:
+            return np.sqrt(np.mean(np.square(pred - truth), axis=1))
 
-    def evaluate_relative(self, pred: np.ndarray, lower_bound: float) -> np.ndarray:
+    def evaluate_relative(self, pred: np.ndarray, lower_bound: float, mask_zeros: bool = True) -> np.ndarray:
         """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
         rel_truth[rel_truth < lower_bound] = lower_bound
 
+        mask = pred > 0
         rel_pred = pred / pred.sum(axis=0, keepdims=True)
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
@@ -104,7 +112,10 @@ class HoldoutData:
         rel_pred[rel_pred < lower_bound] = lower_bound
         rel_truth = np.log10(rel_truth)
         rel_pred = np.log10(rel_pred)
-        return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
+        if mask_zeros:
+            return np.sqrt(np.mean(np.square(rel_pred - rel_truth)[mask], axis=1))  # RMS
+        else:
+            return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
