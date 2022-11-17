@@ -84,8 +84,8 @@ class HoldoutData:
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         truth = np.where(truth < lower_bound, lower_bound, truth)
         truth = np.where(truth > upper_bound, upper_bound, truth)
-        mask = pred == 0
 
+        mask = truth > np.min(truth)
         pred = np.where(pred < lower_bound, lower_bound, pred)
         pred = np.where(pred > upper_bound, upper_bound, pred)
         if pred.shape != truth.shape:
@@ -95,7 +95,7 @@ class HoldoutData:
         pred = np.log10(pred)
         if mask_zeros:
             sqdiff = np.square(pred - truth)
-            sqdiff[mask] = np.nan
+            sqdiff[~mask] = np.nan
             return np.sqrt(np.nanmean(sqdiff, axis=1))  # RMS
         else:
             return np.sqrt(np.mean(np.square(pred - truth), axis=1))
@@ -106,7 +106,7 @@ class HoldoutData:
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
         rel_truth[rel_truth < lower_bound] = lower_bound
 
-        mask = pred == 0
+        mask = truth > np.min(truth)
         rel_pred = pred / pred.sum(axis=0, keepdims=True)
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
@@ -116,7 +116,7 @@ class HoldoutData:
         rel_pred = np.log10(rel_pred)
         if mask_zeros:
             sqdiff = np.square(rel_pred - rel_truth)
-            sqdiff[mask] = np.nan
+            sqdiff[~mask] = np.nan
             return np.sqrt(np.nanmean(sqdiff, axis=1))  # RMS
         else:
             return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
