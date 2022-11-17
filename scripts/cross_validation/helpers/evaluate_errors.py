@@ -94,7 +94,9 @@ class HoldoutData:
         truth = np.log10(truth)
         pred = np.log10(pred)
         if mask_zeros:
-            return np.sqrt(np.mean(np.square(pred - truth)[mask], axis=1))  # RMS
+            sqdiff = np.square(pred - truth)
+            sqdiff[mask] = np.nan
+            return np.sqrt(np.nanmean(sqdiff, axis=1))  # RMS
         else:
             return np.sqrt(np.mean(np.square(pred - truth), axis=1))
 
@@ -113,7 +115,9 @@ class HoldoutData:
         rel_truth = np.log10(rel_truth)
         rel_pred = np.log10(rel_pred)
         if mask_zeros:
-            return np.sqrt(np.mean(np.square(rel_pred - rel_truth)[mask], axis=1))  # RMS
+            sqdiff = np.square(rel_pred - rel_truth)
+            sqdiff[mask] = np.nan
+            return np.sqrt(np.nanmean(sqdiff, axis=1))  # RMS
         else:
             return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
 
