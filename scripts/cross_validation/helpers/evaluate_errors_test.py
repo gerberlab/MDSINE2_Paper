@@ -626,7 +626,7 @@ def make_grouped_boxplot(abund_ax, error_ax,
 
     log_lb = np.log10(lb)
     df = df.assign(Bin=pd.cut(
-        np.log10(df['Truth']).fillna(log_lb),
+        np.log10(df['Truth']).replace([-np.inf], log_lb),
         bins=10
     ))
     df_agg = df.groupby(['Method', 'HeldoutSubjectIdx', 'TaxonIdx', 'Bin']).apply(agg_fn).reset_index()
