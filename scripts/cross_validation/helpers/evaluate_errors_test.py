@@ -691,6 +691,7 @@ def make_grouped_boxplot(abund_ax, error_ax,
 
     abund_ax.legend([], [])
     error_ax.legend([], [])
+    error_ax.set_ylim([0, 6])
 
 
 def draw_method_legend(fig, method_order, method_colors, position: Tuple[float, float]):
