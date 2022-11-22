@@ -370,8 +370,6 @@ def evaluate_all(regression_inputs_dir: Path,
                  complete_study: md2.Study,
                  sim_dt: float,
                  sim_max: float,
-                 abs_lower_bound: float = 1e5,
-                 rel_lower_bound: float = 1e-6,
                  mdsine2_subsample_every: int = 1):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
@@ -750,8 +748,8 @@ def main():
         }
     )
 
-    make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
-    make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
+    make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)', lb=1e-5, ub=1e40)
+    make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)', lb=1e-10, ub=1.0)
     fig.tight_layout()
     plt.savefig(plot_dir / "overall.pdf")
     plt.close(fig)
@@ -772,8 +770,8 @@ def main():
         }
     )
 
-    make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, lb=1e5, error_ylabel='RMSE (log Abs abundance)')
-    make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, lb=1e-6, error_ylabel='RMSE (log Rel abundance)')
+    make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, error_ylabel='RMSE (log Abs abundance)', lb=1e-5, ub=1e40)
+    make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, error_ylabel='RMSE (log Rel abundance)', lb=1e-10, ub=1.0)
     ax[0, 0].get_legend().remove()
     ax[1, 0].get_legend().remove()
     ax[0, 1].get_legend().remove()
