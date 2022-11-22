@@ -640,6 +640,7 @@ def make_grouped_boxplot(abund_ax, error_ax,
 
     # ============ Render bin counts.
     def _aggregate_abundances_bin(_df):
+        print(_df.head(1)['Bin'])
         bin = _df.head(1)['Bin'].item()
         count = sum(1 for _ in _df.groupby(['HeldoutSubjectIdx', 'TaxonIdx', 'TimePoint']))
         return pd.Series({
