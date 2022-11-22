@@ -633,10 +633,10 @@ def make_grouped_boxplot(abund_ax, error_ax,
 
     #=====================================================================
     # Divide taxa based on abundance quantiles.
-    df = df.loc[
-        df['Method'].isin(method_order)
-    ].assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_quantiles))
-    log_lb = np.log10(lb)
+    # df = df.loc[
+    #     df['Method'].isin(method_order)
+    # ].assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_bins))
+    # log_lb = np.log10(lb)
 
     # ============ Render bin counts.
     def _aggregate_abundances_bin(_df):
