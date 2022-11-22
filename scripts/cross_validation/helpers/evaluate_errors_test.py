@@ -608,7 +608,7 @@ def make_grouped_boxplot(abund_ax, error_ax,
                          method_colors: Dict[str, np.ndarray],
                          lb: float,
                          ub: float,
-                         num_quantiles: int = 10,
+                         num_bins: int = 10,
                          error_ylabel: Optional[str] = None):
     def agg_fn(_df):
         truth = _df['Truth'].to_numpy()
@@ -624,9 +624,12 @@ def make_grouped_boxplot(abund_ax, error_ax,
         )))  # Root mean squared?
         return pd.Series({'Error': err}, index=['Error'])
 
-    df = df.assign(Bin=pd.qcut(df['Truth'], q=num_quantiles))
-    df_agg = df.groupby(['Method', 'HeldoutSubjectIdx', 'TaxonIdx', 'Bin']).apply(agg_fn).reset_index()
     log_lb = np.log10(lb)
+    df = df.assign(Bin=pd.cut(
+        np.log10(df['Truth']).fillna(log_lb),
+        bins=10
+    ))
+    df_agg = df.groupby(['Method', 'HeldoutSubjectIdx', 'TaxonIdx', 'Bin']).apply(agg_fn).reset_index()
 
     #=====================================================================
     # Divide taxa based on abundance quantiles.
