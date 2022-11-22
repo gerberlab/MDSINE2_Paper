@@ -670,9 +670,9 @@ def make_grouped_boxplot(abund_ax, error_ax,
         if np.isinf(left):
             left = log_lb
         return '({:.1f},\n{:.1f}]'.format(left, right)
-    df['BinLabel'] = df['Bin'].map(_bin_label)
-    df = df.sort_values('Bin')
-    supported_methods = set(pd.unique(df['Method']))
+    df_agg['BinLabel'] = df_agg['Bin'].map(_bin_label)
+    df_agg = df_agg.sort_values('Bin')
+    supported_methods = set(pd.unique(df_agg['Method']))
     method_order = [m for m in method_order if m in supported_methods]
     sns.boxplot(
         data=df_agg,
