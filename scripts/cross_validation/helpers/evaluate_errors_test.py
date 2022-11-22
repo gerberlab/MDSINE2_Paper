@@ -668,7 +668,7 @@ def make_grouped_boxplot(abund_ax, error_ax,
         left = interval.left
         right = interval.right
         if np.isinf(left):
-            left = log_lb
+            return '(-inf,\n{:.1f}]'.format(right)
         return '({:.1f},\n{:.1f}]'.format(left, right)
     df_agg['BinLabel'] = df_agg['Bin'].map(_bin_label)
     df_agg = df_agg.sort_values('Bin')
