@@ -416,7 +416,7 @@ def evaluate_all(regression_inputs_dir: Path,
 
         # Absolute abundance
         try:
-            traj = np.median(
+            traj = np.nanmedian(
                 inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                 axis=0
             )
@@ -431,7 +431,7 @@ def evaluate_all(regression_inputs_dir: Path,
             add_absolute_results(
                 'MDSINE2 (No Modules)',
                 heldout_data.evaluate_absolute(
-                    np.median(
+                    np.nanmedian(
                         inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                         axis=0
                     )
@@ -461,7 +461,7 @@ def evaluate_all(regression_inputs_dir: Path,
             add_relative_results(
                 'MDSINE2',
                 heldout_data.evaluate_relative(
-                    np.median(
+                    np.nanmedian(
                         inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                         axis=0
                     )
@@ -474,7 +474,7 @@ def evaluate_all(regression_inputs_dir: Path,
             add_relative_results(
                 'MDSINE2 (No Modules)',
                 heldout_data.evaluate_relative(
-                    np.median(
+                    np.nanmedian(
                         inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                         axis=0
                     )
