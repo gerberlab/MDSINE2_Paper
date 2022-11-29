@@ -103,12 +103,13 @@ class HoldoutData:
             })
         return pd.DataFrame(entries)
 
-    def evaluate_relative(self, pred: np.ndarray) -> pd.DataFrame:
+    def evaluate_relative(self, pred: np.ndarray, eps: float = 1e-10) -> pd.DataFrame:
         """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
         # rel_truth[rel_truth < lower_bound] = lower_bound
 
+        pred = pred + eps
         rel_pred = pred / pred.sum(axis=0, keepdims=True)
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
