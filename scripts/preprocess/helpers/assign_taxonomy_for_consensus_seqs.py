@@ -101,5 +101,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     study = md2.Study.load(args.input_study_path)
-    study.taxa.generate_consensus_taxonomies(study.taxa, Path(args.rdp_table))
+    assign_taxonomies(study.taxa, Path(args.rdp_table))
     study.save(args.output_study_path)
