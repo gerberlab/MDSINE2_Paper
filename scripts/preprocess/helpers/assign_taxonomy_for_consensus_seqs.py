@@ -88,6 +88,9 @@ def assign_taxonomies(taxaset: md2.base.OTUTaxaSet, rdp_species_table: Path):
             tax_genus=row['Genus'],
             tax_species=row['Species']
         )
+        if otu.name == 'OTU_124':
+            print(asv.name)
+            print(row)
 
 
 if __name__ == '__main__':
