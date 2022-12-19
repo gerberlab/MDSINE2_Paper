@@ -5,6 +5,7 @@ Author: David Kaplan
 Date: 11/30/20
 MDSINE2 version: 4.0.6
 '''
+from pathlib import Path
 import pandas as pd
 import mdsine2 as md2
 from mdsine2.logger import logger
@@ -73,6 +74,7 @@ def parse_rdp(fname, confidence_threshold) -> pd.DataFrame:
 
 
 def assign_taxonomies(taxaset: md2.base.OTUTaxaSet, rdp_species_table: Path):
+    logger.info(f'Parsing RDP from {rdp_species_table}')
     df = pd.read_csv(rdp_species_table, sep='\t', index_col=0)
     for otu in taxaset:
         asv = otu.components[0]
@@ -98,9 +100,6 @@ if __name__ == '__main__':
         help='This is the minimum confidence required for us to use the classification')
     args = parser.parse_args()
 
-    logger.info(f'Parsing RDP from {args.rdp_table}')
-    df = parse_rdp(fname=args.rdp_table, confidence_threshold=args.confidence_threshold)
-
     study = md2.Study.load(args.input_study_path)
-    study.taxa.generate_consensus_taxonomies(df)
+    study.taxa.generate_consensus_taxonomies(study.taxa, Path(args.rdp_table))
     study.save(args.output_study_path)
