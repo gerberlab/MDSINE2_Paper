@@ -86,7 +86,8 @@ def assign_taxonomies(taxaset: md2.base.OTUTaxaSet, rdp_species_table: Path):
             'order': row['Order'],
             'family': row['Family'],
             'genus': row['Genus'],
-            'species': row['Species']
+            'species': row['Species'],
+            'asv': asv.name
         }
 
 
