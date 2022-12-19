@@ -6,11 +6,12 @@ require_program python
 echo "Assigning Taxonomy for OTUs..."
 
 
-rdp_file=${DATASET_DIR}/metadata_OTU/taxonomy_RDP.txt
+rdp_file=${DATASET_DIR}/raw_tables/rdp_species.tsv
 if ! [ -f $rdp_file ]; then
 	echo "Couldn't locate taxonomy file ${rdp_file}"
 	exit 1
 fi
+echo "[*] This script assumes each OTU is just an ASV. (Todo: deprecate OTU agglomeration.)"
 
 
 for dataset in healthy replicates inoculum; do

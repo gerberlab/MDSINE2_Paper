@@ -72,6 +72,22 @@ def parse_rdp(fname, confidence_threshold) -> pd.DataFrame:
     return pd.DataFrame(data, columns=columns, index=index)
 
 
+def assign_taxonomies(taxaset: OTUTaxaSet, rdp_species_table: Path):
+    df = pd.read_csv(rdp_species_table, sep='\t', index_col=0)
+    for otu in taxaset:
+        asv = otu.components[0]
+        row = df.loc[asv.name]
+        otu.set_taxonomy(
+            tax_kingdom=row['Kingdom'],
+            tax_phylum=row['Phylum'],
+            tax_class=row['Class'],
+            tax_order=row['Order'],
+            tax_family=row['Family'],
+            tax_genus=row['Genus'],
+            tax_species=row['Species']
+        )
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument('--input-study', '-i', type=str, dest='input_study_path')
