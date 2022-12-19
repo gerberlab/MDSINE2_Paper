@@ -79,18 +79,15 @@ def assign_taxonomies(taxaset: md2.base.OTUTaxaSet, rdp_species_table: Path):
     for otu in taxaset:
         asv = otu.components[0]
         row = df.loc[asv.name]
-        otu.set_taxonomy(
-            tax_kingdom=row['Kingdom'],
-            tax_phylum=row['Phylum'],
-            tax_class=row['Class'],
-            tax_order=row['Order'],
-            tax_family=row['Family'],
-            tax_genus=row['Genus'],
-            tax_species=row['Species']
-        )
-        if otu.name == 'OTU_124':
-            print(asv.name)
-            print(row)
+        otu.taxonomy = {
+            'kingdom': row['Kingdom'],
+            'phylum': row['Phylum'],
+            'class': row['Class'],
+            'order': row['Order'],
+            'family': row['Family'],
+            'genus': row['Genus'],
+            'species': row['Species']
+        }
 
 
 if __name__ == '__main__':
