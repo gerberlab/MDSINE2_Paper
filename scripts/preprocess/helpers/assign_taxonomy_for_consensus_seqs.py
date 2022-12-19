@@ -72,7 +72,7 @@ def parse_rdp(fname, confidence_threshold) -> pd.DataFrame:
     return pd.DataFrame(data, columns=columns, index=index)
 
 
-def assign_taxonomies(taxaset: OTUTaxaSet, rdp_species_table: Path):
+def assign_taxonomies(taxaset: md2.base.OTUTaxaSet, rdp_species_table: Path):
     df = pd.read_csv(rdp_species_table, sep='\t', index_col=0)
     for otu in taxaset:
         asv = otu.components[0]
