@@ -210,7 +210,7 @@ def set_colors(df, color_idx, color_taxa_dict, color_set):
 def add_perturbation_label(ax, perturbations, subj, times, textcolor='black',
      textsize=None, alpha=0.25, label=True):
 
-    if md2.issubject(subj):
+    if isinstance(subj, md2.Subject):
         subj = subj.name
     if not md2.isstr(subj):
         raise ValueError('`Cannot recognize {}'.format(subj))

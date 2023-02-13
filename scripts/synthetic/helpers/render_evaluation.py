@@ -108,6 +108,13 @@ def render_topology_errors(df: pd.DataFrame, ax, order, palette):
         )
 
     area_df = df.groupby(['Method', 'ReadDepth', 'Trial', 'NoiseLevel']).apply(auroc).rename('Error').reset_index()
+
+    noise_ordering = area_df['NoiseLevel'].map({
+        'low': 0,
+        'medium': 1,
+        'high': 2
+    })
+    area_df = area_df.assign(Ordering=noise_ordering).sort_values('Ordering')
     area_df.loc[:, 'x'] = area_df['ReadDepth'].astype(str) + ' reads\n' + area_df['NoiseLevel'].astype(str) + ' noise'
 
     if area_df.shape[0] > 0:
@@ -135,9 +142,8 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
     # ax0 = fig.add_subplot(spec[0, :2])
     # ax1, ax2 = fig.add_subplot(spec[1, 0]), fig.add_subplot(spec[1, 1])
 
-    spec = fig.add_gridspec(ncols=5, nrows=1, width_ratios=[1, 1, 1, 1, 0.08], wspace=0.6)
-    axes = [fig.add_subplot(spec[0, i]) for i in range(4)]
-
+    spec = fig.add_gridspec(ncols=4, nrows=1, width_ratios=[1, 1, 1, 0.08], wspace=0.6)
+    axes = [fig.add_subplot(spec[0, i]) for i in range(3)]
     df = load_df(dataframe_dir / "growth_rate_errors.csv")
     section = df.loc[df['ReadDepth'] == read_depth]
     render_growth_rate_errors(
@@ -158,26 +164,26 @@ def render_all(fig: plt.Figure, dataframe_dir: Path, method_order: List[str], pa
         palette=palette
     )
 
-    # ax0 = fig.add_subplot(spec[2, :2])
-    # ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
-    df = load_df(dataframe_dir / 'holdout_trajectory_errors.csv')
-    section = df.loc[df['ReadDepth'] == read_depth]
-    render_holdout_trajectory_errors(
-        section,
-        ax=axes[2],
-        order=method_order,
-        palette=palette
-    )
+    # # ax0 = fig.add_subplot(spec[2, :2])
+    # # ax1, ax2 = fig.add_subplot(spec[3, 0]), fig.add_subplot(spec[3, 1])
+    # df = load_df(dataframe_dir / 'holdout_trajectory_errors.csv')
+    # section = df.loc[df['ReadDepth'] == read_depth]
+    # render_holdout_trajectory_errors(
+    #     section,
+    #     ax=axes[2],
+    #     order=method_order,
+    #     palette=palette
+    # )
 
     # ax0 = fig.add_subplot(spec[2, 2:])
     # ax1, ax2 = fig.add_subplot(spec[3, 2]), fig.add_subplot(spec[3, 3])
 
-    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-ridge', 'glv-ra-ridge']
+    topology_method_order = ['MDSINE2', 'MDSINE1', 'glv-elastic_net', 'glv-ridge']
     df = load_df(dataframe_dir / "topology_errors.csv")
     section = df.loc[df['ReadDepth'] == read_depth]
     render_topology_errors(
         section,
-        ax=axes[3],
+        ax=axes[2],
         order=topology_method_order,
         palette=palette
     )
@@ -206,7 +212,8 @@ def main():
 
     default_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-    method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    # method_order = ['MDSINE2', 'MDSINE1', 'lra-elastic_net', 'glv-elastic_net', 'glv-ridge', 'glv-ra-elastic_net', 'glv-ra-ridge']
+    method_order = ['MDSINE2', 'MDSINE1', 'glv-elastic_net', 'glv-ridge']
     color_palette = {method: c for method, c in zip(method_order, default_colors)}
 
     fig = plt.figure(figsize=(args.figure_width, args.figure_height))
@@ -225,7 +232,6 @@ def main():
     plt.savefig(out_path)
     fig.tight_layout()
     print(f"Saved figure to {out_path}")
-
 
 
 if __name__ == "__main__":

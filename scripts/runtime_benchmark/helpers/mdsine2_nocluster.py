@@ -60,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '--log_every', type=int, default=100,
+        '--log-every', type=int, default=100,
         required=False,
         help='<Optional> Tells the inference loop to print debug messages every k iterations.'
     )
@@ -113,12 +113,6 @@ def main():
         raise ValueError('Must specify `--perturbation-ind-prior`')
     params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = \
         args.perturbation_prior
-
-    # Change the cluster initialization to no clustering if there are less than 30 clusters
-    if len(study.taxa) <= 30:
-        print(
-            'Since there is less than 30 taxa, we set the initialization of the clustering to `no-clusters`')
-        params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
 
     mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study)
     mdata_fname = os.path.join(params.MODEL_PATH, 'metadata.txt')

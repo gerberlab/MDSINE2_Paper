@@ -1,10 +1,8 @@
-# MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export PROJECT_DIR="/mnt/f/MDSINE2_figures"
-
-
 # =================== DON'T MODIFY THESE (unless you really need to)
-_THIS_PATH="${PROJECT_DIR}/scripts/settings.sh"  # the location of this file.
-echo "[*] Using environment settings from ${_THIS_PATH}."
+_cwd=$(pwd)
+_parent="$(dirname "$_cwd")"
+_this_path="${_cwd}/settings.sh"  # the location of this file.
+echo "[*] Using environment settings from ${_this_path}."
 
 
 require_program()
@@ -26,15 +24,33 @@ require_variable()
 	fi
 }
 
+require_file()
+{
+	path=$1
+	if [ ! -f $path ]
+	then
+		echo "File ${path} not found."
+		exit 1
+	fi
+}
+
+require_dir()
+{
+	path=$1
+	if [ ! -d $path ]
+	then
+		echo "Directory ${path} not found."
+		exit 1
+	fi
+}
+
 export require_program
 export require_variable
 
 
 require_variable "DATASET_NAME" "${DATASET_NAME}"
 
+export PROJECT_DIR=$_parent
 export CLV_DIR="${PROJECT_DIR}/submodules/clv_fork"
 export DATASET_DIR="${PROJECT_DIR}/datasets/${DATASET_NAME}"
-export PREPROCESS_DIR="${DATASET_DIR}/preprocessed"
 export OUTPUT_DIR="${DATASET_DIR}/output"
-export PHYLOGENY_OUT_DIR="${OUTPUT_DIR}/phylogeny"
-export PLOTS_OUT_DIR="${OUTPUT_DIR}/plots"

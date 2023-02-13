@@ -2,6 +2,7 @@ from pathlib import Path
 import argparse
 from typing import List
 
+import numpy as np
 import pandas as pd
 import mdsine2 as md2
 
@@ -33,17 +34,26 @@ def create_files(study: md2.Study, counts_path: Path, metadata_path: Path, bioma
         print("sampleID\tisIncluded\tsubjectID\tmeasurementid\tperturbid\texptblock\tintv", file=metadata_file)
         metadata_line_idx = 1
         for subj_idx, subj in enumerate(study):
-            for t, reads in subj.reads.items():
+            times = subj.times
+            pert_ids = np.zeros(len(times), dtype=int)
+            for p_idx, pert in enumerate(study.perturbations):
+                start = pert.starts[subj.name]
+                end = pert.starts[subj.name]
+                indices, = np.where((times >= start) & (times <= end))
+                pert_ids[indices] = p_idx + 1
+
+            for t_idx, (t, reads) in enumerate(subj.reads.items()):
                 sample_id = f'SUBJ{subj_idx}_T{t}'
                 counts_df_entries.append({
                     taxon.name: reads[taxa_idx]
                     for taxa_idx, taxon in enumerate(study.taxa)
                 })
                 sample_ids.append(sample_id)
+                pert_id = pert_ids[t_idx]
 
-                metadata_file.write(f"{sample_id}\t1\t{subj_idx}\t{t}\t0\t1\t")
+                metadata_file.write(f"{sample_id}\t1\t{subj_idx}\t{t}\t{pert_id}\t1\t")
                 if metadata_line_idx <= len(study.taxa):
-                    metadata_file.write("{}".format(intervene_time_idxs[metadata_line_idx - 1]))
+                    metadata_file.write(str(intervene_time_idxs[metadata_line_idx - 1]))
                 metadata_file.write("\n")
                 metadata_line_idx += 1
 

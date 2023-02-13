@@ -42,7 +42,6 @@ mdsine2 infer \
 		--basepath $inference_out_dir \
 		--interaction-ind-prior "strong-sparse" \
 		--perturbation-ind-prior "weak-agnostic" \
-		--benchmark \
 		| tee ${inference_out_dir}/log.txt
 
 end_time=$(date +%s%N)

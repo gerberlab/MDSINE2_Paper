@@ -121,7 +121,7 @@ def mdsine2_output(result_dir: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray
     Parser which extracts glv params from the specified results directory.
     :return:
     """
-    mcmc = md2.BaseMCMC.load(str(result_dir / "mdsine2" / "mcmc.pkl"))
+    mcmc = md2.BaseMCMC.load(str(result_dir / "mcmc.pkl"))
     growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
     interaction_indicators = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR].get_trace_from_disk(section='posterior')
     self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section='posterior')
@@ -220,10 +220,11 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
 
         # MDSINE2 inference error eval
         try:
-            _, growths, _ = mdsine2_output(result_dir)
+            _, growths, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
             errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
             _add_entry('MDSINE2', float(np.median(errors)))
         except FileNotFoundError:
+            print("Skipping MDSINE2 (read depth={}, trial={}, noise={}), dir = {}".format(read_depth, trial_num, noise_level, result_dir))
             pass
 
         # MDSINE1 error
@@ -235,11 +236,11 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
             pass
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -298,11 +299,11 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
             pass
 
         # CLV inference error eval
-        _add_regression_entry("lra", "elastic_net")
+        # _add_regression_entry("lra", "elastic_net")
         _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
-        _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "elastic_net")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -378,10 +379,10 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
         # CLV inference error eval
         # Note: No obvious t-test implementation for elastic net regression.
         # _add_regression_entry("lra", "elastic_net")
-        # _add_regression_entry("glv", "elastic_net")
+        _add_regression_entry("glv", "elastic_net")
         _add_regression_entry("glv", "ridge")
         # _add_regression_entry("glv-ra", "elastic_net")
-        _add_regression_entry("glv-ra", "ridge")
+        # _add_regression_entry("glv-ra", "ridge")
 
     df = pd.DataFrame(df_entries)
     df['NoiseLevel'] = pd.Categorical(
@@ -614,37 +615,37 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    # print("Evaluating growth rate errors.")
-    # growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    # out_path = output_dir / "growth_rate_errors.csv"
-    # growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    # print(f"Wrote growth rate errors to {out_path.name}.")
-    #
-    # print("Evaluating interaction strength errors.")
-    # interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    # out_path = output_dir / "interaction_strength_errors.csv"
-    # interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    # print(f"Wrote interaction strength errors to {out_path.name}.")
-    #
-    # print("Evaluating interaction topology errors.")
-    # topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    # out_path = output_dir / "topology_errors.csv"
-    # topology_errors.to_csv(output_dir / "topology_errors.csv")
-    # print(f"Wrote interaction topology errors to {out_path.name}.")
+    print("Evaluating growth rate errors.")
+    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
+    out_path = output_dir / "growth_rate_errors.csv"
+    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
+    print(f"Wrote growth rate errors to {out_path.name}.")
 
-    print("Evaluating holdout trajectory errors.")
-    init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
-        growth,
-        interactions,
-        init_dist,
-        100.0,
-        results_base_dir,
-        args.subsample_fwsim
-    )
-    out_path = output_dir / "holdout_trajectory_errors.csv"
-    holdout_trajectory_errors.to_csv(out_path)
-    print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
+    print("Evaluating interaction strength errors.")
+    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
+    out_path = output_dir / "interaction_strength_errors.csv"
+    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
+    print(f"Wrote interaction strength errors to {out_path.name}.")
+
+    print("Evaluating interaction topology errors.")
+    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
+    out_path = output_dir / "topology_errors.csv"
+    topology_errors.to_csv(output_dir / "topology_errors.csv")
+    print(f"Wrote interaction topology errors to {out_path.name}.")
+
+    # print("Evaluating holdout trajectory errors.")
+    # init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
+    # holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
+    #     growth,
+    #     interactions,
+    #     init_dist,
+    #     100.0,
+    #     results_base_dir,
+    #     args.subsample_fwsim
+    # )
+    # out_path = output_dir / "holdout_trajectory_errors.csv"
+    # holdout_trajectory_errors.to_csv(out_path)
+    # print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
 if __name__ == "__main__":

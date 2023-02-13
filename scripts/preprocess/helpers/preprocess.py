@@ -24,26 +24,76 @@ can be found in `paper_files/preprocessing/prefiltered_asvs.fa`.
 
 '''
 import argparse
+from pathlib import Path
+from typing import List
+
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
+from mdsine2 import Study, OTU, OTUTaxaSet
+
 import mdsine2 as md2
 from mdsine2.logger import logger
 import os
 
+
+def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str, trim_option: str) -> Study:
+    logger.info(f"Loaading dataset `{dataset_name}` from {dataset_dir}")
+    # 1) Load the dataset
+    study = md2.dataset.load_gibson(dset=dataset_name,
+                                    as_df=False,
+                                    species_assignment='both',
+                                    load_local=dataset_dir,
+                                    max_n_species=max_n_species)
+
+    # Set the sequences for each taxon
+    # Remove all taxa that are not contained in that file
+    # Remove the gaps
+    logger.info('Replacing sequences with the file {}'.format(sequence_file))
+    seqs = SeqIO.to_dict(SeqIO.parse(sequence_file, format='fasta'))
+    to_delete = []
+    for taxon in study.taxa:
+        if taxon.name not in seqs:
+            to_delete.append(taxon.name)
+    for name in to_delete:
+        logger.info('Deleting {} because it was not in {}'.format(name, sequence_file))
+    study.pop_taxa(to_delete)
+
+    M = []
+    for taxon in study.taxa:
+        seq = list(str(seqs[taxon.name].seq))
+        M.append(seq)
+    M = np.asarray(M)
+
+    if trim_option == "ANY_GAPS":
+        logger.info("Trimming aligned columns with any (> 0) gaps.")
+        n_gaps = np.sum(M == '-', axis=0)
+        idxs = np.where(n_gaps == 0)[0]
+    elif trim_option == "ALL_GAPS":
+        logger.info("Trimming aligned columns with all gaps.")
+        n_bases = np.sum(M != '-', axis=0)
+        idxs = np.where(n_bases > 0)[0]
+    else:
+        raise RuntimeError(f"Unrecognized trim_option argument `{trim_option}`")
+
+    logger.info('There were {} valid positions out of {}.'.format(len(idxs), M.shape[1]))
+    M = M[:, idxs]
+    for i,taxon in enumerate(study.taxa):
+        taxon.sequence = ''.join(M[i])
+
+    return study
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument('--output-basepath', '-o', type=str, dest='basepath',
-        help='This is where you want to save the parsed dataset.')
-    parser.add_argument('--hamming-distance', '-hd', type=int, dest='hamming_distance',
+    parser.add_argument('--output-prefix', '-o', dest='output_prefix', required=True,
+                        help='The prefix to use (including any directory) for the resulting .pkl and .fa files.')
+    parser.add_argument('--hamming-distance', '-hd', type=int, dest='hamming_distance', required=True,
         help='This is the hamming radius to aggregate ASV sequences. If nothing ' \
-            'is provided, then there will be no aggregation.', default=None)
-    parser.add_argument('--rename-prefix', '-rp', type=str, dest='rename_prefix',
-        help='This is the prefix you are renaming the aggregate taxa to. ' \
-            'If nothing is provided, then they will not be renamed', default=None)
-    parser.add_argument('--sequences', '-s', type=str, dest='sequences',
+            'is provided, then there will be no aggregation.')
+    parser.add_argument('--sequences', '-s', type=str, dest='sequences', required=True,
         help='This is the fasta file location of the aligned sequences for each taxon' \
             ' that was used for placement in the phylogenetic tree. If nothing is ' \
-            'provided, then do not replace them.', default=None)
+            'provided, then do not replace them.')
     parser.add_argument('--remove-timepoints', dest='remove_timepoints', nargs='+', default=None, 
         type=float, help='Which times to remove')
     parser.add_argument('--max-n-species', '-ms', dest='max_n_species', type=int, default=2,
@@ -52,100 +102,57 @@ if __name__ == '__main__':
                         help='The name of the dataset to extract.')
     parser.add_argument('--dataset-dir', '-d', dest='dataset_dir', type=str, required=True,
                         help='The directory containing the input dataset (A collection of TSV files).')
+    parser.add_argument('--trim-option', dest='trim_option', type=str, required=False, default='ALL_GAPS',
+                        help='Specify how to trim columns with gaps in the alignment.')
+    parser.add_argument('--sort-order', dest='sort_order', type=str, required=False, default='SIZE',
+                        help='Specify how to order the agglomerations. '
+                             'Options: [\"SIZE\", \"MIN_ASV_IDX\"]')
+    parser.add_argument('--naming-scheme', dest='naming_scheme', type=str, required=False, default='DEFAULT',
+                        help='Specify how to name the agglomerations.'
+                             'Options: [\"DEFAULT\", \"MIN_ASV_LABEL\"]')
 
     args = parser.parse_args()
-    os.makedirs(args.basepath, exist_ok=True)
 
     dset = args.dataset_name
-
-    # 1) Load the dataset
-    study = md2.dataset.load_gibson(dset=dset,
-                                    as_df=False,
-                                    species_assignment='both',
-                                    load_local=args.dataset_dir,
-                                    max_n_species=args.max_n_species)
-
-    # 2) Set the sequences for each taxon
-    #    Remove all taxa that are not contained in that file
-    #    Remove the gaps
-    if args.sequences is not None:
-        logger.info('Replacing sequences with the file {}'.format(args.sequences))
-        seqs = SeqIO.to_dict(SeqIO.parse(args.sequences, format='fasta'))
-        to_delete = []
-        for taxon in study.taxa:
-            if taxon.name not in seqs:
-                to_delete.append(taxon.name)
-        for name in to_delete:
-            logger.info('Deleting {} because it was not in {}'.format(
-                name, args.sequences))
-        study.pop_taxa(to_delete)
-
-        M = []
-        for taxon in study.taxa:
-            seq = list(str(seqs[taxon.name].seq))
-            M.append(seq)
-        M = np.asarray(M)
-        gaps = M == '-'
-        n_gaps = np.sum(gaps, axis=0)
-        idxs = np.where(n_gaps == 0)[0]
-        logger.info('There are {} positions where there are no gaps out of {}. Setting those ' \
-            'to the sequences'.format(len(idxs), M.shape[1]))
-        M = M[:, idxs]
-        for i,taxon in enumerate(study.taxa):
-            taxon.sequence = ''.join(M[i])
+    study = load_dataset(dset, args.dataset_dir, args.max_n_species, args.sequences, args.trim_option)
 
     # Aggregate with specified hamming distance
-    if args.hamming_distance is not None:
-        logger.info('Aggregating taxa with a hamming distance of {}'.format(args.hamming_distance))
-        study = md2.aggregate_items(subjset=study, hamming_dist=args.hamming_distance)
+    logger.info(f"Using {args.naming_scheme} naming scheme of OTU.")
 
-        # Get the maximum distance of all the OTUs
-        m = -1
-        for taxon in study.taxa:
-            if md2.isotu(taxon):
-                for aname in taxon.aggregated_taxa:
-                    for bname in taxon.aggregated_taxa:
-                        if aname == bname:
-                            continue
-                        aseq = taxon.aggregated_seqs[aname]
-                        bseq = taxon.aggregated_seqs[bname]
-                        d = md2.diversity.beta.hamming(aseq, bseq)
-                        if d > m:
-                            m = d
-        logger.info('Maximum distance within an OTU: {}'.format(m))
+    def otu_naming(idx: int, asvs: List[md2.Taxon]) -> str:
+        if args.naming_scheme == 'MIN_ASV_LABEL':
+            min_asv_label = min(int(asv.name.split("_")[1]) for asv in asvs)
+            return f'OTU_{min_asv_label}'
+        else:
+            return f'OTU_{idx + 1}'
+
+    agg_study = md2.aggregate_items(subjset=study,
+                                    hamming_dist=args.hamming_distance,
+                                    sort_order=args.sort_order,
+                                    otu_naming=otu_naming)
 
     # 3) compute consensus sequences
-    if args.sequences is not None:
-        orig = md2.dataset.load_gibson(dset=dset,
-                                        as_df=False,
-                                        species_assignment='both',
-                                        load_local=args.dataset_dir,
-                                        max_n_species=args.max_n_species)
+    if not isinstance(agg_study.taxa, OTUTaxaSet):
+        raise RuntimeError("Unexpected error: Expected OTUs, but got something else. "
+                           "Check internal implementation of aggregate_items().")
+    agg_study.taxa.generate_consensus_seqs(threshold=0.65, noconsensus_char='N')
 
-        for taxon in study.taxa:
-            if md2.isotu(taxon):
-                for asvname in taxon.aggregated_taxa:
-                    taxon.aggregated_seqs[asvname] = orig.taxa[asvname].sequence
-            else:
-                taxon.sequence = orig.taxa[taxon.name].sequence
-
-        # Compute consensus sequences
-        study.taxa.generate_consensus_seqs(threshold=0.65, noconsensus_char='N')
-
-    # 4) Rename taxa
-    if args.rename_prefix is not None:
-        print('Renaming taxa with prefix {}'.format(args.rename_prefix))
-        study.taxa.rename(prefix=args.rename_prefix, zero_based_index=False)
-
-    # 5) Remove timepoints
+    # 4) Remove timepoints
     if args.remove_timepoints is not None:
         if dset in ['healthy', 'uc']:
-            study.pop_times(args.remove_timepoints)
+            agg_study.pop_times(args.remove_timepoints)
 
-    # 6) Save the study set and sequences
-    study.save(os.path.join(args.basepath, 'gibson_' + dset + '_agg.pkl'))
+    # 5) Save the study set and sequences
+    logger.info("# otus: {}".format(len(agg_study.taxa)))
+
+    pkl_path = Path(args.output_prefix).with_suffix('.pkl')
+    agg_study.save(pkl_path)
+    logger.info(f"Saved study to {pkl_path}")
+
     ret = []
-    for taxon in study.taxa:
+    for taxon in agg_study.taxa:
         ret.append(SeqRecord.SeqRecord(seq=Seq.Seq(taxon.sequence), id=taxon.name,
             description=''))
-    SeqIO.write(ret, os.path.join(args.basepath, 'gibson_' + dset + '_agg.fa'), 'fasta-2line')
+
+    fasta_path = Path(args.output_prefix).with_suffix('.fa')
+    SeqIO.write(ret, fasta_path, 'fasta-2line')

@@ -178,6 +178,13 @@ mkdir -p $inference_out_dir
 seed=0
 mdsine_cfg=$inference_out_dir/mdsine.cfg
 
+
+if [ -f $inference_out_dir/BVS.mat ]; then
+	echo "Found output ${inference_out_dir}/BVS.mat. Skipping."
+	exit 0
+fi
+
+
 # ======= Run inference
 echo "[*] Running mdsine1 inference (reads=${read_depth}, trial=${trial}, noise level=${noise_level})"
 
