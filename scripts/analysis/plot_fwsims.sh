@@ -22,5 +22,6 @@ for subj in 2 3 4 5; do
 			--study ${HEALTHY_DSET} \
 			--subject ${subj} \
 			-o ${subj_outdir}/fwsims.npy \
-			--plot all
+			--plot all \
+			--gibbs-subsample 100
 done

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source synthetic/settings.sh
+source synthetic/large/settings.sh
 
 echo "MATLAB DIR: ${MATLAB_DIR}"
 echo "MATLAB executable: ${MATLAB}"
@@ -18,7 +18,7 @@ require_variable "noise_level" $noise_level
 
 convert_to_windows() {
 	linux_path=$1
-	echo "F:/${linux_path#/mnt/f/}"
+	echo "D:/${linux_path#/mnt/d/}"
 }
 
 

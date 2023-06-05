@@ -22,7 +22,7 @@ export QPCR_TRIPLICATES=6  # The number of physical+technical replicate combinat
 
 export OUTPUT_DIR="${DATASET_DIR}/output"
 export NUM_CORES=1
-export MDSINE1_DIR="/home/younhun/mdsine"
+export MDSINE1_DIR="/home/pylori/mdsine"
 
 export MATLAB_DIR="/mnt/c/Program\ Files/MATLAB/R2015b/bin"
 export PATH=${PATH}:${MATLAB_DIR}

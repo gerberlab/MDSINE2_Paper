@@ -1,17 +1,14 @@
 import argparse
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, Iterator, Callable, Any, Optional, List, Dict
+from typing import Tuple, Iterator, Callable, Any
 
+import itertools
 import pickle
 import pandas as pd
 import numpy as np
 import scipy.special
 import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
-import seaborn as sns
 
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
@@ -79,47 +76,52 @@ class HoldoutData:
         trajs = np.copy(self.trajectories[:, t_subset_indices])
         return trajs
 
-    def evaluate_absolute(self, pred: np.ndarray, upper_bound: float, lower_bound: float, mask_zeros: bool = True) -> np.ndarray:
+    def evaluate_absolute(self, pred: np.ndarray) -> pd.DataFrame:
         """Compute RMS error metric between prediction and truth, one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
-        truth = np.where(truth < lower_bound, lower_bound, truth)
-        truth = np.where(truth > upper_bound, upper_bound, truth)
-
-        mask = truth > np.min(truth)
-        pred = np.where(pred < lower_bound, lower_bound, pred)
-        pred = np.where(pred > upper_bound, upper_bound, pred)
+        # truth = np.where(truth < lower_bound, lower_bound, truth)
+        # truth = np.where(truth > upper_bound, upper_bound, truth)
+        #
+        # pred = np.where(pred < lower_bound, lower_bound, pred)
+        # pred = np.where(pred > upper_bound, upper_bound, pred)
         if pred.shape != truth.shape:
             raise ValueError(f"truth shape ({truth.shape}) does not match pred shape ({pred.shape})")
 
-        truth = np.log10(truth)
-        pred = np.log10(pred)
-        if mask_zeros:
-            sqdiff = np.square(pred - truth)
-            sqdiff[~mask] = np.nan
-            return np.sqrt(np.nanmean(sqdiff, axis=1))  # RMS
-        else:
-            return np.sqrt(np.mean(np.square(pred - truth), axis=1))
+        # truth = np.log10(truth)
+        # pred = np.log10(pred)
+        entries = []
+        for taxa_idx, time_idx in itertools.product(range(pred.shape[0]), range(pred.shape[1])):
+            entries.append({
+                'taxa': taxa_idx,
+                'time': time_idx,
+                'truth': truth[taxa_idx, time_idx],
+                'pred': pred[taxa_idx, time_idx]
+            })
+        return pd.DataFrame(entries)
 
-    def evaluate_relative(self, pred: np.ndarray, lower_bound: float, mask_zeros: bool = True) -> np.ndarray:
+    def evaluate_relative(self, pred: np.ndarray, eps: float = 1e-10) -> pd.DataFrame:
         """Compute RMS error metric between prediction and truth (in relative abundance), one metric for each taxa."""
         truth = self.trajectory_subset(self.subject.times[0], self.subject.times[-1])
         rel_truth = truth / truth.sum(axis=0, keepdims=True)
-        rel_truth[rel_truth < lower_bound] = lower_bound
+        # rel_truth[rel_truth < lower_bound] = lower_bound
 
-        mask = truth > np.min(truth)
+        pred = pred + eps
         rel_pred = pred / pred.sum(axis=0, keepdims=True)
         if rel_pred.shape != rel_truth.shape:
             raise ValueError(f"truth shape ({rel_truth.shape}) does not match pred shape ({rel_pred.shape})")
 
-        rel_pred[rel_pred < lower_bound] = lower_bound
-        rel_truth = np.log10(rel_truth)
-        rel_pred = np.log10(rel_pred)
-        if mask_zeros:
-            sqdiff = np.square(rel_pred - rel_truth)
-            sqdiff[~mask] = np.nan
-            return np.sqrt(np.nanmean(sqdiff, axis=1))  # RMS
-        else:
-            return np.sqrt(np.mean(np.square(rel_pred - rel_truth), axis=1))
+        # rel_pred[rel_pred < lower_bound] = lower_bound
+        # rel_truth = np.log10(rel_truth)
+        # rel_pred = np.log10(rel_pred)
+        entries = []
+        for taxa_idx, time_idx in itertools.product(range(rel_pred.shape[0]), range(rel_pred.shape[1])):
+            entries.append({
+                'taxa': taxa_idx,
+                'time': time_idx,
+                'truth': rel_truth[taxa_idx, time_idx],
+                'pred': rel_pred[taxa_idx, time_idx]
+            })
+        return pd.DataFrame(entries)
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
@@ -365,8 +367,6 @@ def evaluate_all(regression_inputs_dir: Path,
                  complete_study: md2.Study,
                  sim_dt: float,
                  sim_max: float,
-                 abs_lower_bound: float = 1e5,
-                 rel_lower_bound: float = 1e-6,
                  mdsine2_subsample_every: int = 1):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
@@ -386,152 +386,144 @@ def evaluate_all(regression_inputs_dir: Path,
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
 
         heldout_data = HoldoutData(complete_study[sid], sidx)
-        true_abs_means = np.log10(np.mean(heldout_data.trajectories, axis=1))
-        true_rel_means = np.log10(np.mean(heldout_data.normalized_trajectories, axis=1))
 
-        def add_absolute_entry(_method: str, _errs: np.ndarray):
-            for taxa_idx, (taxa_err, true_abs_mean) in enumerate(zip(_errs, true_abs_means)):
+        def add_absolute_results(_method: str, _res: pd.DataFrame):
+            for _, row in _res.iterrows():
                 absolute_df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
                     'Method': _method,
-                    'TaxonIdx': taxa_idx,
-                    'TrueAbundMean': true_abs_mean,
-                    'Error': taxa_err
+                    'TaxonIdx': row['taxa'],
+                    'TimePoint': row['time'],
+                    'Truth': row['truth'],
+                    'Pred': row['pred']
                 })
 
-        def add_relative_entry(_method: str, _errs: np.ndarray):
-            for taxa_idx, (taxa_err, true_rel_mean) in enumerate(zip(_errs, true_rel_means)):
+        def add_relative_results(_method: str, _res: pd.DataFrame):
+            for _, row in _res.iterrows():
                 relative_df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
                     'Method': _method,
-                    'TaxonIdx': taxa_idx,
-                    'TrueAbundMean': true_rel_mean,
-                    'Error': taxa_err
+                    'TaxonIdx': row['taxa'],
+                    'TimePoint': row['time'],
+                    'Truth': row['truth'],
+                    'Pred': row['pred']
                 })
 
         # Absolute abundance
         try:
-            traj = np.median(
+            traj = np.nanmedian(
                 inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                 axis=0
             )
-            add_absolute_entry(
+            add_absolute_results(
                 'MDSINE2',
-                heldout_data.evaluate_absolute(
-                    traj,
-                    upper_bound=sim_max,
-                    lower_bound=abs_lower_bound
-                )
+                heldout_data.evaluate_absolute(traj)
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
 
         try:
-            add_absolute_entry(
+            add_absolute_results(
                 'MDSINE2 (No Modules)',
                 heldout_data.evaluate_absolute(
-                    np.median(
+                    np.nanmedian(
                         inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                         axis=0
-                    ),
-                    upper_bound=sim_max,
-                    lower_bound=abs_lower_bound
+                    )
                 )
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
 
         try:
-            add_absolute_entry(
+            add_absolute_results(
                 'gLV (elastic net)',
-                heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
+                heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate glv-elastic Net output: Holdout Subject {sid}.")
 
         try:
-            add_absolute_entry(
+            add_absolute_results(
                 'gLV (ridge)',
-                heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale), upper_bound=sim_max, lower_bound=abs_lower_bound)
+                heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
 
         # Relative abundance
         try:
-            add_relative_entry(
+            add_relative_results(
                 'MDSINE2',
                 heldout_data.evaluate_relative(
-                    np.median(
+                    np.nanmedian(
                         inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                         axis=0
-                    ),
-                    lower_bound=rel_lower_bound
+                    )
                 )
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'MDSINE2 (No Modules)',
                 heldout_data.evaluate_relative(
-                    np.median(
+                    np.nanmedian(
                         inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
                         axis=0
-                    ),
-                    lower_bound=rel_lower_bound
+                    )
                 )
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'cLV',
-                heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
+                heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate clv output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'gLV-RA (elastic net)',
-                heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+                heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'gLV-RA (ridge)',
-                heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+                heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate glv-RA-ridge output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'gLV (elastic net)',
-                heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+                heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate glv-elastic net output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'gLV (ridge)',
-                heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale), lower_bound=rel_lower_bound)
+                heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate glv-ridge output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_entry(
+            add_relative_results(
                 'LRA',
-                heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t), lower_bound=rel_lower_bound)
+                heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t))
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate LRA output (relabund): Holdout Subject {sid}.")
@@ -541,134 +533,10 @@ def evaluate_all(regression_inputs_dir: Path,
     return absolute_results, relative_results
 
 
-def make_boxplot(ax, df: pd.DataFrame,
-                 method_order: List[str],
-                 method_colors: Dict[str, np.ndarray],
-                 xlabel: Optional[str] = None,
-                 ylabel: Optional[str] = None):
-    df = df.loc[
-        df['Method'].isin(method_order)
-    ].sort_values(
-        by='Method',
-        key=lambda col: col.map({m: i for i, m in enumerate(method_order)})
-    )
-
-    sns.boxplot(
-        data=df,
-        ax=ax,
-        x='Method',
-        y='Error',
-        showfliers=False,
-        palette=method_colors,
-        whis=(2.5, 97.5)
-    )
-
-    sns.stripplot(
-        data=df,
-        ax=ax,
-        x='Method',
-        y='Error',
-        dodge=True,
-        color='black',
-        alpha=0.3,
-        linewidth=1.0
-    )
-
-    def line_break(x: str):
-        break_at_chars = ''.join(['(', ',', '/', ')'])
-        return '\n'.join(re.split(f'[{break_at_chars}]', x))
-
-    labels = [
-        line_break(item.get_text())
-        for item in ax.get_xticklabels()
-    ]
-    ax.set_xticklabels(labels)
-
-    if xlabel is not None:
-        ax.set_xlabel(xlabel, fontsize=15)
-    if ylabel is not None:
-        ax.set_ylabel(ylabel, fontsize=15)
-
-
-def make_grouped_boxplot(abund_ax, error_ax,
-                         df,
-                         method_order: List[str],
-                         method_colors: Dict[str, np.ndarray],
-                         lb: float,
-                         num_quantiles: int = 10,
-                         error_ylabel: Optional[str] = None):
-    # Divide taxa based on abundance quantiles.
-    df = df.loc[
-        df['Method'].isin(method_order)
-    ].assign(Bin=pd.qcut(df['TrueAbundMean'], q=num_quantiles))
-    log_lb = np.log10(lb)
-
-    # ============ Render bin counts.
-    def _aggregate_abundances_bin(_df):
-        bin = _df.head(1)['Bin'].item()
-        return pd.Series({
-            'Left': bin.left if not np.isinf(bin.left) else log_lb,
-            'Right': bin.right,
-            'Count': _df.shape[0]
-        })
-    bin_counts = df.groupby('Bin').apply(_aggregate_abundances_bin)
-    widths = bin_counts['Right'] - bin_counts['Left']
-    abund_ax.bar(
-        x=bin_counts['Left'],
-        height=1 / widths,
-        align='edge',
-        width=widths,
-        linewidth=0.5,
-        edgecolor='black',
-        color='tab:blue'
-    )
-    abund_ax.set_xlabel('')
-    abund_ax.set_ylabel('Density of OTUs')
-
-    # ============= Render RMSE.
-    def _bin_label(interval):
-        left = interval.left
-        right = interval.right
-        if np.isinf(left):
-            left = log_lb
-        return '({:.1f},\n{:.1f}]'.format(left, right)
-    df['BinLabel'] = df['Bin'].map(_bin_label)
-    df = df.sort_values('Bin')
-    supported_methods = set(pd.unique(df['Method']))
-    method_order = [m for m in method_order if m in supported_methods]
-    sns.boxplot(
-        data=df, ax=error_ax,
-        x='BinLabel',
-        y='Error',
-        hue='Method', hue_order=method_order, palette=method_colors,
-        showfliers=False,
-        whis=(2.5, 97.5)
-    )
-    error_ax.set_axisbelow(True)
-    error_ax.yaxis.grid(True, 'major', linewidth=1, color='#e6e6e6')
-    error_ax.set_xlabel('')
-    if error_ylabel is not None:
-        error_ax.set_ylabel(error_ylabel)
-
-    abund_ax.legend([], [])
-    error_ax.legend([], [])
-
-
-def draw_method_legend(fig, method_order, method_colors, position: Tuple[float, float]):
-    legend_elements = [
-        Patch(facecolor=method_colors[method], edgecolor='black', linewidth=0.5, label=method)
-        for method in method_order
-    ]
-    fig.legend(
-        handles=legend_elements,
-        loc='upper center', bbox_to_anchor=position,
-        fancybox=True, ncol=len(method_order)
-    )
-
-
 def main():
     args = parse_args()
     plot_dir = Path(args.plot_dir)
+    plot_dir.mkdir(exist_ok=True, parents=True)
 
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
@@ -695,56 +563,6 @@ def main():
 
     absolute_results.to_csv(plot_dir / "absolute_cv.tsv", sep='\t', index=False)
     relative_results.to_csv(plot_dir / "relative_cv.tsv", sep='\t', index=False)
-
-    # ==================== Plot settings.
-    methods = ['MDSINE2', 'MDSINE2 (No Modules)', 'cLV', 'LRA', 'gLV-RA (elastic net)', 'gLV-RA (ridge)', 'gLV (ridge)', 'gLV (elastic net)']
-    palette_tab20 = sns.color_palette("tab10", len(methods))
-    method_colors = {m: palette_tab20[i] for i, m in enumerate(methods)}
-
-    # ==================== Evaluate and plot overall errors.
-    fig, ax = plt.subplots(
-        nrows=1,
-        ncols=2,
-        figsize=(14, 5),
-        gridspec_kw={
-            'width_ratios': [1, 2],
-            'right': 0.92,
-            'left': 0.08
-        }
-    )
-
-    make_boxplot(ax[0], absolute_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Abs Abundance)')
-    make_boxplot(ax[1], relative_results, methods, method_colors, xlabel='Method', ylabel='RMSE (log Rel Abundance)')
-    fig.tight_layout()
-    plt.savefig(plot_dir / "overall.pdf")
-    plt.close(fig)
-
-    # ==================== Evaluate and plot errors binned by log-abundances.
-    fig, ax = plt.subplots(
-        nrows=2,
-        ncols=2,
-        figsize=(20, 5),
-        gridspec_kw={
-            'height_ratios': [1, 2],
-            'width_ratios': [1, 2],
-            'wspace': 0.05,
-            'right': 0.99,
-            'left': 0.03,
-            'bottom': 0.2,
-            'top': 0.95
-        }
-    )
-
-    make_grouped_boxplot(ax[0, 0], ax[1, 0], absolute_results, methods, method_colors, lb=1e5, error_ylabel='RMSE (log Abs abundance)')
-    make_grouped_boxplot(ax[0, 1], ax[1, 1], relative_results, methods, method_colors, lb=1e-6, error_ylabel='RMSE (log Rel abundance)')
-    ax[0, 0].get_legend().remove()
-    ax[1, 0].get_legend().remove()
-    ax[0, 1].get_legend().remove()
-    ax[1, 1].get_legend().remove()
-    draw_method_legend(fig, methods, method_colors, position=(0.5, 0.1))
-    fig.tight_layout()
-    plt.savefig(plot_dir / "binned.pdf")
-    plt.close(fig)
 
 
 if __name__ == "__main__":
