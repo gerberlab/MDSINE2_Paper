@@ -1,4 +1,4 @@
-# MDSINE2_figures
+# MDSINE2_Paper
 
 Pull this code via
 ```bash
