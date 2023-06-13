@@ -17,9 +17,8 @@ bash synthetic/small/run_regression_all.sh
 ```
 
 
-# Step 3: Compute the errors, and plot them.
+# Step 3: Compute the metrics. (For plotting the data, refer to the accompanying jupyter notebook.)
 
 ```bash
 bash synthetic/small/evaluate.sh
-bash synthetic/small/draw_plots.sh
 ```

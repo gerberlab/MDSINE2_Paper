@@ -43,7 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--glv_ra_ridge_outdir', type=str, required=True)
     parser.add_argument('--glv_ridge_outdir', type=str, required=True)
     parser.add_argument('--lra_elastic_outdir', type=str, required=True)
-    parser.add_argument('--plot_dir', type=str, required=True)
+    parser.add_argument('--out_dir', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
     parser.add_argument('--subsample_every', type=int, required=False, default=1)
@@ -535,8 +535,8 @@ def evaluate_all(regression_inputs_dir: Path,
 
 def main():
     args = parse_args()
-    plot_dir = Path(args.plot_dir)
-    plot_dir.mkdir(exist_ok=True, parents=True)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(exist_ok=True, parents=True)
 
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
@@ -561,8 +561,8 @@ def main():
         mdsine2_subsample_every=args.subsample_every
     )
 
-    absolute_results.to_csv(plot_dir / "absolute_cv.tsv", sep='\t', index=False)
-    relative_results.to_csv(plot_dir / "relative_cv.tsv", sep='\t', index=False)
+    absolute_results.to_csv(out_dir / "absolute_cv.tsv", sep='\t', index=False)
+    relative_results.to_csv(out_dir / "relative_cv.tsv", sep='\t', index=False)
 
 
 if __name__ == "__main__":

@@ -29,11 +29,10 @@ from typing import List
 
 from Bio import SeqIO, SeqRecord, Seq
 import numpy as np
-from mdsine2 import Study, OTU, OTUTaxaSet
+from mdsine2 import Study, OTUTaxaSet
 
 import mdsine2 as md2
 from mdsine2.logger import logger
-import os
 
 
 def load_dataset(dataset_name: str, dataset_dir: str, max_n_species: int, sequence_file: str, trim_option: str) -> Study:

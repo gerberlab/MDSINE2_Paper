@@ -7,18 +7,18 @@ echo "Performing preprocessing on raw data files and generate pkl files containi
 
 # generate the preprocessed pickle files containing timepoints 0 and 0.5. 
 # If files in $PREPROCESS_DIR contains timepoints 0 and 0.5, can ignore this code 
-python preprocess/helpers/preprocess.py \
-    --hamming-distance 2 \
-    --rename-prefix OTU \
-    --sequences ${PREPROCESS_DIR}/gibson_16S_rRNA_v4_ASV_seqs_aligned_filtered.fa \
-    --output-basepath ${PREPROCESSED_ALL_DIR} \
-    --max-n-species 2 \
-    --dataset_dir ${DATASET_DIR}
+#python preprocess/helpers/preprocess.py \
+#    --hamming-distance 2 \
+#    --rename-prefix OTU \
+#    --sequences ${PREPROCESS_DIR}/gibson_16S_rRNA_v4_ASV_seqs_aligned_filtered.fa \
+#    --output-basepath ${PREPROCESSED_ALL_DIR} \
+#    --max-n-species 2 \
+#    --dataset_dir ${DATASET_DIR}
 
-python preprocess/helpers/assign_taxonomy_for_consensus_seqs.py \
-    --rdp-table ${PREPROCESS_DIR}/taxonomy_RDP.txt \
-    --confidence-threshold 50 \
-    --output-basepath ${PREPROCESSED_ALL_DIR}
+#python preprocess/helpers/assign_taxonomy_for_consensus_seqs.py \
+#    --rdp-table ${PREPROCESS_DIR}/taxonomy_RDP.txt \
+#    --confidence-threshold 50 \
+#    --output-basepath ${PREPROCESSED_ALL_DIR}
 
 echo "Generated relevant files. Now generating the figure"
 
