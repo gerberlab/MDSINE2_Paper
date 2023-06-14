@@ -5,18 +5,19 @@ Pull this code via
 git clone --recurse-submodules https://github.com/gibsonlab/MDSINE2_figures.git
 ```
 
-**Abstract**: Despite the importance of microbial dysbiosis in human disease, the phenomenon remains poorly understood. We provide the first comprehensive and predictive model of dysbiosis at ecosystem-scale, leveraging our new machine learning method for efficiently inferring compact and interpretable dynamical systems models. Coupling this approach with the most densely temporally sampled interventional study of the microbiome to date, using microbiota from healthy and dysbiotic human donors that we transplanted into mice subjected to antibiotic and dietary interventions, we demonstrate superior predictive performance of our method over state-of-the-art techniques. Moreover, we demonstrate that our approach uncovers intrinsic dynamical properties of dysbiosis driven by destabilizing competitive cycles, in contrast to stabilizing interaction chains in the healthy microbiome, which have implications for restoration of the microbiome to treat disease.
 
 # Important links
 - Associated GitHub repo for the Bayesian model: ["MDSINE2"](https://github.com/gerberlab/MDSINE2)<br />
   <a href="https://github.com/gerberlab/MDSINE2"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2-blue?style=flat&logo=github"/></a>
-- Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/tutorials) that can be opened directly in Google Colab:<br />
-<a href="https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
 - Raw sequences from longitudinal experiments on NCBI: <br />
 - <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA784519/"><img alt="" src="https://img.shields.io/badge/NCBI-PRJNA784519-blue?style=flat"/></a>
-- Folder containing [notebooks to reproduce figures found in the paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/notebooks) (requires local Jupyter instance to re-run)
 - Zenodo repository containing pre-computed outputs of inference of the full dataset and cross-validation: <br />
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8006854.svg)](https://doi.org/10.5281/zenodo.8006854)
+
+# Jupyter Notebooks
+- Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/tutorials) that can be opened directly in Google Colab:<br />
+<a href="https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
+- Folder containing [notebooks to reproduce figures found in the paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/paper_figures) (requires local Jupyter instance to re-run)
 
 
 # Instructions
@@ -61,10 +62,10 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager
 We provided shell scripts that implement several pipelines. Link: [Analysis Pipeline](scripts/README.md) 
  
 To reproduce the figures using the output of these analyses, please go through the Jupyter notebooks 
-located in the `notebooks` directory of this repository.
+located in the `paper_figures` directory of this repository.
 To run them yourself, you will need to run a jupyter instance, for example:
 ```bash
 cd MDSINE2_Paper
 jupyter lab --port 8888
 ```
-and navigate to `notebooks/` through JupyterLab.
+and navigate to `paper_figures/` through JupyterLab.
