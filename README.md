@@ -13,7 +13,8 @@ git clone --recurse-submodules https://github.com/gibsonlab/MDSINE2_figures.git
 - Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/tutorials) that can be opened directly in Google Colab:<br />
 <a href="https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
 - Raw sequences from longitudinal experiments on NCBI: <br />
-<a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA784519/"><img alt="" src="https://img.shields.io/badge/NCBI-PRJNA784519-blue?style=flat"/></a>
+- <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA784519/"><img alt="" src="https://img.shields.io/badge/NCBI-PRJNA784519-blue?style=flat"/></a>
+- Folder containing [notebooks to reproduce figures found in the paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/notebooks) (requires local Jupyter instance to re-run)
 - Zenodo repository containing pre-computed outputs of inference of the full dataset and cross-validation: <br />
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8006854.svg)](https://doi.org/10.5281/zenodo.8006854)
 
