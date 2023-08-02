@@ -11,8 +11,11 @@ git clone --recurse-submodules https://github.com/gerberlab/MDSINE2_Paper.git
   <a href="https://github.com/gerberlab/MDSINE2"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2-blue?style=flat&logo=github"/></a>
 - Raw sequences from longitudinal experiments on NCBI: <br />
 - <a href="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA784519/"><img alt="" src="https://img.shields.io/badge/NCBI-PRJNA784519-blue?style=flat"/></a>
-- Zenodo repository containing pre-computed outputs of inference of the full dataset and cross-validation: <br />
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8006853.svg)](https://doi.org/10.5281/zenodo.8006853)
+- Zenodo repositories containing pre-computed outputs of inference of the full dataset and cross-validation: <br />
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8006853.svg)](https://doi.org/10.5281/zenodo.8006853) (CV + Replicates) <br />
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8208503.svg)](https://doi.org/10.5281/zenodo.8208503) (Full Inference) <br />
+  (Note: please ensure downloads are from the latest versions of these records. To extract a `.tar.xf` archive on Linux, use the `tar xf` command; on Windows, use 7-zip.)
+
 
 # Jupyter Notebooks
 - Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/tutorials) that can be opened directly in Google Colab:<br />
