@@ -67,6 +67,26 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help='Prior of the indicator of the perturbations'
     )
+    parser.add_argument(
+        '--interaction-ind-prior-a', type=float, dest='interaction_prior_a',
+        required=False, help='The `a` parameter of the interaction indicator prior.', default=None
+    )
+    parser.add_argument(
+        '--interaction-ind-prior-b', type=float, dest='interaction_prior_b',
+        required=False, help='The `b` parameter of the interaction indicator prior.', default=None
+    )
+    parser.add_argument(
+        '--interaction-str-mean-loc', type=float, dest='interaction_str_mean_loc',
+        required=False, help='The loc parameter for the interaction strength prior mean.', default=0.0
+    )
+    parser.add_argument(
+        '--interaction-str-var-scale', type=float, dest='interaction_str_var_scale',
+        required=False, help='The scale parameter for the interaction strength prior var.', default=None
+    )
+    parser.add_argument(
+        '--interaction-str-var-dof', type=float, dest='interaction_str_var_dof',
+        required=False, help='The dof parameter for the interaction strength prior var.', default=None
+    )
 
     parser.add_argument(
         '--log-every', type=int, default=100,
@@ -132,11 +152,26 @@ def main():
         raise ValueError('Must specify `--interaction-ind-prior`')
     else:
         params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['hyperparam_option'] = args.interaction_prior
+    params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['a'] = args.interaction_prior_a
+    params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['b'] = args.interaction_prior_b
 
     if args.perturbation_prior is None:
         raise ValueError('Must specify `--perturbation-ind-prior`')
     else:
         params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = args.perturbation_prior
+
+    # Set the interaction strength priors
+    if args.interaction_str_mean_loc != 0.0:
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc_option'] = 'manual'
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc'] = args.interaction_str_mean_loc
+
+    if args.interaction_str_var_scale != None:
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale_option'] = 'manual'
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale'] = args.interaction_str_var_scale
+
+    if args.interaction_str_var_dof != None:
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_str_var_dof
 
     # Change the cluster initialization to no clustering if there are less than 30 clusters
     if len(study.taxa) <= 30:
