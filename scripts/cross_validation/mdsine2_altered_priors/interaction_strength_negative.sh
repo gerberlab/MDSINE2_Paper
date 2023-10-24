@@ -23,7 +23,7 @@ python cross_validation/helpers/mdsine2_loo.py \
 		--checkpoint $MDSINE2_SAVE_EVERY \
 		--basepath $inference_out_dir \
 		--interaction-ind-prior $MDSINE2_INTERACTION_INDICATOR_PRIOR \
-		--interaction-str-mean-loc -8.375082717193844e-10 \
+		--interaction-str-mean-loc "-8.375082717193844e-10" \
 		--interaction-str-var-scale 9.977011494252875e-11 \
 		--interaction-str-var-dof 870 \
 		--perturbation-ind-prior $MDSINE2_PERTURBATION_INDICATOR_PRIOR \
