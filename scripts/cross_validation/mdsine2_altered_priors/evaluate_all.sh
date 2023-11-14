@@ -14,6 +14,7 @@ evaluate_subdir()
 }
 
 
+evaluate_subdir "mdsine2-modules"
 evaluate_subdir "mdsine2-modules-interaction-density-dense"
 evaluate_subdir "mdsine2-modules-interaction-density-sparse"
 evaluate_subdir "mdsine2-modules-interaction-density-medium"
