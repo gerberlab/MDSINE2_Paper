@@ -8,7 +8,7 @@ evaluate_subdir()
   out_subdir=$1
   python cross_validation/helpers/prior_comparison_errors.py \
     --study ${DATASET_PKL} \
-    --mdsine2_outdir ${OUTPUT_DIR}/${out_subdir} \
+    --mdsine_outdir ${OUTPUT_DIR}/${out_subdir} \
     --out_dir ${OUTPUT_DIR}/${out_subdir} \
     --subsample_every 100
 }
