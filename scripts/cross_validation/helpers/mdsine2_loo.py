@@ -88,7 +88,7 @@ def parse_args() -> argparse.Namespace:
         required=False, help='The dof parameter for the interaction strength prior var.', default=None
     )
     parser.add_argument(
-        '--gaussian_varscale_inflation', type=float, dest='gaussian_varscale_inflation_factor',
+        '--gaussian_inflation_factor', type=float, dest='gaussian_inflation_factor',
         required=False,
         help='The factor to scale the SICS prior scale parameter by (also effectively scales the prior mean).',
         default=None

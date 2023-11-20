@@ -23,7 +23,7 @@ python cross_validation/helpers/mdsine2_loo.py \
 		--checkpoint $MDSINE2_SAVE_EVERY \
 		--basepath $inference_out_dir \
 		--interaction-ind-prior $MDSINE2_INTERACTION_INDICATOR_PRIOR \
-		--gaussian_varscale_inflation 1e-4 \
+		--gaussian_inflation_factor 1e-4 \
 		--interaction-str-var-dof 2.01 \
 		--perturbation-ind-prior $MDSINE2_PERTURBATION_INDICATOR_PRIOR \
 		--log-every 100 \
