@@ -180,7 +180,8 @@ def main():
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_str_var_dof
 
     if args.gaussian_inflation_factor != None:
-        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
+        # No need to separately parametrize interaction var prior; it's supposed to copy from self-interactions.
+        # params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = args.gaussian_inflation_factor
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['target_mean'] = args.gaussian_inflation_factor
