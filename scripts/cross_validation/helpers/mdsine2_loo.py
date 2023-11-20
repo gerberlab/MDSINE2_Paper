@@ -87,6 +87,12 @@ def parse_args() -> argparse.Namespace:
         '--interaction-str-var-dof', type=float, dest='interaction_str_var_dof',
         required=False, help='The dof parameter for the interaction strength prior var.', default=None
     )
+    parser.add_argument(
+        '--gaussian_varscale_inflation', type=float, dest='gaussian_varscale_inflation_factor',
+        required=False,
+        help='The factor to scale the SICS prior scale parameter by (also effectively scales the prior mean).',
+        default=None
+    )
 
     parser.add_argument(
         '--log-every', type=int, default=100,
@@ -172,6 +178,12 @@ def main():
     if args.interaction_str_var_dof != None:
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_str_var_dof
+
+    if args.gaussian_inflation_factor != None:
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.gaussian_varscale_inflation_factor
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.gaussian_varscale_inflation_factor
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = args.gaussian_varscale_inflation_factor
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['target_mean'] = args.gaussian_varscale_inflation_factor
 
     # Change the cluster initialization to no clustering if there are less than 30 clusters
     if len(study.taxa) <= 30:
