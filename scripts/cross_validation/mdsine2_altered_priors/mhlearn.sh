@@ -25,7 +25,7 @@ python cross_validation/helpers/mdsine2_loo_mhlearn.py \
 		--interaction-ind-prior $MDSINE2_INTERACTION_INDICATOR_PRIOR \
 		--interaction-str-mean-loc 0.0 \
 		--interaction-str-var-dof 2.01 \
-		--gaussian_inflation_factor 1e4 \
+		--gaussian_inflation_factor 1e-4 \
 		--perturbation-ind-prior $MDSINE2_PERTURBATION_INDICATOR_PRIOR \
 		--log-every 100 \
 		--exclude-subject $excluded_subj \
