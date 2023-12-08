@@ -188,7 +188,7 @@ def main():
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = args.gaussian_inflation_factor
     params.LEARN[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS] = True
-    params.LEARN[STRNAMES.STRNAMES] = True
+    params.LEARN[STRNAMES.PRIOR_VAR_GROWTH] = True
 
     # Change the cluster initialization to no clustering if there are less than 30 clusters
     if len(study.taxa) <= 30:
