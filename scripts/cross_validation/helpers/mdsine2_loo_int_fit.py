@@ -184,6 +184,7 @@ def main():
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['target_mean'] = 1e4
     if args.gaussian_inflation_factor != None:
         # This script specifically parametrizes the inflation factor ONLY for interaction var prior.
+        params.INITIALIZATION_KWARGS[STRNAMES.PROIR_VAR_INTERACTIONS]['scale_option'] = 'inflated-median'
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
 
     # Change the cluster initialization to no clustering if there are less than 30 clusters
