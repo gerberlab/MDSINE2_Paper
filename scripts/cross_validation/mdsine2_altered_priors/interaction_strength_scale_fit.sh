@@ -7,7 +7,7 @@ excluded_subj=$1
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/mdsine2-modules-interaction-strength-zero/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/mdsine2-modules-interaction-strength-scale-fit/${excluded_subj}
 mkdir -p ${inference_out_dir}
 
 echo "[*] Running cross-validation run for MDSINE2 with zero-mean interaction-str prior (Excluding subject: ${excluded_subj})"
