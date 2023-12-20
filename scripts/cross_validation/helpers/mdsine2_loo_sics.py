@@ -186,11 +186,11 @@ def main():
     # Set the interaction strength priors
     if args.interaction_mean_loc != 0.0:
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc_option'] = 'manual'
-        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc'] = args.interaction_str_mean_loc
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc'] = args.interaction_mean_loc
 
     if args.interaction_var_dof != None:
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
-        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_str_var_dof
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_var_dof
 
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.interaction_var_rescale
 
