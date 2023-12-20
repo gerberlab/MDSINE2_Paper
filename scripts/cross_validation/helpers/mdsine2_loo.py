@@ -91,7 +91,7 @@ def parse_args() -> argparse.Namespace:
         '--gaussian_inflation_factor', type=float, dest='gaussian_inflation_factor',
         required=False,
         help='The factor to scale the SICS prior scale parameter by (also effectively scales the prior mean).',
-        default=None
+        default=1e4
     )
 
     parser.add_argument(

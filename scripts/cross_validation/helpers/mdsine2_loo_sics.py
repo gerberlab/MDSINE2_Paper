@@ -75,23 +75,40 @@ def parse_args() -> argparse.Namespace:
         '--interaction-ind-prior-b', type=float, dest='interaction_prior_b',
         required=False, help='The `b` parameter of the interaction indicator prior.', default=None
     )
+    # =========== DEFAULT VALUES LISTED BELOW
     parser.add_argument(
-        '--interaction-str-mean-loc', type=float, dest='interaction_str_mean_loc',
+        '--interaction-mean-loc', type=float, dest='interaction_mean_loc',
         required=False, help='The loc parameter for the interaction strength prior mean.', default=0.0
     )
     parser.add_argument(
-        '--interaction-str-var-scale', type=float, dest='interaction_str_var_scale',
-        required=False, help='The scale parameter for the interaction strength prior var.', default=None
+        '--interaction-var-dof', type=float, dest='interaction_var_dof',
+        required=False, help='The dof parameter for the interaction strength prior var.', default=2.01
     )
     parser.add_argument(
-        '--interaction-str-var-dof', type=float, dest='interaction_str_var_dof',
-        required=False, help='The dof parameter for the interaction strength prior var.', default=None
-    )
-    parser.add_argument(
-        '--gaussian_inflation_factor', type=float, dest='gaussian_inflation_factor',
+        '--interaction-var-rescale', type=float, dest='interaction_var_rescale',
         required=False,
-        help='The factor to scale the SICS prior scale parameter by (also effectively scales the prior mean).',
-        default=None
+        help='Controls the scale parameter for the interaction strength prior var, using the formula [SCALE]*E^2',
+        default=1e-8
+    )
+    parser.add_argument(
+        '--growth-var-rescale', type=float, dest='growth_var_rescale',
+        required=False,
+        help='Controls the initialization of the growth variance (Note: its not learned by default)'
+             'Uses the fomrmula [SCALE]*<default_value>',
+        default=1.0
+    )
+    parser.add_argument(
+        '--si-var-rescale', type=float, dest='si_var_rescale',
+        required=False,
+        help='Controls the initialization of the si variance (Note: its not learned by default)'
+             'Uses the fomrmula [SCALE]*<default_value>',
+        default=1.0
+    )
+    parser.add_argument(
+        '--pert-var-mean', type=float, dest='pert_var_mean',
+        required=False,
+        help='Controls the mean of the perturbation variance. DOF=2.01, scale=<mean>*(dof-2)/dof.',
+        default=1e4
     )
 
     parser.add_argument(
@@ -167,25 +184,24 @@ def main():
         params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = args.perturbation_prior
 
     # Set the interaction strength priors
-    if args.interaction_str_mean_loc != 0.0:
+    if args.interaction_mean_loc != 0.0:
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc_option'] = 'manual'
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc'] = args.interaction_str_mean_loc
 
-    if args.interaction_str_var_scale != None:
-        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale_option'] = 'manual'
-        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale'] = args.interaction_str_var_scale
-
-    if args.interaction_str_var_dof != None:
+    if args.interaction_var_dof != None:
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_str_var_dof
 
-    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = 1e4
-    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = 1e4
-    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['target_mean'] = 1e4
-    if args.gaussian_inflation_factor != None:
-        # No need to separately parametrize interaction var prior; it's supposed to copy from self-interactions.
-        # params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
-        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.gaussian_inflation_factor
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.interaction_var_rescale
+
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = 1e4 * args.si_var_rescale
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = 1e4 * args.growth_var_rescale
+
+    # perturbation variance
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['dof_option'] = 'manual'
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['dof'] = 2.01
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_PERT]['target_mean'] = args.pert_var_mean
+
 
     # Change the cluster initialization to no clustering if there are less than 30 clusters
     if len(study.taxa) <= 30:
