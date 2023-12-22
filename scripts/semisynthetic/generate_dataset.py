@@ -144,7 +144,7 @@ def sample_qpcr(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-s', '--input_glv_params', dest="study_path",
+        '--study', '-s', dest="study_path",
         type=str, required=True,
         help="The path to the original (real) datas Study pickle file."
     )
