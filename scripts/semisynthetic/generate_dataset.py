@@ -167,6 +167,11 @@ def parse_args() -> argparse.Namespace:
         help="The path to the pickled MCMC run of the fixed-module inference."
     )
     parser.add_argument(
+        '--out', '-o', dest='out_path',
+        type=str, required=True,
+        help="The desired full path to which the synthetic study object will be saved.."
+    )
+    parser.add_argument(
         '--read-depth', '-r', dest='read_depth',
         type=int, required=True,
         help="The overall read depth to simulate per timepoint."
@@ -192,6 +197,7 @@ def parse_args() -> argparse.Namespace:
 def main(
         study_path: Path,
         fixed_module_pkl_path: Path,
+        out_path: Path,
         read_depth: int,
         dirichlet_alpha: int,
         qpcr_noise_scale: float,
@@ -205,7 +211,7 @@ def main(
     :return:
     """
     rng = np.random.default_rng(seed)
-    create_synthetic_dataset(
+    synth_study = create_synthetic_dataset(
         source_study=md2.Study.load(str(study_path)),
         fixed_cluster_mcmc=md2.BaseMCMC.load(str(fixed_module_pkl_path)),
         sim_read_depth=read_depth,
@@ -214,12 +220,16 @@ def main(
         rng=rng
     )
 
+    out_path.parent.mkdir(exist_ok=True, parents=True)
+    synth_study.save(str(out_path))
+
 
 if __name__ == "__main__":
     args = parse_args()
     main(
         study_path=Path(args.study_path),
         fixed_module_pkl_path=Path(args.fixed_module_pkl_path),
+        out_path=Path(args.out_path),
         read_depth=args.read_depth,
         dirichlet_alpha=args.dirichlet_alpha,
         qpcr_noise_scale=args.qpcr_noise_scale,

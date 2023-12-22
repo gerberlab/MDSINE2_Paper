@@ -9,6 +9,7 @@ for read_depth in "${READ_DEPTHS[@]}"; do
     python semisynthetic/generate_dataset.py \
       --study ${STUDY_PKL} \
       --fixed-module-pkl ${FIXED_MODULE_MCMC} \
+      --out ${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}/dataset.pkl \
       --read-depth ${read_depth} \
       --alpha ${ALPHA_DIRICHLET} \
       --qpcr-noise-scale ${QPCR_NOISE_SCALE} \
