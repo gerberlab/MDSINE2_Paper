@@ -169,7 +169,7 @@ def parse_args() -> argparse.Namespace:
         help="The qPCR noise scale (geometric noise stdev scaling)"
     )
     parser.add_argument(
-        '--seed', '-s', dest='seed',
+        '--seed', dest='seed',
         type=int, required=True,
         help="The random seed to use for sampling randomness."
     )
