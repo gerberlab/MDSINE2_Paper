@@ -29,7 +29,8 @@ def create_synthetic_dataset(
     )
 
     for source_subj in source_study:
-        new_subj = synthetic_study.add_subject(name=source_subj.name)
+        synthetic_study.add_subject(name=source_subj.name)
+        new_subj = synthetic_study[source_subj.name]
 
         # Add timepoints
         new_subj.times = source_subj.times
@@ -69,8 +70,8 @@ def sample_data_from_posterior_trajectory(
             ))
 
         if n_union_timepoints != len(subj.times):
-            print("Matrix's n_timepoints dimension ({}) doesn't match subject `{}` timepoints ({}). Reverse timepoint lookup is required.".format(
-                n_union_timepoints, subj.name, len(subj.times)
+            print("Subject `{}`: Matrix's n_timepoints dimension ({}) doesn't match measurement timepoints ({}). Reverse timepoint lookup is required.".format(
+                subj.name, n_union_timepoints, len(subj.times)
             ))
 
             """
