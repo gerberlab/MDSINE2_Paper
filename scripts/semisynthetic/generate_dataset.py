@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Tuple
 
-import click
+import argparse
 import numpy as np
 
 import mdsine2 as md2
@@ -62,6 +62,7 @@ def sample_data_from_posterior_trajectory(
     for subj_idx, subj in enumerate(study):
         traj_posterior_samples = trajectory_set.value[subj_idx].get_trace_from_disk(section='posterior')
         n_samples, n_taxa, n_timepoints = traj_posterior_samples.shape
+        print(traj_posterior_samples.shape)
 
         if n_taxa != len(study.taxa):
             raise ValueError("Matrix's n_taxa dimension ({}) doesn't match taxaset size ({})".format(
@@ -140,39 +141,41 @@ def sample_qpcr(
 
 
 # ============ CLI interface
-@click.command()
-@click.option(
-    '--study', '-s', 'study_path',
-    type=click.Path(path_type=Path, dir_okay=False, exists=True, readable=True),
-    required=True,
-    help="The path to the original (real) data's Study pickle file."
-)
-@click.option(
-    '--fixed-module-pkl', '-fm', 'fixed_module_pkl_path',
-    type=click.Path(path_type=Path, dir_okay=False, exists=True, readable=True),
-    required=True,
-    help="The path to the pickled MCMC run of the fixed-module inference."
-)
-@click.option(
-    '--read-depth', '-r', 'read_depth',
-    type=int, required=True,
-    help="The overall read depth to simulate per timepoint."
-)
-@click.option(
-    '--alpha', '-a', 'dirichlet_alpha',
-    type=float, required=True,
-    help="The alpha parameter of the dirichlet distribution (the overall scale: sum_i alpha_i)"
-)
-@click.option(
-    '--qpcr-noise-scale', '-q', 'qpcr_noise_scale',
-    type=float, required=True,
-    help="The qPCR noise scale (geometric noise stdev scaling)"
-)
-@click.option(
-    '--seed', '-s', 'seed',
-    type=int, required=True,
-    help="The random seed to use for sampling randomness."
-)
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-s', '--input_glv_params', dest="study_path",
+        type=str, required=True,
+        help="The path to the original (real) datas Study pickle file."
+    )
+    parser.add_argument(
+        '--fixed-module-pkl', '-fm', dest='fixed_module_pkl_path',
+        type=str, required=True,
+        help="The path to the pickled MCMC run of the fixed-module inference."
+    )
+    parser.add_argument(
+        '--read-depth', '-r', dest='read_depth',
+        type=int, required=True,
+        help="The overall read depth to simulate per timepoint."
+    )
+    parser.add_argument(
+        '--alpha', '-a', dest='dirichlet_alpha',
+        type=float, required=True,
+        help="The alpha parameter of the dirichlet distribution (the overall scale: sum_i alpha_i)"
+    )
+    parser.add_argument(
+        '--qpcr-noise-scale', '-q', dest='qpcr_noise_scale',
+        type=float, required=True,
+        help="The qPCR noise scale (geometric noise stdev scaling)"
+    )
+    parser.add_argument(
+        '--seed', '-s', dest='seed',
+        type=int, required=True,
+        help="The random seed to use for sampling randomness."
+    )
+    return parser.parse_args()
+
+
 def main(
         study_path: Path,
         fixed_module_pkl_path: Path,
@@ -200,4 +203,12 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(
+        study_path=Path(args.study_path),
+        fixed_module_pkl_path=Path(args.fixed_module_pkl_path),
+        read_depth=args.read_depth,
+        dirichlet_alpha=args.dirichlet_alpha,
+        qpcr_noise_scale=args.qpcr_noise_scale,
+        seed=args.seed
+    )
