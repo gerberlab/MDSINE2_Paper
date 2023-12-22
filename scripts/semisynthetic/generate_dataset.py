@@ -8,40 +8,6 @@ import mdsine2 as md2
 from mdsine2.names import STRNAMES
 
 
-@click.command()
-@click.option(
-    # add options here
-)
-def main(
-        study_path: Path,
-        fixed_module_pkl_path: Path,
-        read_depth: int,
-        dirichlet_alpha: int,
-        qpcr_noise_scale: float,
-        seed: int
-):
-    """
-    Read the fixed-module inference, use the stored "filtered-state" (latent traj X) samples.
-
-    :param fixed_module_pkl_path:
-    :param read_depth:
-    :return:
-    """
-    rng = np.random.default_rng(seed)
-    create_synthetic_dataset(
-        source_study=md2.Study.load(study_path),
-        fixed_cluster_mcmc=md2.BaseMCMC.load(fixed_module_pkl_path),
-        sim_read_depth=read_depth,
-        dirichlet_alpha=dirichlet_alpha,
-        qpcr_noise_scale=qpcr_noise_scale,
-        rng=rng
-    )
-
-
-if __name__ == "__main__":
-    main()
-
-
 # ======= Helper functions
 def create_synthetic_dataset(
         source_study: md2.Study,
@@ -152,7 +118,12 @@ def dirichlet_multinomial(alpha: np.ndarray, n: int, rng: np.random.Generator) -
     return x
 
 
-def sample_qpcr(total_mass: np.ndarray, noise_scale: float, n_replicates: int, rng: np.random.Generator) -> np.ndarray
+def sample_qpcr(
+        total_mass: np.ndarray,
+        noise_scale: float,
+        n_replicates: int,
+        rng: np.random.Generator
+) -> np.ndarray:
     """
     Sample qPCR measurements for the specified biomass trajectory.
     :param total_mass: A 1-D array specifying biomass for each timepoint.
@@ -166,3 +137,67 @@ def sample_qpcr(total_mass: np.ndarray, noise_scale: float, n_replicates: int, r
         +
         noise_scale * rng.normal(loc=0.0, scale=1.0, size=(n_times, n_replicates))
     )
+
+
+# ============ CLI interface
+@click.command()
+@click.option(
+    '--study', '-s', 'study_path',
+    type=click.Path(path_type=Path, dir_okay=False, exists=True, readable=True),
+    required=True,
+    help="The path to the original (real) data's Study pickle file."
+)
+@click.option(
+    '--fixed-module-pkl', '-fm', 'fixed_module_pkl_path',
+    type=click.Path(path_type=Path, dir_okay=False, exists=True, readable=True),
+    required=True,
+    help="The path to the pickled MCMC run of the fixed-module inference."
+)
+@click.option(
+    '--read-depth', '-r', 'read_depth',
+    type=int, required=True,
+    help="The overall read depth to simulate per timepoint."
+)
+@click.option(
+    '--alpha', '-a', 'dirichlet_alpha',
+    type=float, required=True,
+    help="The alpha parameter of the dirichlet distribution (the overall scale: sum_i alpha_i)"
+)
+@click.option(
+    '--qpcr-noise-scale', '-q', 'qpcr_noise_scale',
+    type=float, required=True,
+    help="The qPCR noise scale (geometric noise stdev scaling)"
+)
+@click.option(
+    '--seed', '-s', 'seed',
+    type=int, required=True,
+    help="The random seed to use for sampling randomness."
+)
+def main(
+        study_path: Path,
+        fixed_module_pkl_path: Path,
+        read_depth: int,
+        dirichlet_alpha: int,
+        qpcr_noise_scale: float,
+        seed: int
+):
+    """
+    Read the fixed-module inference, use the stored "filtered-state" (latent traj X) samples.
+
+    :param fixed_module_pkl_path:
+    :param read_depth:
+    :return:
+    """
+    rng = np.random.default_rng(seed)
+    create_synthetic_dataset(
+        source_study=md2.Study.load(str(study_path)),
+        fixed_cluster_mcmc=md2.BaseMCMC.load(str(fixed_module_pkl_path)),
+        sim_read_depth=read_depth,
+        dirichlet_alpha=dirichlet_alpha,
+        qpcr_noise_scale=qpcr_noise_scale,
+        rng=rng
+    )
+
+
+if __name__ == "__main__":
+    main()
