@@ -4,7 +4,7 @@ source ./settings.sh  # use parent settings (scripts/settings.sh)
 
 
 export QPCR_NOISE_SCALE=0.01
-export ALPHA_DIRICHLET=5384.0625  # empirical fit using replicate data.
+export ALPHA_DIRICHLET=5373.2041  # empirical fit using replicate data.
 export READ_DEPTHS=(600 3000 15000 75000)
 export NUM_SAMPLE_TRIALS=5
 
