@@ -222,6 +222,7 @@ def main(
 
     out_path.parent.mkdir(exist_ok=True, parents=True)
     synth_study.save(str(out_path))
+    print(f"Saved semisynthetic dataset to {out_path}.")
 
 
 if __name__ == "__main__":
