@@ -61,18 +61,30 @@ def sample_data_from_posterior_trajectory(
     qpcr_per_subject = {}
     for subj_idx, subj in enumerate(study):
         traj_posterior_samples = trajectory_set.value[subj_idx].get_trace_from_disk(section='posterior')
-        n_samples, n_taxa, n_timepoints = traj_posterior_samples.shape
-        print(traj_posterior_samples.shape)
+        n_samples, n_taxa, n_union_timepoints = traj_posterior_samples.shape
 
         if n_taxa != len(study.taxa):
             raise ValueError("Matrix's n_taxa dimension ({}) doesn't match taxaset size ({})".format(
                 n_taxa, len(study.taxa)
             ))
 
-        if n_timepoints != len(subj.times):
-            raise ValueError("Matrix's n_timepoints dimension ({}) doesn't match subject `{}` timepoints ({})".format(
-                n_timepoints, subj.name, len(subj.times)
+        if n_union_timepoints != len(subj.times):
+            print("Matrix's n_timepoints dimension ({}) doesn't match subject `{}` timepoints ({}). Reverse timepoint lookup is required.".format(
+                n_union_timepoints, subj.name, len(subj.times)
             ))
+
+            """
+            Dec-22-2023
+            
+            According to code by @dkaplan, MDSINE2 creates "fake" timepoints via linear interpolation for 
+            some of the subjects, so the matrix shape might be bigger than the data's provided timepoint array shape.
+            
+            Refer to the "essential_timepoints" setting of the "Filtering" class, whose default implementation is to
+            set each subject's timepoint collection to the union of all the subjects. 
+            """
+            _union_indices = {t: i for i, t in enumerate(mcmc.graph.data.times[subj_idx])}  # indices of the LARGE timepoint array (with fake timepoints)
+            _t_indices = [_union_indices[t] for t in subj.times]  # The ORIGINAL timepoints from the subject's raw measurements
+            traj_posterior_samples = traj_posterior_samples[:, :, _t_indices]  # the submatrix containing only the target measurement timepoints.
 
         read_counts = np.array([
             sample_reads(read_depth, trajs, dirichlet_alpha, rng=rng)
