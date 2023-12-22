@@ -4,8 +4,8 @@ source ./settings.sh  # use parent settings (scripts/settings.sh)
 
 
 export QPCR_NOISE_SCALE=0.01
-export ALPHA_DIRICHLET=73.4451785497543  # empirical fit using Subject 2, taxa "OTU_2" at timepoint 3.0
-export READ_DEPTHS=(10000 20000 30000 40000 50000)
+export ALPHA_DIRICHLET=5384.0625  # empirical fit using replicate data.
+export READ_DEPTHS=(600 3000 15000 75000)
 export NUM_SAMPLE_TRIALS=5
 
 export STUDY_PKL="${PROJECT_DIR}/datasets/gibson/preprocessed/gibson_healthy_agg_filtered.pkl"
