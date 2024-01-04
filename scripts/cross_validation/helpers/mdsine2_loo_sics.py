@@ -94,14 +94,14 @@ def parse_args() -> argparse.Namespace:
         '--growth-var-rescale', type=float, dest='growth_var_rescale',
         required=False,
         help='Controls the initialization of the growth variance (Note: its not learned by default)'
-             'Uses the fomrmula [SCALE]*<default_value>',
+             'Uses the fomrmula 1e4*[SCALE]*<default_value>',
         default=1.0
     )
     parser.add_argument(
         '--si-var-rescale', type=float, dest='si_var_rescale',
         required=False,
         help='Controls the initialization of the si variance (Note: its not learned by default)'
-             'Uses the fomrmula [SCALE]*<default_value>',
+             'Uses the fomrmula 1e4*[SCALE]*<default_value>',
         default=1.0
     )
     parser.add_argument(
@@ -192,7 +192,8 @@ def main():
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_var_dof
 
-    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = args.interaction_var_rescale
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale_option'] = 'inflated-median'
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.interaction_var_rescale
 
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = 1e4 * args.si_var_rescale
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = 1e4 * args.growth_var_rescale
