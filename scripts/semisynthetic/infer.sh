@@ -27,11 +27,17 @@ export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/analysis/logging_to_file.ini"
 export LOG_FILEPATH="${inference_dir}/inference.log"
 touch $LOG_FILEPATH
 
+# ======= Fit NegBin qPCR model
+echo "[*] Fitting Negative binomial model."
+replicate_study=${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}/replicate.pkl
+mdsine2 infer-negbin --input ${replicate_study} --seed ${NEGBIN_SEED} --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath $inference_dir
+
+# ======= Perform inference
 synth_study=${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}/dataset.pkl
 output_study_name="simulated"
 mdsine2 infer \
 		--input $synth_study \
-		--negbin $REPLICATE_MCMC \
+		--negbin $inference_dir/synthetic-replicate/mcmc.pkl \
 		--seed $INFERENCE_SEED \
 		--burnin $BURNIN \
 		--n-samples $N_SAMPLES \
