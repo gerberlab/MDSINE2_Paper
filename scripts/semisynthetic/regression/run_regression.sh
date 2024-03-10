@@ -10,7 +10,7 @@ require_variable "trial" $trial
 
 
 
-instance_dir=${DATASET_DIR}/semisynthetic/read_depth_${read_depth}/trial_${trial}
+instance_dir=${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}
 dataset_file=${instance_dir}/dataset.pkl
 regression_dir=${instance_dir}/regression
 regression_input_dir=${regression_dir}/inputs
