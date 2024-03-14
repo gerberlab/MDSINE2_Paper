@@ -128,18 +128,26 @@ def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
     return _wrapper
 
 
+class IncompleteChainError(BaseException):
+    pass
+
+
 @cached_forward_simulation
 def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, sim_max: float, init_limit_of_detection: float, subsample_every: int) -> np.ndarray:
     logger.info(f"Evaluating forward simulation using mdsine2 MCMC samples ({data_path})")
     mcmc = md2.BaseMCMC.load(str(data_path))
 
     growth = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk()
+    n_samples = growth.shape[0]
     self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk()
     interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk()
     interactions[np.isnan(interactions)] = 0
     self_interactions = -np.absolute(self_interactions)
     for i in range(self_interactions.shape[1]):
         interactions[:, i, i] = self_interactions[:, i]
+
+    if n_samples < 10000:
+        raise IncompleteChainError()
 
     perts = []
     pert_starts = []
@@ -280,6 +288,8 @@ def evaluate_all(
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
+        except IncompleteChainError:
+            logger.error(f"Chain for Holdout {sid} not complete.")
 
         # Relative abundance
         try:
@@ -294,6 +304,8 @@ def evaluate_all(
             )
         except FileNotFoundError:
             logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+        except IncompleteChainError:
+            logger.error(f"Chain for Holdout {sid} not complete.")
 
     absolute_results = pd.DataFrame(absolute_df_entries)
     relative_results = pd.DataFrame(relative_df_entries)

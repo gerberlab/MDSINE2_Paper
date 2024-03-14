@@ -88,7 +88,7 @@ def parse_args() -> argparse.Namespace:
         '--interaction-var-rescale', type=float, dest='interaction_var_rescale',
         required=False,
         help='Controls the scale parameter for the interaction strength prior var, using the formula [SCALE]*E^2',
-        default=1e-8
+        default=1.0
     )
     parser.add_argument(
         '--growth-var-rescale', type=float, dest='growth_var_rescale',
@@ -193,7 +193,7 @@ def main():
         params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_var_dof
 
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale_option'] = 'inflated-median'
-    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = args.interaction_var_rescale
+    params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = 1e4 * args.interaction_var_rescale
 
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]['inflation_factor'] = 1e4 * args.si_var_rescale
     params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_GROWTH]['inflation_factor'] = 1e4 * args.growth_var_rescale
