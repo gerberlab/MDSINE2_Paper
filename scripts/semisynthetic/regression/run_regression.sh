@@ -11,7 +11,7 @@ require_variable "trial" $trial
 
 
 instance_dir=${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}
-dataset_file=${instance_dir}/dataset.pkl
+dataset_file=${instance_dir}/dataset_filtered.pkl
 regression_dir=${instance_dir}/regression
 regression_input_dir=${regression_dir}/inputs
 mkdir -p $regression_input_dir
@@ -35,9 +35,9 @@ run_regression() {
 }
 
 # ======= Run regression methods
-run_regression "clv" "elastic_net"
-run_regression "lra" "elastic_net"
+#run_regression "clv" "elastic_net"
+#run_regression "lra" "elastic_net"
 run_regression "glv" "elastic_net"
 run_regression "glv" "ridge"
-run_regression "glv-ra" "elastic_net"
-run_regression "glv-ra" "ridge"
+#run_regression "glv-ra" "elastic_net"
+#run_regression "glv-ra" "ridge"
