@@ -29,12 +29,12 @@ touch $LOG_FILEPATH
 
 # ======= Fit NegBin qPCR model
 echo "[*] Fitting Negative binomial model."
-replicate_study=${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}/replicate.pkl
+replicate_study=${DATASET_DIR}/trial_${trial}/read_depth_${read_depth}/replicate.pkl
 mdsine2 infer-negbin --input ${replicate_study} --seed ${NEGBIN_SEED} --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath $inference_dir
 
 # ======= Perform inference
 echo "[*] Performing inference on dataset."
-synth_study=${DATASET_DIR}/read_depth_${read_depth}/trial_${trial}/dataset_filtered.pkl
+synth_study=${DATASET_DIR}/trial_${trial}/read_depth_${read_depth}/dataset_filtered.pkl
 output_study_name="simulated"
 mdsine2 infer \
 		--input $synth_study \
