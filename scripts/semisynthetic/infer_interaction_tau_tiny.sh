@@ -46,7 +46,7 @@ mdsine2 infer \
 		--multiprocessing $MULTIPROCESSING \
 		--rename-study "${output_study_name}" \
 		--basepath $inference_dir \
-		--interaction-ind-prior $INTERACTION_IND_PRIOR \
+		--interaction-ind-prior 'weak-agnostic' \
 		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
 		--interaction-mean-loc 0.0 \
 		--interaction-var-rescale 1e-8 \
