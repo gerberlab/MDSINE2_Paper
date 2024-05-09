@@ -49,7 +49,7 @@ mdsine2 infer \
 		--interaction-ind-prior $INTERACTION_IND_PRIOR \
 		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
 		--interaction-mean-loc 0.0 \
-		--interaction-var-rescale 1e-4 \
+		--interaction-var-rescale 1e-8 \
 
 echo "[*] Visualizing output of ${output_study_name}"
 export LOG_FILEPATH="${inference_dir}/visualization.log"
