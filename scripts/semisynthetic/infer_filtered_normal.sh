@@ -46,7 +46,7 @@ mdsine2 infer \
 		--multiprocessing $MULTIPROCESSING \
 		--rename-study "${output_study_name}" \
 		--basepath $inference_dir \
-		--interaction-ind-prior $INTERACTION_IND_PRIOR \
+		--interaction-ind-prior 'weak-agnostic' \
 		--perturbation-ind-prior $PERTURBATION_IND_PRIOR
 
 echo "[*] Visualizing output of ${output_study_name}"
