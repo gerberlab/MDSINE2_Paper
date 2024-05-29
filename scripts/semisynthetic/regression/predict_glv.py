@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 from scipy.integrate import solve_ivp
 import mdsine2 as md2
+from numba import jit
 
 
 def forward_sim_single_subj_glv(A, g, B, x0, u, times, rel_abund=False):
@@ -14,13 +15,25 @@ def forward_sim_single_subj_glv(A, g, B, x0, u, times, rel_abund=False):
     (np.ndarray) u : the perturbation indicator
     (np.ndarray) t : the time coefficients
     """
+    # def grad_fn(A, g, B, u):
+    #     def fn(t, x):
+    #         if B is None or u is None:
+    #             return g + A.dot(x)
+    #         elif B is not None and u is not None:
+    #             return g + A.dot(np.exp(x)) + B.dot(u)
+    #     return fn
+
     def grad_fn(A, g, B, u):
-        def fn(t, x):
-            if B is None or u is None:
-                return g + A.dot(x)
-            elif B is not None and u is not None:
-                return g + A.dot(np.exp(x)) + B.dot(u)
-        return fn
+        def fn1(t, x):
+            return g + A.dot(x)
+        def fn2(t, x):
+            return g + A.dot(np.exp(x)) + B.dot(u)
+        if B is None or u is None:
+            return jit(fn1)
+        elif B is not None and u is not None:
+            return jit(fn2)
+        else:
+            raise Exception("Unknown function class")
 
     x_pred = np.zeros((times.shape[0], x0.shape[0]))
     x_pred[0] = np.exp(x0)
