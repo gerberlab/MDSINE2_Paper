@@ -52,7 +52,7 @@ if __name__ == "__main__":
         zero_counts += np.sum(counts == 0)
         total_counts += counts.size
         Y.append(counts)
-        U.append(perturb_ids.reshape((-1, 1)))
+        U.append(perturb_ids)
         T.append(times)
 
     out_dir = Path(args.output_dir)
