@@ -71,7 +71,7 @@ def perturbations_to_u(study: md2.Study, subject: md2.Subject, times: np.ndarray
         end = pert.ends[subject.name]
         indices, = np.where((times >= start) & (times <= end))
         perturb_ids[indices] = p_idx + 1
-    return perturb_ids
+    return perturb_ids.reshape((-1, 1))
 
 
 def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, start_time: float, x0: np.ndarray, n_days: float, sim_dt: float, out_path: Path):
