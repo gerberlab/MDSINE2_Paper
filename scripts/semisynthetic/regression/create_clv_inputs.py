@@ -35,15 +35,16 @@ if __name__ == "__main__":
     zero_counts = 0
     total_counts = 0
 
+    n_perts = len(study.perturbations)
     for subj in study:
         counts = subj.matrix()["abs"].T
         times = subj.times
-        perturb_ids = np.zeros(len(times), dtype=int)
+        perturb_ids = np.zeros((len(times), n_perts), dtype=int)
         for p_idx, pert in enumerate(study.perturbations):
             start = pert.starts[subj.name]
             end = pert.ends[subj.name]
-            indices, = np.where((times >= start) & (times <= end))
-            perturb_ids[indices] = p_idx + 1
+            timepoint_indices, = np.where((times >= start) & (times <= end))
+            perturb_ids[timepoint_indices, p_idx] = 1
 
         assert len(times) == counts.shape[0]
         assert counts.shape[1] == len(taxa)
