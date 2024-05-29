@@ -55,6 +55,10 @@ if __name__ == "__main__":
         U.append(perturb_ids)
         T.append(times)
 
+    print("Checker")
+    print("len(Y):{}, len(U):{}, len(T):{}".format(len(Y), len(U), len(T)))
+    print("Shape Y[0]:{}, Shape U[0]:{}, Shape T[0]:{}".format(Y[0].shape, U[0].shape, T[0].shape))
+
     out_dir = Path(args.output_dir)
     with open(out_dir / "Y.pkl", "wb") as f:
         pkl.dump(Y, f)
