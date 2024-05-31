@@ -5,12 +5,8 @@ source semisynthetic/settings.sh
 
 read_depth=$1
 trial=$2
-model=$3
-regression=$4
 require_variable "read_depth" $read_depth
 require_variable "trial" $trial
-require_variable "model" $model
-require_variable "regression" $regression
 
 
 
@@ -41,10 +37,10 @@ run_regression() {
 }
 
 # ======= Run regression methods
-run_regression "${model}" "${regression}"
+#run_regression "${model}" "${regression}"
 #run_regression "clv" "elastic_net"
 #run_regression "lra" "elastic_net"
-#run_regression "glv" "elastic_net"
-#run_regression "glv" "ridge"
+run_regression "glv" "elastic_net"
+run_regression "glv" "ridge"
 #run_regression "glv-ra" "elastic_net"
 #run_regression "glv-ra" "ridge"
