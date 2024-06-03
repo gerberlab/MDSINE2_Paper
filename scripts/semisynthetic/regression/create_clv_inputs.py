@@ -37,9 +37,15 @@ if __name__ == "__main__":
 
     maximum_post_rescale_target = 100.0
     n_perts = len(study.perturbations)
+
+    max_abund_all = 0.0
     for subj in study:
         abund = subj.matrix()["abs"].T
-        abund_rescale_factor = maximum_post_rescale_target / np.max(abund)
+        max_abund_all = np.max([max_abund_all, np.max(abund)])
+
+    abund_rescale_factor = maximum_post_rescale_target / max_abund_all
+    for subj in study:
+        abund = subj.matrix()["abs"].T
 
         times = subj.times
         perturb_ids = np.zeros((len(times), n_perts), dtype=int)
