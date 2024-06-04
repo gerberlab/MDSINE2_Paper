@@ -152,7 +152,7 @@ def run_forward_sim(growth: np.ndarray,
     return fwsim_values, fwsim_times
 
 
-def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, n_days: float, out_path: Path):
+def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, n_days: float, out_path: Path, sim_dt: float, sim_max: float):
     # ======= Perturbations
     if study.perturbations is not None:
         perturbations_start = []
@@ -184,8 +184,8 @@ def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, n_days: flo
         perturbations=[B[:, i] for i in range(len(study.perturbations))],
         perturbations_start=perturbations_start,
         perturbations_end=perturbations_end,
-        dt=args.dt,
-        sim_max=args.sim_max,
+        dt=sim_dt,
+        sim_max=sim_max,
         n_days=n_days,
         start_time=subject.times[0]
     )
@@ -200,6 +200,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--subject', dest='subject', type=str)
     parser.add_argument('--out-path', dest='out_path', type=str)
     parser.add_argument('--sim-dt', dest='sim_dt', type=float, default=0.01)
+    parser.add_argument('--sim-max', dest='sim_max', type=float, default=1e20)
     parser.add_argument('--initialize_from_study', type=str, dest='init_study',
                         required=False,
                         help='[Experimental, for semisynthetic comparison only --  NOT TO BE COMMMITED TO GIT] The path to another study file which contains data different from the '
@@ -251,5 +252,6 @@ if __name__ == "__main__":
         # start_time=start_time,
         # x0=initial_conditions,
         n_days=n_days,
-        # sim_dt=args.sim_dt
+        sim_dt=args.sim_dt,
+        sim_max=args.sim_max
     )
