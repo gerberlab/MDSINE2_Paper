@@ -48,7 +48,7 @@ mdsine2 infer \
 		--basepath $inference_dir \
 		--interaction-ind-prior 'weak-agnostic' \
 		--perturbation-ind-prior $PERTURBATION_IND_PRIOR \
-		--fixed-clustering ${DATASET_DIR}/_tmp/clustering.npy
+		--fixed-clustering ${DATASET_DIR}/trial_${trial}/read_depth_${read_depth}/clustering.npy
 
 echo "[*] Visualizing output of ${output_study_name}"
 export LOG_FILEPATH="${inference_dir}/visualization.log"
