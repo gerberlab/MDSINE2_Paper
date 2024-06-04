@@ -152,7 +152,7 @@ def run_forward_sim(growth: np.ndarray,
     return fwsim_values, fwsim_times
 
 
-def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, n_days: float, out_path: Path, sim_dt: float, sim_max: float):
+def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, x0: np.ndarray, n_days: float, out_path: Path, sim_dt: float, sim_max: float):
     # ======= Perturbations
     if study.perturbations is not None:
         perturbations_start = []
@@ -176,11 +176,13 @@ def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, n_days: flo
     assert g.shape[0] == len(study.taxa)
     assert B.shape[0] == len(study.taxa)
     assert B.shape[1] == len(study.perturbations)
+    if x0.ndim == 1:
+        x0 = x0[:, None]
 
     fwsim, times = run_forward_sim(
         growth=g,
         interactions=A,
-        initial_conditions=initial_conditions,
+        initial_conditions=x0,
         perturbations=[B[:, i] for i in range(len(study.perturbations))],
         perturbations_start=perturbations_start,
         perturbations_end=perturbations_end,
@@ -250,7 +252,7 @@ if __name__ == "__main__":
         subject=subject,
         out_path=Path(args.out_path),
         # start_time=start_time,
-        # x0=initial_conditions,
+        x0=initial_conditions,
         n_days=n_days,
         sim_dt=args.sim_dt,
         sim_max=args.sim_max
