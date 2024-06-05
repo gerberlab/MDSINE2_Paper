@@ -152,7 +152,7 @@ def run_forward_sim(growth: np.ndarray,
     return fwsim_values, fwsim_times
 
 
-def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, x0: np.ndarray, n_days: float, out_path: Path, sim_dt: float, sim_max: float):
+def main(glv_pkl_path: Path, rescale_path: Path, study: md2.Study, subject: md2.Subject, x0: np.ndarray, n_days: float, out_path: Path, sim_dt: float, sim_max: float):
     # ======= Perturbations
     if study.perturbations is not None:
         perturbations_start = []
@@ -170,6 +170,11 @@ def main(glv_pkl_path: Path, study: md2.Study, subject: md2.Subject, x0: np.ndar
     with open(glv_pkl_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
+
+        # apply rescaling back into interaction matrix A.
+        rescale_factor = np.load(rescale_path)
+        print("Got rescale factor of: {}".format(rescale_factor))
+        A = A * rescale_factor
 
     assert A.shape[0] == len(study.taxa)
     assert A.shape[1] == len(study.taxa)
@@ -248,6 +253,7 @@ if __name__ == "__main__":
 
     main(
         glv_pkl_path=Path(args.glv_pkl_path),
+        rescale_path=Path(args.regression_inputs_dir) / 'rescale.np',
         study=study,
         subject=subject,
         out_path=Path(args.out_path),
