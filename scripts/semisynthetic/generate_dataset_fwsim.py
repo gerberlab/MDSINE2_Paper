@@ -193,7 +193,7 @@ def forward_simulate(
 ) -> Dict[str, np.ndarray]:
     """Forward simulation for all subjects in a Study object"""
     return {
-        subj.name: forward_simulate_subject(glv_params, study, subj, dt, sim_max)
+        subj.name: forward_simulate_subject(glv_params, study, subj, dt, sim_max)[0]
         for subj in study
     }
 
@@ -203,7 +203,8 @@ def forward_simulate_subject(
         study: md2.Study,
         subject: md2.Subject,
         dt: float,
-        sim_max: float
+        sim_max: float,
+        time_subset: bool = True
 ) -> np.ndarray:
     """Forward simulation for a single subject"""
     # ======= Perturbations
@@ -229,18 +230,26 @@ def forward_simulate_subject(
 
     # print("Data shape: ", subject.matrix()['abs'].shape)
     initial_conditions = subject.matrix()['abs'][:, 0] + 1e4
-    # print("Initial conditions:", initial_conditions)
-
-    x = md2.integrate(
-        dynamics=dyn,
-        initial_conditions=np.expand_dims(initial_conditions, 1),
-        dt=dt,
-        n_days=subject.times[-1] + dt,
-        subsample=True,
-        times=subject.times
-    )
+    if time_subset:
+        x = md2.integrate(
+            dynamics=dyn,
+            initial_conditions=np.expand_dims(initial_conditions, 1),
+            dt=dt,
+            final_day=subject.times[-1],
+            subsample=True,
+            times=subject.times
+        )
+    else:
+        x = md2.integrate(
+            dynamics=dyn,
+            initial_conditions=np.expand_dims(initial_conditions, 1),
+            dt=dt,
+            final_day=subject.times[-1],
+            subsample=False
+        )
     fwsim_values = x['X']
-    return fwsim_values
+    times = x['times']
+    return fwsim_values, times
 
 
 # =========== helpers
@@ -463,9 +472,9 @@ def parse_args() -> argparse.Namespace:
         type=str, required=True, help="The path to the .npz coclustering MCMC samples."
     )
     parser.add_argument(
-        '--cache-dir', '-c', dest='cache_dir',
+        '--truth-dir', '-t', dest='ground_truth_dir',
         type=str, required=True,
-        help="A directory to store temporary files for caching."
+        help="A directory to store ground truth values."
     )
     parser.add_argument(
         '--out', '-o', dest='out_path',
@@ -513,7 +522,7 @@ def main(
         interactions_path: Path,
         perturbations_path: Path,
         coclusterings_path: Path,
-        cache_dir: Path,
+        ground_truth_dir: Path,
         out_path: Path,
         replicate_out_path: Path,
         read_depth: int,
@@ -532,10 +541,10 @@ def main(
     :return:
     """
     source_study = md2.Study.load(str(study_path))
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Using cache dir {cache_dir}")
+    ground_truth_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Using ground truth dir {ground_truth_dir}")
 
-    glv_sim_path = cache_dir / 'glv_best_sim.pkl'
+    glv_sim_path = ground_truth_dir / 'glv_best_sim.pkl'
     if glv_sim_path.exists():
         with open(glv_sim_path, 'rb') as f:
             glv_params, forward_sims = pkl.load(f)
@@ -552,12 +561,24 @@ def main(
         assert coclusterings.shape[0] == interactions.shape[0]  # ensure that the number of samples match
 
         glv_params, instance_coclusters, forward_sims = extract_glv_model(source_study, growths, interactions, perturbations, coclusterings, sim_dt, sim_max)
-        plot_dir = cache_dir / 'fwsim-plots'
+        plot_dir = ground_truth_dir / 'fwsim-plots'
         plot_dir.mkdir(exist_ok=True, parents=True)
         render_plots(source_study, forward_sims, plot_dir)
         with open(glv_sim_path, 'wb') as f:
             pkl.dump((glv_params, forward_sims), f)
-        np.save(cache_dir / "coclusters.npy", instance_coclusters)
+        np.save(ground_truth_dir / "coclusters.npy", instance_coclusters)
+
+        # Save the full forward simulation.
+        for subj in source_study:
+            sims, times = forward_simulate_subject(
+                glv_params,
+                source_study,
+                subj,
+                sim_dt,
+                sim_max,
+                time_subset=False
+            )
+            np.savez(ground_truth_dir / f'forward_sim_full_{subj.name}.npz', sims=sims, times=times)
 
     rng = np.random.default_rng(seed)
     out_path.parent.mkdir(exist_ok=True, parents=True)
