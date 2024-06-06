@@ -171,8 +171,8 @@ def extract_glv_model(
     # for param_set, coclust_mat in tqdm(zip(params, coclusterings), total=len(params)):
     iter_idx = 0
     for param_set, coclust_mat in zip(params, coclusterings):
-        err, surviving_modules, total_modules = evaluate_parameter_fwsim(param_set, study, dt, sim_max, coclust_mat)
-        if len(surviving_modules) < total_modules:
+        err, surviving_taxa, surviving_modules, total_modules = evaluate_parameter_fwsim(param_set, study, dt, sim_max, coclust_mat)
+        if len(surviving_taxa) < len(study.taxa):
             param_fwsim_errors.append(np.inf)
         else:
             param_fwsim_errors.append(err)
@@ -181,6 +181,8 @@ def extract_glv_model(
         iter_idx += subsample_every
 
     best_idx = np.argmin(param_fwsim_errors)
+    if param_fwsim_errors[best_idx] == np.inf:
+        raise ValueError("Couldn't find best sim with all surviving taxa")
     print("Choice: index {} (total {} entries)".format(
         best_idx,
         len(params)
@@ -284,7 +286,7 @@ def evaluate_parameter_fwsim(
         dt: float,
         sim_max: float,
         coclust_matrix: np.ndarray
-) -> Tuple[float, Set[int], int]:
+) -> Tuple[float, Set[int], Set[int], int]:
     """
     Evaluate the fwsim error for each subject (And sum them).
     """
@@ -320,7 +322,7 @@ def evaluate_parameter_fwsim(
     total_modules = np.max(clust_assignments) + 1
 
     print("leftover taxa: {}".format(len(leftover_taxa_set)))
-    return np.sum(errors), leftover_module_set, total_modules
+    return np.sum(errors), leftover_taxa_set, leftover_module_set, total_modules
 
 
 def sample_data_from_fwsim(
