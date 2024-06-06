@@ -129,6 +129,7 @@ def create_synthetic_replicates(
                 rng.normal(loc=0.0, scale=qpcr_noise_scale, size=3)
             )
             replicate_subj.qpcr[repl_t] = md2.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+    print("replicate study name: {}".format(replicate_study.name))
     return replicate_study
 
 
