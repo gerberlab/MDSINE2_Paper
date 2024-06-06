@@ -3,6 +3,7 @@ set -e
 source semisynthetic/settings.sh
 
 
+REAL_POSTERIOR_DIR=/data/local/MDSINE2_files/merged_studies_2
 max_read_depth=${READ_DEPTHS[-1]}
 for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
   sample_seed=${trial}
@@ -14,10 +15,10 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
 
   python semisynthetic/generate_dataset_fwsim.py \
     --study ${STUDY_PKL} \
-    --growths /data/local/MDSINE2_files/merged_studies/growth.npy \
-    --interactions /data/local/MDSINE2_files/merged_studies/interactions.npy \
-    --perts /data/local/MDSINE2_files/merged_studies/perturbations.npz \
-    --coclust /data/local/MDSINE2_files/merged_studies_2/coclusters.npy \
+    --growths ${REAL_POSTERIOR_DIR}/growth.npy \
+    --interactions ${REAL_POSTERIOR_DIR}/interactions.npy \
+    --perts ${REAL_POSTERIOR_DIR}/perturbations.npz \
+    --coclust ${REAL_POSTERIOR_DIR}/coclusters.npy \
     --truth-dir ${DATASET_DIR}/truth \
     --out ${raw_dataset} \
     --replicate-out ${raw_replicate} \
