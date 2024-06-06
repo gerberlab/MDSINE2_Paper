@@ -621,7 +621,7 @@ if __name__ == "__main__":
         interactions_path=Path(args.interactions_path),
         perturbations_path=Path(args.perts_path),
         coclusterings_path=Path(args.coclust_path),
-        cache_dir=Path(args.cache_dir),
+        ground_truth_dir=Path(args.ground_truth_dir),
         out_path=Path(args.out_path),
         replicate_out_path=Path(args.replicate_out_path),
         read_depth=args.read_depth,
