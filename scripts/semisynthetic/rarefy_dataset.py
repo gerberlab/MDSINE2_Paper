@@ -40,7 +40,7 @@ def main(
     Rarify a dataset pickle file.
     """
     source_study = md2.Study.load(str(study_path))
-    new_study = md2.Study(taxa=source_study.taxa)
+    new_study = md2.Study(taxa=source_study.taxa, name=source_study.name)
     rng = np.random.default_rng(seed)
 
     for source_subj in source_study:
