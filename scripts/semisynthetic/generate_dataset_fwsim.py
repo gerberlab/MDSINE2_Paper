@@ -59,7 +59,7 @@ def create_synthetic_dataset(
     # ))
 
     # create the study object.
-    synthetic_study = md2.Study(taxa=source_study.taxa)
+    synthetic_study = md2.Study(taxa=source_study.taxa, name='simulated')
     for source_subj in source_study:
         synthetic_study.add_subject(name=source_subj.name)
         new_subj = synthetic_study[source_subj.name]
@@ -70,6 +70,7 @@ def create_synthetic_dataset(
             new_subj.qpcr[t] = md2.qPCRdata(cfus=sampled_qpcr[tidx], mass=1., dilution_factor=1.)
         new_subj.times = source_subj.times
     synthetic_study.perturbations = source_study.perturbations
+    print("synthetic study name: {}".format(synthetic_study.name))
     return synthetic_study
 
 
