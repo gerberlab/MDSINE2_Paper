@@ -144,7 +144,7 @@ def run_forward_sim(growth: np.ndarray,
         dynamics=dyn,
         initial_conditions=initial_conditions,
         dt=dt,
-        n_days=n_days + dt,
+        final_day=n_days,
         subsample=False
     )
     fwsim_values = x['X']
