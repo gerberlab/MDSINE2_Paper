@@ -188,7 +188,7 @@ def main(glv_pkl_path: Path, rescale_path: Path, study: md2.Study, subject: md2.
         growth=g,
         interactions=A,
         initial_conditions=x0,
-        perturbations=[B[:, i] for i in range(len(study.perturbations))],
+        perturbations=[B[:, i] / g for i in range(len(study.perturbations))],
         perturbations_start=perturbations_start,
         perturbations_end=perturbations_end,
         dt=sim_dt,

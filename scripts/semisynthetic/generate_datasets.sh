@@ -13,7 +13,7 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
   raw_dataset=${DATASET_DIR}/trial_${trial}/raw/dataset.pkl
   raw_replicate=${DATASET_DIR}/trial_${trial}/raw/replicate.pkl
 
-  python semisynthetic/generate_dataset_fwsim.py \
+  python semisynthetic/generate_dataset_fwsim_discrete.py \
     --study ${STUDY_PKL} \
     --growths ${REAL_POSTERIOR_DIR}/growth.npy \
     --interactions ${REAL_POSTERIOR_DIR}/interactions.npy \

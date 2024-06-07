@@ -6,6 +6,7 @@ import pickle
 from scipy.integrate import solve_ivp
 import mdsine2 as md2
 from numba import jit
+from tqdm import tqdm
 
 
 def forward_sim_single_subj_glv(A, g, B, x0, u, times, rel_abund=False):
@@ -42,7 +43,7 @@ def forward_sim_single_subj_glv(A, g, B, x0, u, times, rel_abund=False):
     if np.sum(B) == 0:
         B = None
 
-    for t in range(1, times.shape[0]):
+    for t in tqdm(range(1, times.shape[0])):
         if u is not None:
             grad = grad_fn(A, g, B, u[t-1])
         else:
@@ -90,7 +91,7 @@ def perturbations_to_u(study: md2.Study, subject: md2.Subject, times: np.ndarray
 
 
 def main(glv_pkl_path: Path, study: md2.Study, start_time: float, x0: np.ndarray, x0_scaling: float, final_day: float, sim_dt: float, out_path: Path):
-    sim_times = np.arange(start=start_time, stop=final_day, step=sim_dt)
+    sim_times = np.arange(start=start_time, stop=final_day + sim_dt, step=sim_dt)
     u = perturbations_to_u(study, subject, sim_times)
     fwsims = forward_sim_glv(glv_pkl_path, x0 * x0_scaling, u, sim_times)
     np.savez(out_path, sims=fwsims / x0_scaling, times=sim_times)
