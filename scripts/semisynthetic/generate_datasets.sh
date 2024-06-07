@@ -27,8 +27,9 @@ for (( trial = 0; trial < ${NUM_SAMPLE_TRIALS}; trial++ )); do
     --a1 ${NEGBIN_A1} \
     --qpcr-noise-scale ${QPCR_NOISE_SCALE} \
     --seed ${sample_seed} \
-    --sim-dt 0.01 \
     --sim-max 1e20
+#    --sim-dt 0.01 \
+#    --sim-max 1e20
 
   # Rarify to obtain lower read depths.
   filter_args=""
