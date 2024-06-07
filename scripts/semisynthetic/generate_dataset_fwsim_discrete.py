@@ -533,7 +533,7 @@ def main(
     """
     source_study = md2.Study.load(str(study_path))
     ground_truth_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Using ground truth dir {ground_truth_dir}")
+    print(f"Using ground truth dir {ground_truth_dir}, and then doing Discretized Euler integration.")
 
     glv_sim_path = ground_truth_dir / 'glv_best_sim.pkl'
     if glv_sim_path.exists():
