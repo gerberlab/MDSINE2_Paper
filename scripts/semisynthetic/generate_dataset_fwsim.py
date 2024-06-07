@@ -174,10 +174,11 @@ def extract_glv_model(
     iter_idx = 0
     for param_set, coclust_mat in zip(params, coclusterings):
         err, surviving_taxa, surviving_modules, total_modules = evaluate_parameter_fwsim(param_set, study, dt, sim_max, coclust_mat)
-        if len(surviving_taxa) < len(study.taxa):
-            param_fwsim_errors.append(np.inf)
-        else:
-            param_fwsim_errors.append(err)
+        param_fwsim_errors.append(err)
+        # if len(surviving_taxa) < len(study.taxa):
+        #     param_fwsim_errors.append(np.inf)
+        # else:
+        #     param_fwsim_errors.append(err)
         param_num_surviving_modules.append(len(surviving_modules))
         print("[iter={}] Modules survived: {} / {}".format(iter_idx, len(surviving_modules), total_modules))
         iter_idx += subsample_every
