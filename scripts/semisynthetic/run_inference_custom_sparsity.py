@@ -108,7 +108,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         '--cluster-n', type=float, dest='cluster_n',
-        required=False, dtype=int,
+        required=False, type=int,
         help='Controls the sparsity of the interaction indicators (if using "strong-sparse" or "strong-dense")',
         default=None
     )
