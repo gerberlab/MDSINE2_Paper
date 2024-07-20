@@ -13,7 +13,7 @@ require_variable "trial" $trial
 
 echo "[*] Performing MDSINE2 inference for semisynthetic (read_depth=${read_depth} | trial=${trial})"
 
-inference_dir=${DATASET_DIR}/trial_${trial}/read_depth_${read_depth}/inference_filtered_normal_sparse
+inference_dir=${DATASET_DIR}/trial_${trial}/read_depth_${read_depth}/inference_filtered_normal_sparse2
 mkdir -p ${inference_dir}
 
 breadcrumb=${inference_dir}/inference.DONE
