@@ -36,7 +36,7 @@ mdsine2 infer-negbin --input ${replicate_study} --seed ${NEGBIN_SEED} --burnin 2
 echo "[*] Performing inference on dataset."
 synth_study=${DATASET_DIR}/trial_${trial}/read_depth_${read_depth}/dataset_filtered_normal.pkl
 output_study_name="simulated"
-mdsine2 infer \
+python semisynthetic/run_inference_custom_sparsity.py \
 		--input $synth_study \
 		--negbin $inference_dir/synthetic-replicate/mcmc.pkl \
 		--seed $INFERENCE_SEED \
