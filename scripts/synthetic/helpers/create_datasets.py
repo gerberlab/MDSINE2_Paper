@@ -225,7 +225,7 @@ def simulate_trajectories(synth: Synthetic,
                 dynamics=synth.model,
                 initial_conditions=init_abund.reshape(-1, 1),
                 dt=dt,
-                n_days=total_n_days + dt,
+                final_day=total_n_days,
                 processvar=processvar,
                 subsample=False
             )
@@ -236,13 +236,13 @@ def simulate_trajectories(synth: Synthetic,
 
             total_n_days = synth.times[-1]
             d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund.reshape(-1, 1),
-                                    dt=dt, n_days=intervene_day, processvar=processvar,
+                                    dt=dt, final_day=intervene_day, processvar=processvar,
                                     subsample=False)
 
             new_abund = d_pre['X'][:, -1]
             new_abund[0] = pathogen_abund
             d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund.reshape(-1, 1),
-                                     dt=dt, n_days=total_n_days - intervene_day + dt, processvar=processvar,
+                                     dt=dt, final_day=total_n_days - intervene_day, processvar=processvar,
                                      subsample=False)
             # Merge the two results
             d = {
@@ -326,11 +326,6 @@ def main():
         trajs = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
 
         times = raw_trajs[subj]['times']
-
-
-
-        print(times)
-        print(trajs)
         for taxa_traj in trajs:
             ax.plot(times, taxa_traj, marker=None)
         ax.set_yscale('log')

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-source synthetic/large/settings.sh
+source synthetic/small/settings.sh
 
 echo "MATLAB DIR: ${MATLAB_DIR}"
 echo "MATLAB executable: ${MATLAB}"
