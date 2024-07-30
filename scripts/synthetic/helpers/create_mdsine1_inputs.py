@@ -43,7 +43,7 @@ def create_files(study: md2.Study, counts_path: Path, metadata_path: Path, bioma
                     indices, = np.where((times >= start) & (times <= end))
                     pert_ids[indices] = p_idx + 1
             else:
-                print("No perturbations found in this synthetic dataset.")
+                print("No perturbations found in synthetic subject {}.".format(subj.name))
 
             for t_idx, (t, reads) in enumerate(subj.reads.items()):
                 sample_id = f'SUBJ{subj_idx}_T{t}'
