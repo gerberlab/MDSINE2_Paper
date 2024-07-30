@@ -201,6 +201,6 @@ echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
 #true_cfg=$(convert_to_windows ${mdsine_cfg})
 #${MATLAB} -nosplash -nodesktop -wait < mdsine.m -r "mdsine ${true_cfg} ; quit"
-${MATLAB} -nosplash -nodesktop -wait < mdsine.m -r "try, mdsine ${true_cfg}; catch ME, quit; end; quit"
+${MATLAB} -nosplash -nodesktop -wait < mdsine.m -r "try, mdsine ${mdsine_cfg}; catch ME, quit; end; quit"
 echo "[*] Finished matlab run."
 cd -
