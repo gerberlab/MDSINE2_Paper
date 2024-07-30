@@ -16,19 +16,13 @@ require_variable "trial" $trial
 require_variable "noise_level" $noise_level
 
 
-convert_to_windows() {
-	linux_path=$1
-	echo "D:/${linux_path#/mnt/d/}"
-}
-
-
 create_config() {
 	cfg_path=$1
 	seed=$2
-	out_path=$(convert_to_windows $3)
-	metadata_file=$(convert_to_windows $4)
-	counts_file=$(convert_to_windows $5)
-	biomass_file=$(convert_to_windows $6)
+	out_path=$3
+	metadata_file=$4
+	counts_file=$5
+	biomass_file=$6
 
 	cat <<- EOFDOC > $cfg_path
 [General]
@@ -205,7 +199,7 @@ python synthetic/helpers/create_mdsine1_inputs.py \
 
 echo "[*] Running matlab implementation..."
 cd $MDSINE1_DIR
-true_cfg=$(convert_to_windows ${mdsine_cfg})
+#true_cfg=$(convert_to_windows ${mdsine_cfg})
 #${MATLAB} -nosplash -nodesktop -wait < mdsine.m -r "mdsine ${true_cfg} ; quit"
 ${MATLAB} -nosplash -nodesktop -wait < mdsine.m -r "try, mdsine ${true_cfg}; catch ME, quit; end; quit"
 echo "[*] Finished matlab run."
