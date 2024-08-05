@@ -466,7 +466,7 @@ def evaluate_fwsim_errors(true_growth: np.ndarray,
 
         # MDSINE2 error
         try:
-            pred_interactions, pred_growths, _ = mdsine2_output(result_dir)
+            pred_interactions, pred_growths, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
             _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
         except FileNotFoundError:
             pass
@@ -651,7 +651,7 @@ def main():
         args.num_subjects,
         args.subsample_fwsim
     )
-    out_path = output_dir / "holdout_trajectory_errors.csv"
+    out_path = output_dir / "forward_sim_errors.csv"
     holdout_trajectory_errors.to_csv(out_path)
     print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
