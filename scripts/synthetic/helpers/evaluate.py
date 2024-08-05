@@ -24,10 +24,8 @@ def parse_args() -> argparse.Namespace:
                         help='<Required> The desired path to which all evaluation metrics will be saved.')
     parser.add_argument('-g', '--ground_truth_params', type=str, required=True,
                         help='<Required> The path to a .npz file containing `growth_rates`, `interactions` arrays')
-    parser.add_argument('-m', '--initial_cond_mean', type=float, required=True,
-                        help='<Required> The mean of the initial condition distribution.')
-    parser.add_argument('-s', '--initial_cond_std', type=float, required=True,
-                        help='<Required> The standard deviation of the initial condition distribution.')
+    parser.add_argument('-n', '--num_subjects', type=int, required=True,
+                        help='<Required> The number of subjecs to simulate to lump into a single cohort.')
 
     parser.add_argument('--subsample_fwsim', type=int, required=False, default=0.1,
                         help='<Optional> Subsamples this fraction of poster samples from MDSINE(1 or 2).'
@@ -382,25 +380,25 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
     return df
 
 
-def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
-                                       true_interactions: np.ndarray,
-                                       init_rv: scipy.stats.rv_continuous,
-                                       initial_min_value: float,
-                                       results_base_dir: Path,
-                                       subsample_frac: float) -> pd.DataFrame:
+def evaluate_fwsim_errors(true_growth: np.ndarray,
+                          true_interactions: np.ndarray,
+                          initial_min_value: float,
+                          results_base_dir: Path,
+                          dataset_dir: Path,
+                          n_subjects: int,
+                          subsample_frac: float) -> pd.DataFrame:
     """
     Generate a new subject and use it as a "holdout" dataset.
     :param true_growth:
     :param true_interactions:
-    :param init_rv: The (1-d) distribution from which the initial condition will be sampled (iid for each taxon)
     :param results_base_dir:
     :return:
     """
-    def _error_metric(_pred_traj, _true_traj) -> float:
-        _pred_traj[_pred_traj < 1.0] = 1.0
-        _pred_traj = np.log10(_pred_traj)
-        _true_traj = np.log10(_true_traj)
-        return np.sqrt(np.mean(np.square(_pred_traj - _true_traj)))
+    def _error_metric(_pred_trajs, _true_trajs) -> float:
+        _pred_trajs[_pred_trajs < 1.0] = 1.0
+        _pred_trajs = np.log10(_pred_trajs)
+        _true_trajs = np.log10(_true_trajs)
+        return np.sqrt(np.mean(np.square(_pred_trajs - _true_trajs)))
 
     """ Simulation parameters """
     sim_seed = 0
@@ -417,12 +415,19 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         sim_seed += 1
         np.random.seed(sim_seed)
 
-        # generate initial conditions.
-        initial_cond = init_rv.rvs(size=len(true_growth))
-        initial_cond[initial_cond < initial_min_value] = initial_min_value
+        # load initial conditions.
+        true_trajs = []
+        initial_conds = []
+        for subj_idx in range(n_subjects):
+            subj_name = f'subj_{subj_idx}'
+            initial_cond = np.load(dataset_dir / f'trial_{trial_num}' / f'{subj_name}.npz')['sims'][:, 0]
+            initial_cond[initial_cond < initial_min_value] = initial_min_value
+            initial_conds.append(initial_cond)
 
-        true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
-        true_traj = true_traj[:, target_t_idx]
+            true_traj_subj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
+            true_traj_subj = true_traj_subj[:, target_t_idx]
+            true_trajs.append(true_traj_subj)
+        true_trajs = np.stack(true_trajs, axis=0)  # (n_subj x n_taxa x n_times)
 
         def _add_entry(_method: str, _err: float):
             df_entries.append({
@@ -435,13 +440,16 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
 
         def _eval_mdsine(_method: str, _pred_interactions: np.ndarray, _pred_growths: np.ndarray):
             subsample_idxs = np.arange(0, _pred_interactions.shape[0], int(subsample_frac * _pred_interactions.shape[0]))
-            pred_traj = np.median(
-                posterior_forward_sims(_pred_growths[subsample_idxs, :],
-                                       _pred_interactions[subsample_idxs, :, :],
-                                       initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
-                axis=0
-            )
-            _add_entry(_method, _error_metric(pred_traj, true_traj))
+            pred_trajs = np.stack([
+                np.median(
+                    posterior_forward_sims(_pred_growths[subsample_idxs, :],
+                                           _pred_interactions[subsample_idxs, :, :],
+                                           initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
+                    axis=0
+                )  # median trajectory
+                for initial_cond in initial_conds
+            ])
+            _add_entry(_method, _error_metric(pred_trajs, true_trajs))
 
         def _eval_regression(_model_name: str, _regression_type: str):
             pkl_dir = result_dir / _model_name / _regression_type
@@ -450,8 +458,11 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                 print(f"Unable to locate any .pkl files in {result_dir}.")
                 return
             pkl_path = result_paths[0]
-            pred_traj = np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
-            _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_traj, true_traj))
+            pred_trajs = np.stack([
+                np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
+                for initial_cond in initial_conds
+            ])
+            _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_trajs, true_trajs))
 
         # MDSINE2 error
         try:
@@ -582,17 +593,23 @@ def forward_sim(growth,
 
     :return: N x T array of simulated trajs (N = # of taxa, T = # timepoints)
     """
-    dyn = md2.model.gLVDynamicsSingleClustering(growth=None, interactions=None,
-                                                perturbation_ends=[], perturbation_starts=[],
-                                                start_day=0, sim_max=sim_max)
+    dyn = md2.model.gLVDynamicsSingleClustering(
+        growth=None, interactions=None,
+        perturbation_ends=[], perturbation_starts=[],
+        start_day=0, sim_max=sim_max)
     initial_conditions = initial_conditions.reshape(-1, 1)
 
     dyn.growth = growth
     dyn.interactions = interactions
     dyn.perturbations = []
 
-    x = md2.integrate(dynamics=dyn, initial_conditions=initial_conditions,
-                      dt=dt, n_days=sim_t, subsample=False)
+    x = md2.integrate(
+        dynamics=dyn,
+        initial_conditions=initial_conditions,
+        dt=dt,
+        final_day=sim_t,
+        subsample=False
+    )
     return x['X'], x['times']
 
 
@@ -623,19 +640,20 @@ def main():
     topology_errors.to_csv(output_dir / "topology_errors.csv")
     print(f"Wrote interaction topology errors to {out_path.name}.")
 
-    # print("Evaluating holdout trajectory errors.")
-    # init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    # holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
-    #     growth,
-    #     interactions,
-    #     init_dist,
-    #     100.0,
-    #     results_base_dir,
-    #     args.subsample_fwsim
-    # )
-    # out_path = output_dir / "holdout_trajectory_errors.csv"
-    # holdout_trajectory_errors.to_csv(out_path)
-    # print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
+    print("Evaluating forward-simulation errors.")
+    dataset_dir = Path("/data/local/youn/MDSINE2_Paper/datasets/synthetic/data")
+    holdout_trajectory_errors = evaluate_fwsim_errors(
+        growth,
+        interactions,
+        100.0,
+        results_base_dir,
+        dataset_dir,
+        args.num_subjects,
+        args.subsample_fwsim
+    )
+    out_path = output_dir / "holdout_trajectory_errors.csv"
+    holdout_trajectory_errors.to_csv(out_path)
+    print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
 if __name__ == "__main__":

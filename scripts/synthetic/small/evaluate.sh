@@ -9,5 +9,4 @@ python synthetic/helpers/evaluate.py \
 -r ${OUTPUT_DIR} \
 -o ${OUTPUT_DIR} \
 -g ${DATASET_DIR}/glv.npz \
--m 3723.06368786 \
--s 6567.91725508
+-n ${COHORT_SIZE}

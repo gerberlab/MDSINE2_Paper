@@ -323,17 +323,21 @@ def main():
     # Plot the trajectories.
     for subj in synthetic.subjs:
         fig, ax = plt.subplots(figsize=(10, 8))
-        trajs = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
+        sims = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
 
         times = raw_trajs[subj]['times']
-        for taxa_traj in trajs:
+        for taxa_traj in sims:
             ax.plot(times, taxa_traj, marker=None)
         ax.set_yscale('log')
 
         traj_plot_path = out_dir / f'{subj}.pdf'
         plt.savefig(traj_plot_path)
         plt.close(fig)
-        print(f"Saved trajectories to {traj_plot_path}")
+        print(f"Saved trajectory plots to {traj_plot_path}")
+
+        traj_value_path = out_dir / f'{subj}.npz'
+        np.savez(traj_value_path, sims=sims, times=times)
+        print(f"Saved trajectory values to {traj_value_path}")
 
     # Simulate noise levels.
     noise_levels = {
