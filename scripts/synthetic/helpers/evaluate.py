@@ -253,6 +253,8 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
     def _error_metric(pred, truth) -> float:
         assert pred.shape[0] == pred.shape[1]  # Square matrix
+        pred = np.copy(pred)
+        truth = np.copy(truth)
         # return np.sqrt(np.mean(np.square(pred - truth)))
 
         # ===== Don't count diagonals (self interactions)
