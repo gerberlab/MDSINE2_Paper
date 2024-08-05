@@ -282,7 +282,7 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
         # MDSINE2 inference error eval
         try:
-            interactions, _, _ = mdsine2_output(result_dir)
+            interactions, _, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
             errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
             _add_entry('MDSINE2', float(np.median(errors)))
             # pred_interaction = np.median(interactions, axis=0)
@@ -315,64 +315,54 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
 def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
     df_entries = []
+    from sklearn.metrics import roc_auc_score
 
-    def _false_positive_rate(pred, truth) -> float:
-        return 1 - _true_negative_rate(pred, truth)
+    def flatten_off_diagonal(A: np.ndarray) -> np.ndarray:
+        return np.concatenate([
+            A[np.triu_indices_from(A, k=1)],
+            A[np.tril_indices_from(A, k=-1)]
+        ])
 
-    def _true_negative_rate(pred, truth) -> float:
-        not_pred = np.logical_not(pred)
-        not_truth = np.logical_not(truth)
-        # don't count diagonal entries.
-        return _count(not_pred & not_truth) / _count(not_truth)
-
-    def _true_positive_rate(pred, truth) -> float:
-        # Don't count diagonal entries.
-        return _count(pred & truth) / _count(truth)
-
-    def _count(b) -> int:
-        off_diag = (np.eye(b.shape[0]) == 0)
-        return int(np.sum(b & off_diag))
+    def _compute_auroc(_method: str, _p: np.ndarray):
+        auc = roc_auc_score(
+            flatten_off_diagonal(true_indicators),
+            flatten_off_diagonal(_p),
+        )
+        return auc
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
-        def _compute_roc_curve(_method: str, _p: np.ndarray, _q: np.ndarray, use_greater_than: bool):
+        def _compute_roc_curve(_method: str, _pred: np.ndarray):
             """
             Computes a range of FPR/TPR pairs and adds them all to the dataframe.
-            :param _p: An (N_taxa x N_taxa) matrix of p-values for each pair of interactions.
             """
-            if use_greater_than:
-                preds = np.expand_dims(_p, axis=2) > np.expand_dims(_q, axis=(0, 1))
-            else:
-                preds = np.expand_dims(_p, axis=2) < np.expand_dims(_q, axis=(0, 1))
-            for i in range(len(_q)):
-                preds_i = preds[:, :, i]
-                df_entries.append({
-                    'Method': _method,
-                    'ReadDepth': read_depth,
-                    'Trial': trial_num,
-                    'NoiseLevel': noise_level,
-                    'FPR': _false_positive_rate(preds_i, true_indicators),
-                    'TPR': _true_positive_rate(preds_i, true_indicators)
-                })
+            df_entries.append({
+                'Method': _method,
+                'ReadDepth': read_depth,
+                'Trial': trial_num,
+                'NoiseLevel': noise_level,
+                'AUROC': _compute_auroc(_method, _pred)
+            })
 
         def _add_regression_entry(_method: str, _regression_type: str):
             try:
                 interaction_p_values = regression_interaction_pvals(result_dir, _method, _regression_type)  # (N x N)
-                _compute_roc_curve(f'{_method}-{_regression_type}', np.log(interaction_p_values), np.linspace(-100., 0., 1000), use_greater_than=False)
+                # smalller p-value = more significant, so convert it into a "score" by passing 1-p.
+                _compute_roc_curve(f'{_method}-{_regression_type}', 1.0 - interaction_p_values)
             except FileNotFoundError:
                 pass
 
         # MDSINE2 inference error eval
         try:
-            _, _, interaction_indicators = mdsine2_output(result_dir)
-            indicator_pvals = np.mean(interaction_indicators, axis=0)
-            _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0, 1, 1000), use_greater_than=True)
+            _, _, interaction_indicators = mdsine2_output(result_dir / 'mdsine2' / f'simulated-{noise_level}')
+            indicator_probs = np.mean(interaction_indicators, axis=0)
+            _compute_roc_curve('MDSINE2', indicator_probs)
         except FileNotFoundError:
             pass
 
         # MDSINE1 inference error eval
         try:
             _, _, indicator_probs = mdsine1_output(result_dir)
-            _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(0, 1, 1000), use_greater_than=True)
+            _compute_roc_curve('MDSINE1', indicator_probs)
         except FileNotFoundError:
             pass
 
