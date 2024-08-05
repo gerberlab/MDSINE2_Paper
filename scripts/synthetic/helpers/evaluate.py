@@ -642,7 +642,7 @@ def main():
 
     print("Evaluating forward-simulation errors.")
     dataset_dir = Path("/data/local/youn/MDSINE2_Paper/datasets/synthetic/data")
-    holdout_trajectory_errors = evaluate_fwsim_errors(
+    fwsim_errors = evaluate_fwsim_errors(
         growth,
         interactions,
         100.0,
@@ -652,7 +652,7 @@ def main():
         args.subsample_fwsim
     )
     out_path = output_dir / "forward_sim_errors.csv"
-    holdout_trajectory_errors.to_csv(out_path)
+    fwsim_errors.to_csv(out_path)
     print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
