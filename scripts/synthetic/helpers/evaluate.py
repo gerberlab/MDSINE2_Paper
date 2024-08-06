@@ -333,7 +333,7 @@ def evaluate_interaction_strength_metrics(true_interactions: np.ndarray, results
             # errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
             # _add_entry('MDSINE1', float(np.median(errors)))
             pred_interactions = mcmc_to_consensus(interactions, 0.5)
-            _add_entry('MDSINE2', _error_metric(pred_interactions, true_interactions))
+            _add_entry('MDSINE1', _error_metric(pred_interactions, true_interactions))
         except FileNotFoundError:
             pass
 
