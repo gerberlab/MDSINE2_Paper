@@ -307,7 +307,7 @@ def evaluate_interaction_strength_metrics(true_interactions: np.ndarray, results
                 'ReadDepth': read_depth,
                 'Trial': trial_num,
                 'NoiseLevel': noise_level,
-                'Error': _err
+                'Metric': _err
             })
 
         def _add_regression_entry(_method: str, _regression_type: str):
@@ -470,7 +470,7 @@ def evaluate_fwsim_errors(true_growth: np.ndarray,
                 'ReadDepth': read_depth,
                 'Trial': trial_num,
                 'NoiseLevel': noise_level,
-                'Error': _err
+                'Metric': _err
             })
 
         def _eval_mdsine(_method: str, _pred_interactions: np.ndarray, _pred_growths: np.ndarray):
