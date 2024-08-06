@@ -216,7 +216,7 @@ def evaluate_growth_rate_metrics(true_growth: np.ndarray, results_base_dir: Path
         def _add_regression_entry(_method: str, _regression_type: str):
             try:
                 pred_growth, _ = regression_output(result_dir, _method, _regression_type)
-                _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
+                _add_entry(f'{_method}-{_regression_type}', cosine_sim(pred_growth, true_growth))
             except FileNotFoundError:
                 pass
 
