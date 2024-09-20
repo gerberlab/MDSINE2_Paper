@@ -22,11 +22,10 @@ def subj_with_most_timepoints(study: md2.Study) -> md2.Subject:
 
 def forward_simulate(
         glv_params: GLVParamSet,
+        initial_conditions: np.ndarray,
         pert_starts: List[float],
         pert_ends: List[float],
         n_subjects: int,
-        n_perts: int,
-        rng: np.random.Generator,
         end_t: float, sim_dt: float,
         sim_max: float
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -35,13 +34,8 @@ def forward_simulate(
     For each subject (1 through n_subjects), a separate initial condition is sampled iid.
     Then forward-simulation is performed for each timepoint (0, dt, 2*dt, ..., end_t) using the GLV params from the MDSINE2 code.
     """
-    # TODO implement this.
-    raise NotImplementedError("TODO -- implement this function!")
-
-    # BEGIN starter code below. Use this, or start over somehow.
-    n_taxa = len(glv_params.growth)
     trajectories = []
-    initial_conditions: np.ndarray = rng.random(size=(n_subjects, n_taxa))  # TODO: need to sample initial conditions using "rng". Maybe need to fit a log-normal distribution.
+    assert n_subjects > 0
     for subj in range(n_subjects):
         x, t = forward_simulate_subject(
             glv_params, pert_starts, pert_ends,
@@ -53,46 +47,58 @@ def forward_simulate(
         )
     trajectories = np.stack(trajectories, axis=0)
     return trajectories, t
-    # END starter code
 
 
 def truncate_perturbation_list(
-        real_data_study: md2.Study,
-        glv_params: GLVParamSet,
+        real_mouse_pert_names: List[str],
+        real_mouse_timepoints: np.ndarray,
+        real_mouse_pert_starts: List[float],
+        real_mouse_pert_ends: List[float],
+        pert_strengths: np.ndarray,
         n_target_perts: int
-) -> Tuple[List[float], List[float], GLVParamSet]:
+) -> Tuple[List[str], List[float], List[float], np.ndarray]:
     """
     Truncate the pert strengths from glv_params and also read off the timepoints for the perturbations.
-    :param real_data_study:
-    :param glv_params:
-    :param n_target_perts:
+    :param real_mouse_pert_names: The list of perturbation names. (Call this length "p")
+    :param real_mouse_timepoints: The timepoints (an array of timepoint values) for one real mouse of our choice.
+    :param real_mouse_pert_starts: The perturbation start times (a list of length p) for one real mouse of our choice.
+    :param real_mouse_pert_ends: The perturbation end times (a list of length p) for one real mouse of our choice.
+    :param pert_strengths: A (p x n_taxa) array of pert strengths.
+    :param n_target_perts: The number of perts to truncate down to.
     :return:
     """
-    if len(n_target_perts) < 0:
+    if n_target_perts < 0:
         raise ValueError("n_target_perts must be a nonnegative number.")
-    elif len(n_target_perts) > glv_params.perturbations.shape[0]:  # TODO: Check that perturbation strength matrix has shape (n_perts, n_taxa)
+    elif n_target_perts > pert_strengths.shape[0]:  # TODO: Check that perturbation strength matrix has shape (n_perts, n_taxa)
         raise ValueError("n_target_perts cannot exceed the number of existing perturbations from real data ({})".format(
-            glv_params.perturbations.shape[0]
+            pert_strengths.shape[0]
         ))
 
-    pert_starts: List[float] = ??  # TODO: create a new pert_starts array according to n_perts
-    pert_ends: List[float] = ??  # TODO: create a new pert_ends array according to n_perts
-    glv_params: GLVParamSet = ??  # TODO: create a new glv_params object according to n_perts
-    return pert_starts, pert_ends, glv_params
+    """ =========================================== TODO -- Task #1 ============================================ """
+    pert_names: List[str] = real_mouse_pert_names
+    pert_starts: List[float] = real_mouse_pert_starts  # TODO: create a new pert_starts array according to n_perts
+    pert_ends: List[float] = real_mouse_pert_ends  # TODO: create a new pert_ends array according to n_perts
+    pert_strengths: np.ndarray = pert_strengths  # TODO: create a new glv_params object according to n_perts
+    return pert_names, pert_starts, pert_ends, pert_strengths
 
 
 def generate_perturbation_table(
-        glv_params: GLVParamSet,
+        pert_names: List[str],
         pert_starts: List[float],
         pert_ends: List[float],
         n_subjects: int
 ) -> pd.DataFrame:
     """
     Create a dataframe in the same format as the real data "perturbations.tsv" file.
+    :param pert_names: A (perts)-length array listing out the names of each perturbation.
+    :param perturbation_strengths: A (perts x taxa) shaped array.
+    :param pert_starts: A (perts)-length array listing out the start time of each perturbation.
+    :param pert_ends: A (perts)-length array listing out the end time of each perturbation.
+    :param n_subjects: The number of target subjects. In this simulation, we will have the same perturbation window for each subject.
     :return:
     """
-    raise NotImplementedError("TODO!")
 
+    """ ============================================ TODO -- Task #2 ============================================ """
     # Example code
     df_entries = []
     df_entries.append({
@@ -104,28 +110,63 @@ def generate_perturbation_table(
     return pd.DataFrame(df_entries)
 
 
-def main(real_data_study: md2.Study, n_subjects: int, n_perts: int, seed: int, outdir: Path, ground_truth_dir: Path, sim_dt: float, sim_max: float):
+def main(real_data_study: md2.Study, n_subjects: int, n_perts: int, outdir: Path, ground_truth_dir: Path, sim_dt: float, sim_max: float):
     """
     Invoke forward_simulate helper function. Save the trajectories/timepoints array into .npy array files on disk.
     """
+    # Pick our favorite mouse: one with the most timepoints.
     target_mouse = subj_with_most_timepoints(real_data_study)
-    end_t = target_mouse.times[-1]
-    rng = np.random.default_rng(seed=seed)
 
     # Load ground truth parameters.
     glv_sim_path = ground_truth_dir / 'glv_best_sim.pkl'
     with open(glv_sim_path, 'rb') as f:
         glv_params: GLVParamSet = pkl.load(f)
 
-    pert_starts, pert_ends, glv_params = truncate_perturbation_list(real_data_study, glv_params, n_perts)
-    pert_df = generate_perturbation_table(glv_params, pert_starts, pert_ends, n_subjects)
-    trajectories, full_dense_timepoints = forward_simulate(real_data_study, glv_params, n_subjects, n_perts, rng, end_t, sim_dt, sim_max)
+    # The metadata of the real mouse: perturbation names, pert start times, pert end times.
+    real_mouse_end_t = target_mouse.times[-1]
+    real_mouse_pert_names = [p.name for p in real_data_study.perturbations]
+    real_mouse_pert_starts = [
+        pert.starts[target_mouse.name]
+        for pert in real_data_study.perturbations
+    ]
+    real_mouse_pert_ends = [
+        pert.ends[target_mouse.name]
+        for pert in real_data_study.perturbations
+    ]
 
-    assert full_dense_timepoints[-1] == end_t
+    # New synthetic information.
+    initial_conditions = np.load(outdir / "initial_conditions.npy")  # this was generated in a previous step in the pipeline.
+    pert_names_for_sim, pert_starts_for_sim, pert_ends_for_sim, pert_strengths_for_sim = truncate_perturbation_list(
+        real_mouse_pert_names,
+        target_mouse.times,
+        real_mouse_pert_starts,
+        real_mouse_pert_ends,
+        glv_params.perturbations,
+        n_perts)
+    pert_df = generate_perturbation_table(
+        pert_names_for_sim,
+        pert_starts_for_sim,
+        pert_ends_for_sim,
+        n_subjects
+    )
+
+    sim_glv_params = GLVParamSet(glv_params.growth, glv_params.interactions, pert_strengths_for_sim)
+    trajectories, full_dense_timepoints = forward_simulate(
+        sim_glv_params,
+        initial_conditions,
+        pert_starts_for_sim,
+        pert_ends_for_sim,
+        n_subjects,
+        real_mouse_end_t,
+        sim_dt,
+        sim_max
+    )
+
+    assert full_dense_timepoints[-1] == real_mouse_end_t
     outdir.mkdir(exist_ok=True, parents=True)
     np.save(outdir / "trajectories.npy", trajectories)
     np.save(outdir / "timepoints.npy", full_dense_timepoints)
-    pert_df.to_csv(outdir / "perturbations.tsv", index=False)
+    pert_df.to_csv(outdir / "perturbations.tsv", index=False, sep='\t')
 
 
 def parse_args() -> argparse.Namespace:
@@ -133,7 +174,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-r", "--real-data-pkl", dest="real_data_pkl", type=int, required=True)
     parser.add_argument("-n", "--n-subjects", dest="n_subjects", type=int, required=True)
     parser.add_argument("-p", "--n-perts", dest="n_perts", type=int, required=True)
-    parser.add_argument("-s", "--seed", type=int, required=True)
     parser.add_argument("-o", "--outdir", type=str, required=True)
     parser.add_argument("-g", "--ground-truth-dir", dest="ground_truth_dir", type=str, required=True)
     parser.add_argument("-dt", "--sim-dt", dest="sim_dt", type=float, required=False, default=0.01)
@@ -147,7 +187,6 @@ if __name__ == "__main__":
         real_data_study=md2.Study.load(args.real_data_pkl),
         n_subjects=args.n_subjects,
         n_perts=args.n_perts,
-        seed=args.seed,
         outdir=Path(args.outdir),
         ground_truth_dir=Path(args.ground_truth_dir),
         sim_dt=args.sim_dt,
