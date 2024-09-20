@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 
 import mdsine2 as md2
-from scripts.semisynthetic2.python_helpers.base import GLVParamSet, forward_simulate
+from scripts.semisynthetic2.data_generation.python_helpers.base import GLVParamSet, forward_simulate
 
 
 def extract_glv_model(

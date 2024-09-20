@@ -11,7 +11,7 @@ for (( i = 0; i < ${N_TRAJ_SEEDS}; ++i)); do
 
   echo "[* create_initial_condition] Handling replicate ${i} (seed=${traj_seed})"
   outpath="${out_dir}/initial_condition.npy"
-  python semisynthetic2/python_helpers/create_initial_condition.py \
+  python semisynthetic2/data_generation/python_helpers/create_initial_condition.py \
   -r "${REAL_DATA_PKL}" \
   -n "${MAX_N_MICE}" \
   -s "${traj_seed}" \
