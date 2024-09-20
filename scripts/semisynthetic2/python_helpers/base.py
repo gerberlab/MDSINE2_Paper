@@ -34,7 +34,7 @@ def forward_simulate_subject(
         dt: float,
         sim_max: float,
         time_subset: bool = True
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Forward simulation for a single subject"""
     dyn = md2.model.gLVDynamicsSingleClustering(
         growth=glv_params.growth,

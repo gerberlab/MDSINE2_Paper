@@ -10,11 +10,12 @@ export ALPHA_DIRICHLET=4511.6211 # old value: 5373.2041  # empirical fit using r
 export NEGBIN_A0=4.2034E-08
 export NEGBIN_A1=6.0537E-02
 
-export READ_DEPTHS=(3000 15000 75000)
-#export READ_DEPTHS=(3750 7500 15000 30000 60000)
-export NUM_SAMPLE_TRIALS=10
+# Number of seeds, other data generation settings
+export N_TRAJ_SEEDS=10
+export SIM_MAX=1e20
 
-export STUDY_PKL="${PROJECT_DIR}/datasets/gibson/preprocessed/gibson_healthy_agg_filtered.pkl"
+# Real data
+export REAL_DATA_PKL="${PROJECT_DIR}/datasets/gibson/preprocessed/gibson_healthy_agg_filtered.pkl"
 export FIXED_MODULE_MCMC="${PROJECT_DIR}/datasets/gibson/output/mdsine2/inference/merged_studies_fixed_cluster/mcmc.pkl"
 
 # inference settings
