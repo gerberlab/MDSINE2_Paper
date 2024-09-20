@@ -110,7 +110,10 @@ def generate_perturbation_table(
     return pd.DataFrame(df_entries)
 
 
-def main(real_data_study: md2.Study, n_subjects: int, n_perts: int, outdir: Path, ground_truth_dir: Path, sim_dt: float, sim_max: float):
+def main(
+        real_data_study: md2.Study, n_subjects: int, n_perts: int, initial_conditions: np.ndarray,
+        outdir: Path, ground_truth_dir: Path, sim_dt: float, sim_max: float
+):
     """
     Invoke forward_simulate helper function. Save the trajectories/timepoints array into .npy array files on disk.
     """
@@ -135,7 +138,6 @@ def main(real_data_study: md2.Study, n_subjects: int, n_perts: int, outdir: Path
     ]
 
     # New synthetic information.
-    initial_conditions = np.load(outdir / "initial_conditions.npy")  # this was generated in a previous step in the pipeline.
     pert_names_for_sim, pert_starts_for_sim, pert_ends_for_sim, pert_strengths_for_sim = truncate_perturbation_list(
         real_mouse_pert_names,
         target_mouse.times,
@@ -174,6 +176,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-r", "--real-data-pkl", dest="real_data_pkl", type=int, required=True)
     parser.add_argument("-n", "--n-subjects", dest="n_subjects", type=int, required=True)
     parser.add_argument("-p", "--n-perts", dest="n_perts", type=int, required=True)
+    parser.add_argument("-i", "--initial-conditions", dest="init_cond_path", type=str, required=True)
     parser.add_argument("-o", "--outdir", type=str, required=True)
     parser.add_argument("-g", "--ground-truth-dir", dest="ground_truth_dir", type=str, required=True)
     parser.add_argument("-dt", "--sim-dt", dest="sim_dt", type=float, required=False, default=0.01)
@@ -187,6 +190,7 @@ if __name__ == "__main__":
         real_data_study=md2.Study.load(args.real_data_pkl),
         n_subjects=args.n_subjects,
         n_perts=args.n_perts,
+        initial_conditions=np.load(args.init_cond_path),
         outdir=Path(args.outdir),
         ground_truth_dir=Path(args.ground_truth_dir),
         sim_dt=args.sim_dt,
