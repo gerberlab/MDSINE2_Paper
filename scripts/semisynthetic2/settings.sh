@@ -22,15 +22,12 @@ export REAL_DATA_PKL="${PROJECT_DIR}/datasets/gibson/preprocessed/gibson_healthy
 export FIXED_MODULE_MCMC="${PROJECT_DIR}/datasets/gibson/output/mdsine2/inference/merged_studies_fixed_cluster/mcmc.pkl"
 
 # inference settings
-#export REPLICATE_MCMC="${PROJECT_DIR}/datasets/gibson/output/mdsine2/negbin/replicates/mcmc.pkl"
 export NEGBIN_SEED=314159
 export INFERENCE_SEED=123456
 export BURNIN=5000
 export N_SAMPLES=15000
 export CHECKPOINT=100
 export MULTIPROCESSING=0
-export INTERACTION_IND_PRIOR="weak-agnostic"
-export PERTURBATION_IND_PRIOR="weak-agnostic"
 
 
 
