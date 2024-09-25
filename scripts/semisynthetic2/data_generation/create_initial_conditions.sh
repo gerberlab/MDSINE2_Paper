@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+source semisynthetic2/settings.sh
 
 
 base_seed=314159

@@ -7,12 +7,15 @@ export QPCR_NOISE_SCALE=0.2989  #0.2989
 export ALPHA_DIRICHLET=4511.6211 # old value: 5373.2041  # empirical fit using replicate data.
 
 # from real data
+export READ_DEPTH=75000
 export NEGBIN_A0=4.2034E-08
 export NEGBIN_A1=6.0537E-02
 
 # Number of seeds, other data generation settings
 export N_TRAJ_SEEDS=10
+export N_DATA_SEEDS=3
 export SIM_MAX=1e20
+export SIM_DT=0.01
 
 # Real data
 export REAL_DATA_PKL="${PROJECT_DIR}/datasets/gibson/preprocessed/gibson_healthy_agg_filtered.pkl"

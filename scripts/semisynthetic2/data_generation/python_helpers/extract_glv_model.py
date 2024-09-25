@@ -5,7 +5,38 @@ import argparse
 from pathlib import Path
 
 import mdsine2 as md2
-from scripts.semisynthetic2.data_generation.python_helpers.base import GLVParamSet, forward_simulate
+from base import GLVParamSet, forward_simulate_subject
+
+
+def forward_simulate_all_subj(
+        glv_params: GLVParamSet,
+        study: md2.Study,
+        dt: float,
+        sim_max: float
+) -> Dict[str, np.ndarray]:
+    """Forward simulation for all subjects in a Study object"""
+    sims_dict = {}
+    for subj in study:
+        perturbations_start = []
+        perturbations_end = []
+        if study.perturbations is not None:
+            for pert in study.perturbations:
+                perturbations_start.append(pert.starts[subj.name])
+                perturbations_end.append(pert.ends[subj.name])
+
+        initial_conditions = subj.matrix()['abs'][:, 0] + 1e4
+        trajs = forward_simulate_subject(
+            glv_params,
+            perturbations_start,
+            perturbations_end,
+            subj.times,
+            initial_conditions,
+            dt,
+            sim_max
+        )[0]
+
+        sims_dict[subj.name] = trajs
+    return sims_dict
 
 
 def extract_glv_model(
@@ -55,7 +86,7 @@ def extract_glv_model(
         best_idx,
         len(params)
     ))
-    return params[best_idx], coclusterings[best_idx], forward_simulate(params[best_idx], study, dt, sim_max)
+    return params[best_idx], coclusterings[best_idx], forward_simulate_all_subj(params[best_idx], study, dt, sim_max)
 
 
 # =========== helpers
@@ -91,7 +122,7 @@ def evaluate_parameter_fwsim(
     """
     Evaluate the fwsim error for each subject (And sum them).
     """
-    fwsims = forward_simulate(params, study, dt, sim_max)
+    fwsims = forward_simulate_all_subj(params, study, dt, sim_max)
     errors = []
     eps = 1e-5
     for subj_name, fwsim_trajs in fwsims.items():

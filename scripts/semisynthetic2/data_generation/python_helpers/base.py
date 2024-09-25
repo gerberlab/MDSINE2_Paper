@@ -12,17 +12,20 @@ GLVParamSet = namedtuple(
 )
 
 
-# def forward_simulate(
-#         glv_params: GLVParamSet,
-#         study: md2.Study,
-#         dt: float,
-#         sim_max: float
-# ) -> Dict[str, np.ndarray]:
-#     """Forward simulation for all subjects in a Study object"""
-#     return {
-#         subj.name: forward_simulate_subject(glv_params, study, subj, dt, sim_max)[0]
-#         for subj in study
-#     }
+def generate_mouse_name(mouse_index: int) -> str:
+    return "SYNTH_SUBJ_{}".format(mouse_index)
+
+
+def subj_with_most_timepoints(study: md2.Study) -> md2.Subject:
+    best_subj = None
+    for subj in study:
+        if best_subj is None:
+            best_subj = subj
+        elif len(best_subj.times) < len(subj.times):
+            best_subj = subj
+    if best_subj is None:
+        raise ValueError("No subjects found in study.")
+    return best_subj
 
 
 def forward_simulate_subject(
@@ -46,7 +49,7 @@ def forward_simulate_subject(
         sim_max=sim_max
     )
 
-    if len(initial_conditions) == 1:
+    if len(initial_conditions.shape) == 1:
         initial_conditions = np.expand_dims(initial_conditions, 1)
     if time_subset:
         x = md2.integrate(

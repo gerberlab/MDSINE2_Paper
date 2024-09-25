@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+source semisynthetic2/settings.sh
 
 
 for n_perts in 0 1 2 3; do
@@ -9,7 +11,7 @@ for n_perts in 0 1 2 3; do
     -n "${MAX_N_MICE}" \
     -p "${n_perts} " \
     -i "${DATASET_DIR}/trajectory_replicate_${replicate}/initial_condition.npy" \
-    -o "${DATASET_DIR}/trajectory_replicate_${replicate}/perts_${n_perts}" \
+    -o "${DATASET_DIR}/trajectory_replicate_${replicate}/perts_${n_perts}/trajectories" \
     -g "${DATASET_DIR}/truth" \
     -dt "${SIM_DT}" \
     -sm "${SIM_MAX}"
