@@ -17,6 +17,7 @@ require_variable "inference_dir" "${inference_dir}"
 
 pickle_dir=${DATASET_DIR}/trajectory_replicate_${traj_repl}/perts_${n_perts}/data_replicate_${data_repl}/mice_${n_mice}/timepoints_${timeseries_id}/mdsine2
 
+set -e
 echo "[* filter.sh] Applying dataset filter."
 # filter relative abundance; relabund must exceed 0.0001 for at least 7 timepoints in 2 subjects, allowing for initial colonization time of 5 days.
 mdsine2 filter \
