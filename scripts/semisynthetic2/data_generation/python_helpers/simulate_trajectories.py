@@ -116,7 +116,8 @@ def main(
     Invoke forward_simulate helper function. Save the trajectories/timepoints array into .npy array files on disk.
     """
     # Pick our favorite mouse: one with the most timepoints.
-    target_mouse = subj_with_most_timepoints(real_data_study)
+    target_mouse = subj_with_most_timepoints['2']  # hardcoded, we figured this out beforehand. This change was done because we would like to pre-code the timepoint thinning.
+    # target_mouse = subj_with_most_timepoints(real_data_study)
 
     # Load ground truth parameters.
     glv_sim_path = ground_truth_dir / 'glv_best_sim.pkl'

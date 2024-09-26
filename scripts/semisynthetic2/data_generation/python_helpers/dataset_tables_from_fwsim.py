@@ -223,7 +223,7 @@ def create_replicate_metadata_df(n_replicates: int, integer_timepoints: List[int
     for t in integer_timepoints:
         for replicate_idx in range(n_replicates):
             df_entries.append({
-                "sampleID": f'M0-D{t}-{replicate_idx}',
+                "sampleID": f'M0-D{t}-R{replicate_idx}',
                 "subject": f'M0-D{t}',
                 "time": replicate_idx  # this looks wrong at first glance, but the point is that each physical replicate is treated as a separate sample.
             })
@@ -256,7 +256,7 @@ def create_replicate_qpcr_df(
 ) -> pd.DataFrame:
     df_entries = [
         {
-            "sampleID": f'M0-D{t}-{replicate_idx}',
+            "sampleID": f'M0-D{t}-R{replicate_idx}',
             "measurement1": qpcr_values[replicate_idx][t_idx, 0],
             "measurement2": qpcr_values[replicate_idx][t_idx, 1],
             "measurement3": qpcr_values[replicate_idx][t_idx, 2]
