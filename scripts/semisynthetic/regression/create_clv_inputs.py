@@ -36,7 +36,11 @@ if __name__ == "__main__":
     total_counts = 0
 
     maximum_post_rescale_target = 100.0
-    n_perts = len(study.perturbations)
+    print("HI")
+    if study.perturbations is None:
+        n_perts = 0
+    else:
+        n_perts = len(study.perturbations)
 
     max_abund_all = 0.0
     for subj in study:
@@ -49,11 +53,12 @@ if __name__ == "__main__":
 
         times = subj.times
         perturb_ids = np.zeros((len(times), n_perts), dtype=int)
-        for p_idx, pert in enumerate(study.perturbations):
-            start = pert.starts[subj.name]
-            end = pert.ends[subj.name]
-            timepoint_indices, = np.where((times >= start) & (times <= end))
-            perturb_ids[timepoint_indices, p_idx] = 1
+        if study.perturbations is not None:
+            for p_idx, pert in enumerate(study.perturbations):
+                start = pert.starts[subj.name]
+                end = pert.ends[subj.name]
+                timepoint_indices, = np.where((times >= start) & (times <= end))
+                perturb_ids[timepoint_indices, p_idx] = 1
 
         assert len(times) == abund.shape[0]
         assert abund.shape[1] == len(taxa)
