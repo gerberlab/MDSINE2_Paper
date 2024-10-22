@@ -62,7 +62,10 @@ def main(
 
     qpcr = pd.read_csv(qpcr_path, sep='\t')
     qpcr = qpcr.loc[qpcr["sampleID"].isin(target_sample_ids)]
-    perturbations = pd.read_csv(perts_path, sep='\t')
+    try:
+        perturbations = pd.read_csv(perts_path, sep='\t').set_index('name')
+    except pd.errors.EmptyDataError:
+        perturbations = None
 
     # Finally, create the pickle file.
     base_study = Study.load(str(study_containing_taxa))
@@ -72,7 +75,7 @@ def main(
         metadata=metadata.set_index('sampleID'),
         reads=counts,  # this is the result of a pivot, so index is already set properly.
         qpcr=qpcr.set_index('sampleID'),
-        perturbations=perturbations.set_index('name'),
+        perturbations=perturbations,
     )
     out_path.parent.mkdir(exist_ok=True, parents=True)
     study.save(str(out_path))

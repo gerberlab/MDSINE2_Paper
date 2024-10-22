@@ -10,6 +10,9 @@ from mdsine2 import TaxaSet
 
 
 # ======= Helper functions
+def round_to_nearest_dt(x: np.ndarray, dt: float) -> np.ndarray:
+    return np.around(x/dt, decimals=0)*dt
+
 def sample_data_from_fwsim(
         forward_sims: np.ndarray,
         subj_names: List[str],
@@ -30,11 +33,16 @@ def sample_data_from_fwsim(
     qpcr_per_subject = {}
     n_subjs = forward_sims.shape[0]
 
-    # only take 0.5-discretized timepoints.
-    start_t = sim_timepoints[0]
-    end_t = sim_timepoints[-1]
-    timepoint_subset = set(np.arange(start_t, end_t+0.5, step=0.5))
-    timepoint_subset_indices = [i for i, t in enumerate(sim_timepoints) if t in timepoint_subset]
+    # only take discretized timepoints.
+    nearest_dt=0.1
+    timepoint_subset = np.sort(np.unique(
+        round_to_nearest_dt(sim_timepoints, dt=nearest_dt)
+    ))
+    assert np.isclose(sim_timepoints[0], timepoint_subset).sum() == 1  # first timepoint is inside set
+    assert np.isclose(sim_timepoints[-1], timepoint_subset).sum() == 1  # last timepoint is inside set
+    timepoint_subset_indices = [i for i, t in enumerate(sim_timepoints) if np.isclose(t, timepoint_subset).sum() > 0]
+    if len(timepoint_subset) != len(timepoint_subset_indices):
+        raise ValueError("timepoint subset doesnt match timepoint indices; probably due to some floating-point precision error. This error is fatal.")
 
     for subj_idx, subj_name in zip(range(n_subjs), subj_names):
         trajs = forward_sims[subj_idx]

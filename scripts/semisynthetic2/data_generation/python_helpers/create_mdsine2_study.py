@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import *
 import argparse
 
+import numpy as np
 import pandas as pd
 from base import generate_mouse_name
 from mdsine2 import TaxaSet, Study
@@ -38,8 +39,11 @@ def main(
         study_name: str,
         out_path: Path
 ):
+    # First, load the base taxaset.
+    base_taxa = Study.load(str(study_containing_taxa)).taxa
+
     # First, slice the metadata by samples.
-    timepoints = load_timepoints(timepoints_path)
+    timepoints = list(load_timepoints(timepoints_path))
     mice_subset = set(generate_mouse_name(i) for i in range(num_mice))
 
     metadata = pd.read_csv(metadata_path, sep='\t')
@@ -48,8 +52,16 @@ def main(
         raise ValueError("Can't create a study object from more mice than what was originally available ({}).".format(
             n_metadata_mice
         ))
+
+    """
+    Note: it's not correct to do metadata['time'].isin(timepoints), because of floating-point precision issues.
+    See: https://stackoverflow.com/questions/42566737/pandas-isin-returns-different-result-as-eq-floating-dtype-dependency-issue
+    """
+    time_isin_collection = np.isclose(metadata['time'], timepoints[0])
+    for t in timepoints[1:]:
+        time_isin_collection = time_isin_collection | np.isclose(metadata['time'], t)
     metadata = metadata.loc[
-        metadata['subject'].isin(mice_subset) & metadata['time'].isin(timepoints),
+        metadata['subject'].isin(mice_subset) & time_isin_collection,
         :
     ]
     if len(pd.unique(metadata['time'])) != len(timepoints):
@@ -66,21 +78,25 @@ def main(
         index='taxaName',
         columns='sampleID',
         values='reads'
-    )
+    ).reindex([
+        taxon.name for taxon in base_taxa
+    ])
 
     qpcr = pd.read_csv(qpcr_path, sep='\t')
     qpcr = qpcr.loc[qpcr["sampleID"].isin(target_sample_ids)]
-    perturbations = pd.read_csv(perts_path, sep='\t')
+    try:
+        perturbations = pd.read_csv(perts_path, sep='\t').set_index('name')
+    except pd.errors.EmptyDataError:
+        perturbations = None
 
     # Finally, create the pickle file.
-    base_study = Study.load(str(study_containing_taxa))
-    study = Study(base_study.taxa, name=study_name)
+    study = Study(base_taxa, name=study_name)
 
     study.parse(
         metadata=metadata.set_index('sampleID'),
         reads=counts,  # this is the result of a pivot, so index is already set properly.
         qpcr=qpcr.set_index('sampleID'),
-        perturbations=perturbations.set_index('name'),
+        perturbations=perturbations,
     )
     out_path.parent.mkdir(exist_ok=True, parents=True)
     study.save(str(out_path))

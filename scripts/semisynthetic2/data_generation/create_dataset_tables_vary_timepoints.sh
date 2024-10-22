@@ -6,7 +6,8 @@ source semisynthetic2/settings.sh
 n_mice=4  # matches real data
 n_perts=3  # matches real data
 
-declare -a timeseries_ids=("all" "thin1" "thin2" "thin3" "A" "B" "C")
+#declare -a timeseries_ids=("all" "thin1" "thin2" "thin3" "A" "B" "C")
+declare -a timeseries_ids=("A" "B" "C" "all" "thin1" "thin2" "thin3")
 
 
 for timeseries_id in "${timeseries_ids[@]}"; do
@@ -19,7 +20,7 @@ for timeseries_id in "${timeseries_ids[@]}"; do
       replicate_timepoints_file="semisynthetic2/data_generation/files/replicate_timepoints.txt"
 
       # dataset for inference
-      echo "[* create_dataset_tables_vary_mice.sh] Creating inference pickle file for [traj_repl=${traj_repl} | n_perts=${n_perts} | data_repl=${data_repl} | n_mice=${n_mice} | ]"
+      echo "[* create_dataset_tables_vary_mice.sh] Creating inference pickle file for [traj_repl=${traj_repl} | n_perts=${n_perts} | data_repl=${data_repl} | n_mice=${n_mice} | timeseries=${timeseries_id}]"
       python semisynthetic2/data_generation/python_helpers/create_mdsine2_study.py \
       -m "${DATASET_DIR}/trajectory_replicate_${traj_repl}/perts_${n_perts}/data_replicate_${data_repl}/tables_raw/metadata.tsv" \
       -t "${REAL_DATA_PKL}" \
@@ -32,7 +33,7 @@ for timeseries_id in "${timeseries_ids[@]}"; do
       -o "${pickle_outdir}/synthetic.pkl"
 
       # replicate dataset for calibration
-      echo "[* create_dataset_tables_vary_mice.sh] Creating replicate pickle file for [traj_repl=${traj_repl} | n_perts=${n_perts} | data_repl=${data_repl} | n_mice=${n_mice}]"
+      echo "[* create_dataset_tables_vary_mice.sh] Creating replicate pickle file for [traj_repl=${traj_repl} | n_perts=${n_perts} | data_repl=${data_repl} | n_mice=${n_mice} | timeseries=${timeseries_id}]"
       python semisynthetic2/data_generation/python_helpers/create_mdsine2_replicate_study.py \
       -m "${DATASET_DIR}/trajectory_replicate_${traj_repl}/perts_${n_perts}/data_replicate_${data_repl}/tables_raw/replicate_metadata.tsv" \
       -t "${REAL_DATA_PKL}" \

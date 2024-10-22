@@ -18,26 +18,18 @@ def generate_initial_conditions(
     """
     x_all = []
     for subj in real_data_study:
-        x = subj.matrix()['abs'][:, 0] + 1e4
+        x = subj.matrix()['abs'][:, 0]  # the first timeslice.
         x_all.append(x)
-    x_all = np.concatenate(x_all, axis=0)
+    x_all = np.stack(x_all, axis=0)  # (n_real_mice x n_taxa)
 
-    # fit lognormal distribution.
-    x_log = np.log10(x_all)
-    sigma_log = np.std(x_log)
-    mean_log = np.mean(x_log)
+    # fit lognormal distribution for each taxa.
+    x_log = np.log(x_all)
+    sigma_log = np.std(x_log, axis=0)
     n_taxa = len(real_data_study.taxa)
-    return rng.lognormal(
-        mean=mean_log, sigma=sigma_log,
-        size=(n_subjects, n_taxa)
-    )
 
-    # # Dummy code: copy from mouse 1, repeat N times. Add 1e4 to pad the zeroes.
-    # target_real_mouse = real_data_study['2']
-    # return np.stack([
-    #     target_real_mouse.matrix()['abs'][:, 0] + 1e4
-    #     for _ in range(n_subjects)
-    # ], axis=0)
+    sampled_abunds = x_all[0] * rng.lognormal(mean=np.zeros(n_taxa), sigma=sigma_log, size=(n_subjects, n_taxa))
+    sampled_abunds[np.isnan(sampled_abunds)] = 0.0
+    return sampled_abunds + 1e5
 
 
 def main(real_data_study: md2.Study, n_subjects: int, seed: int, out_path: Path):

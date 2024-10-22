@@ -2,7 +2,7 @@
 export DATASET_NAME="semisynthetic2"
 source ./settings.sh  # use parent settings (scripts/settings.sh)
 
-export MAX_N_MICE=16
+export MAX_N_MICE=8
 export QPCR_NOISE_SCALE=0.2989  #0.2989
 export ALPHA_DIRICHLET=4511.6211 # old value: 5373.2041  # empirical fit using replicate data.
 
