@@ -8,7 +8,7 @@ require_variable "inference_dir" "${inference_dir}"
 # ======= Fit NegBin qPCR model
 echo "[* run_mdsine2.sh] Fitting Negative binomial model."
 replicate_study=${inference_dir}/synthetic_replicate_filtered.pkl
-#mdsine2 infer-negbin --input "${replicate_study}" --seed "${NEGBIN_SEED}" --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath "${inference_dir}"
+mdsine2 infer-negbin --input "${replicate_study}" --seed "${NEGBIN_SEED}" --burnin 2000 --n-samples 6000 --checkpoint 200 --basepath "${inference_dir}"
 
 # ======= Perform inference
 echo "[* run_mdsine2.sh] Performing inference on dataset."
