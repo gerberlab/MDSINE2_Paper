@@ -22,5 +22,4 @@ mdsine2 infer \
 		--multiprocessing "$MULTIPROCESSING" \
 		--basepath "$inference_dir" \
 		--interaction-ind-prior 'weak-agnostic' \
-		--perturbation-ind-prior 'weak-agnostic' \
-		--resume
+		--perturbation-ind-prior 'weak-agnostic'
