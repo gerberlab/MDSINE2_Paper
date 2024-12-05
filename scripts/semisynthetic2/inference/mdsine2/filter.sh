@@ -20,14 +20,25 @@ pickle_dir=${DATASET_DIR}/trajectory_replicate_${traj_repl}/perts_${n_perts}/dat
 set -e
 echo "[* filter.sh] Applying dataset filter."
 # filter relative abundance; relabund must exceed 0.0001 for at least 7 timepoints in 2 subjects, allowing for initial colonization time of 5 days.
-mdsine2 filter \
+if [[ $n_mice == 1 ]]; then
+  mdsine2 filter \
   --dataset "${pickle_dir}/synthetic.pkl" \
   --outfile "${inference_dir}/synthetic_filtered.pkl" \
   --dtype rel \
   --threshold 0.0001 \
   --min-num-consecutive 7 \
-  --min-num-subjects 2 \
+  --min-num-subjects 1 \
   --colonization-time 5
+else
+  mdsine2 filter \
+    --dataset "${pickle_dir}/synthetic.pkl" \
+    --outfile "${inference_dir}/synthetic_filtered.pkl" \
+    --dtype rel \
+    --threshold 0.0001 \
+    --min-num-consecutive 7 \
+    --min-num-subjects 2 \
+    --colonization-time 5
+fi
 
 echo "[* filter.sh] Applying dataset filter to replicates."
 python semisynthetic2/inference/mdsine2/helpers/filter_replicate.py \
