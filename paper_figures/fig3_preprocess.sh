@@ -9,8 +9,8 @@ prefilt_aln_fasta=${DATASET_DIR}/metadata_ASV/prefiltered_asvs.fa
 mkdir -p gibson_full_timepoints
 
 
-#for dataset in healthy replicates inoculum; do
-for dataset in inoculum; do
+for dataset in healthy replicates inoculum; do
+#for dataset in inoculum; do
   echo "[*] Extracting dataset: ${dataset}"
 	python ${PROJECT_DIR}/scripts/preprocess/helpers/preprocess.py \
 			--hamming-distance 0 \
