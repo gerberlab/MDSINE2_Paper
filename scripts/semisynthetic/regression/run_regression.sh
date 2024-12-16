@@ -25,6 +25,7 @@ run_regression() {
 	regression_type=$2
 	echo "[*] Running ${model}, ${regression_type} (reads=${read_depth} | trial=${trial})"
 	out_dir=${regression_dir}/output/$model/$regression_type
+	breadcrumb=${regression_dir}/output/$model/$regression_type/regression.DONE
 	mkdir -p $out_dir
 	python ${CLV_DIR}/healthy_prediction_experiments.py \
 	  -m $model \
@@ -32,6 +33,7 @@ run_regression() {
 	  -o $out_dir \
 	  -i ${regression_input_dir} \
 	  --limit_of_detection 1.0
+	touch ${breadcrumb}
 }
 
 # ======= Run regression methods

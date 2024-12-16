@@ -25,5 +25,5 @@ export BURNIN=5000
 export N_SAMPLES=15000
 export CHECKPOINT=100
 export MULTIPROCESSING=0
-export INTERACTION_IND_PRIOR="strong-sparse"
+export INTERACTION_IND_PRIOR="weak-agnostic"
 export PERTURBATION_IND_PRIOR="weak-agnostic"

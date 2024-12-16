@@ -10,6 +10,8 @@ trial=$2
 require_variable "read_depth" $read_depth
 require_variable "trial" $trial
 
+# "sparse2": use strong-sparse prior but with a pre-defined # of clusters
+
 
 echo "[*] Performing MDSINE2 inference for semisynthetic (read_depth=${read_depth} | trial=${trial})"
 

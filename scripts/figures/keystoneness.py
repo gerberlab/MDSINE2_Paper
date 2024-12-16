@@ -121,7 +121,7 @@ class MdsineOutput(object):
                 len(clusters),
                 len(clusters)
             ),
-            dtype=np.float
+            dtype=float
         )
         cluster_reps = [
             next(iter(cluster.members)) for cluster in clusters

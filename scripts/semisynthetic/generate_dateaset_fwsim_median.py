@@ -143,6 +143,9 @@ GLVParamSet = namedtuple(
 )
 
 
+
+
+
 def extract_glv_model(
         study: md2.Study,
         growths: np.ndarray,
@@ -153,19 +156,11 @@ def extract_glv_model(
         sim_max: float,
 ) -> Tuple[GLVParamSet, np.ndarray, Dict[str, np.ndarray]]:
     """Pick a best forward simulation based on error evaluation metric."""
-
-    subsample_every = 1000
-    if subsample_every > 1:
-        print("Subsampling every {} MCMC samples. (overall, there are {} samples)".format(subsample_every, interactions.shape[0]))
-    params = [
-        GLVParamSet(
-            growth=growths[i],
-            interactions=interactions[i],
-            perturbations=[p[i] for p in perturbations]
-        )
-        for i in range(0, interactions.shape[0], subsample_every)
-    ]
-    coclusterings = coclusterings[::subsample_every]
+    param = GLVParamSet(
+        growth=np.median(growths, axis=0),
+        interactions=np.median(interactions, axis=0),
+        perturbations=[np.median(p, axis=0) for p in perturbations]
+    )
 
     # Extract the best parameter set using forward simulations.
     param_fwsim_errors = []
@@ -174,7 +169,6 @@ def extract_glv_model(
     iter_idx = 0
     for param_set, coclust_mat in zip(params, coclusterings):
         err, surviving_taxa, surviving_modules, total_modules = evaluate_parameter_fwsim(param_set, study, dt, sim_max, coclust_mat)
-        # param_fwsim_errors.append(err)
         if len(surviving_taxa) < len(study.taxa):
             param_fwsim_errors.append(np.inf)
         else:
@@ -190,7 +184,7 @@ def extract_glv_model(
         best_idx,
         len(params)
     ))
-    return params[best_idx], coclusterings[best_idx], forward_simulate(params[best_idx], study, dt, sim_max)
+    return params[best_idx], forward_simulate(params[best_idx], study, dt, sim_max)
 
 
 def forward_simulate(
@@ -541,6 +535,13 @@ def main(
         sim_max: float,
         sim_dt: float
 ):
+    """
+    Read the fixed-module inference, use the stored "filtered-state" (latent traj X) samples.
+
+    :param fixed_module_pkl_path:
+    :param read_depth:
+    :return:
+    """
     source_study = md2.Study.load(str(study_path))
     ground_truth_dir.mkdir(parents=True, exist_ok=True)
     print(f"Using ground truth dir {ground_truth_dir}")
@@ -550,6 +551,7 @@ def main(
         with open(glv_sim_path, 'rb') as f:
             glv_params, forward_sims = pkl.load(f)
     else:
+        # Take the median parameter set from posterior.
         growths = np.load(growth_path)
         interactions = np.load(interactions_path)
         perturbations_map = np.load(perturbations_path)

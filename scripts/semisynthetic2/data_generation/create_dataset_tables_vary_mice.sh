@@ -4,7 +4,9 @@ source semisynthetic2/settings.sh
 
 
 n_perts=3
-for n_mice in 2 4 8 16; do
+# for n_mice in 2 4 8 16; do
+# for n_mice in 1 2 4 6; do
+for n_mice in 1 6; do
   for (( traj_repl = 0; traj_repl < ${N_TRAJ_SEEDS}; ++traj_repl)); do
     for (( data_repl = 0; data_repl < ${N_DATA_SEEDS}; ++data_repl )); do
       pickle_outdir=${DATASET_DIR}/trajectory_replicate_${traj_repl}/perts_${n_perts}/data_replicate_${data_repl}/mice_${n_mice}/timepoints_all/mdsine2

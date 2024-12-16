@@ -7,8 +7,11 @@ import argparse
 
 import numba
 import numpy as np
+import scipy
+import scipy.stats
 
 import mdsine2 as md2
+from mdsine2.names import STRNAMES
 import matplotlib.pyplot as plt
 
 
@@ -119,51 +122,300 @@ GLVParamSet = namedtuple(
 
 
 def extract_glv_model(
+        mcmc: md2.BaseMCMC,
         study: md2.Study,
+) -> Tuple[GLVParamSet, np.ndarray, Dict[str, np.ndarray]]:
+    mcmc_log_likelihoods = evaluate_likelihoods(mcmc, study)
+    best_idx = np.argmax(mcmc_log_likelihoods)
+
+
+    glv_params = GLVParamSet(
+        growth=growths[i],
+        interactions=interactions[i],
+        perturbations=[p[i] for p in perturbations]
+    )
+    return glv_params, coclusterings, fwsim
+
+
+def clustering_sizes(cluster_assignments) -> np.ndarray:
+    cluster_ids = set(cluster_assignments)
+    return np.array([
+        np.sum(cluster_ids == c_id)
+        for c_id in cluster_ids
+    ])
+
+
+# ======================================== LIKELIHOOD FUNCTIONS/HELPERS
+def crp_log_likelihood(alpha, clustering):
+    sizes = clustering_sizes(clustering)
+    ll = 0.0
+    cumulative_sz = 0
+    for n in sizes:
+        # numerator: alpha * 1 * 2 * ... * (n-1)
+        ll += np.sum(np.log(alpha) + np.log(np.arange(1, n, step=1)))
+
+        # denominator: (C+alpha) + (C+alpha+1) + ... + (C+n-1+alpha)
+        ll -= np.sum(np.log(cumulative_sz + alpha + np.arange(0, n)))
+    return ll
+
+
+def module_interaction_log_likelihood(clustering: np.ndarray, interactions: np.ndarray, indicator_prior_a, indicator_prior_b, strength_prior_means, strength_prior_scales) -> float:
+    clustering_ids = set(clustering)
+    c_rep_indices = [
+        np.argmax(clustering == c_id)
+        for c_id in clustering_ids
+    ]
+    submatrix = interactions[c_rep_indices, :][:, c_rep_indices]
+
+    # First, evaluate the zero-locations (log-likelihood of the indicator being zero)
+    n_zeros = np.sum(np.isnan(submatrix))
+    zero_ll = n_zeros * scipy.stats.betabinom.logpmf(n=1, k=0, a=indicator_prior_a, b=indicator_prior_b)
+
+    # Next, evaluate the nonzero-locations (LL of indicator being nonzero, plus LL of strength)
+    nonzeros = submatrix[~np.isnan(submatrix)]
+    nonzero_ll = nonzeros.size * scipy.stats.betabinom.logpmf(n=1, k=1, a=indicator_prior_a, b=indicator_prior_b)
+    strength_ll = np.sum(scipy.stats.norm.logpdf(loc=strength_prior_means, scale=strength_prior_scales, x=nonzeros))
+    return zero_ll + nonzero_ll + strength_ll
+
+
+def pert_log_likelihood(pert_str, clustering, pert_indicator_a, pert_indicator_b, pert_strength_mean, pert_strength_scale):
+    clustering_ids = set(clustering)
+    c_rep_indices = [
+        np.argmax(clustering == c_id)
+        for c_id in clustering_ids
+    ]
+    subsection = pert_str[c_rep_indices]
+
+    # First, evaluate the zero-locations (LL of indicator being zero)
+    n_zeros = np.sum(np.isnan(subsection))
+    zero_ll = n_zeros * scipy.stats.betabinom.logpmf(n=1, k=0, a=pert_indicator_a, b=pert_indicator_b)
+
+    # Next, evaluate the nonzero-locations (LL of indicator being nonzero, plus LL of strength)
+    nonzeros = subsection[~np.isnan(subsection)]
+    nonzero_ll = nonzeros.size * scipy.stats.betabinom.logpmf(n=1, k=1, a=pert_indicator_a, b=pert_indicator_b)
+    strength_ll = np.sum(scipy.stats.norm.logpdf(loc=pert_strength_mean, scale=pert_strength_scale, x=nonzeros))
+    return zero_ll + nonzero_ll + strength_ll
+
+
+def forward_process_ll(
+        subj: md2.Subject,
+        subj_latent_x: np.ndarray,
         growths: np.ndarray,
         interactions: np.ndarray,
-        perturbations: List[np.ndarray],
-        coclusterings: np.ndarray,
-        sim_max: float,
-) -> Tuple[GLVParamSet, np.ndarray, Dict[str, np.ndarray]]:
-    """Pick a best forward simulation based on error evaluation metric."""
+        all_pert_strs: Dict[str, np.ndarray],
+        process_vars: np.ndarray
+) -> np.ndarray:
+    # This is vectorized.
+    n_samples = subj_latent_x.shape[0]
+    assert growths.shape[0] == n_samples
+    assert interactions.shape[0] == n_samples
+    for p in all_pert_strs.values():
+        assert p.shape[0] == n_samples
+    assert process_vars.shape[0] == n_samples
 
-    subsample_every = 1000
-    if subsample_every > 1:
-        print("Subsampling every {} MCMC samples. (overall, there are {} samples)".format(subsample_every, interactions.shape[0]))
-    params = [
-        GLVParamSet(
-            growth=growths[i],
-            interactions=interactions[i],
-            perturbations=[p[i] for p in perturbations]
+    # Formulate the perturbation on/off calculation per timepoint.
+    pert_order = sorted(all_pert_strs.keys())
+    perturbation_signals = np.stack([
+        (subj.times[:-1] >= subj.parent.perturbations[pert_name].starts[subj.name])
+        &
+        (subj.times[:-1] <= subj.parent.perturbations[pert_name].ends[subj.name])
+        for pert_name in pert_order
+    ], axis=0)  # shape is (N_perts, N_times-1), indicates whether perturbation is applied at a particular timepoint.
+    pert_strs_matrix = np.stack([
+        all_pert_strs[pert_name]
+        for pert_name in pert_order
+    ], axis=2)  # shape is (N_samples, N_taxa, N_perts)
+
+    # latent process likelihood
+    dt = np.diff(subj.times)
+    subj_latent_mu_log = (
+            np.log(subj_latent_x[:, :, :-1])  # shape is (N_samples, N_taxa, N_times-1)
+            + (
+                    ( # r+Ax is implemented here
+                            ( # r is implemented here: r = (growth)*(1+pert)
+                                    growths  # shape is (N_samples, N_taxa)
+                                    * (1 + pert_strs_matrix @ perturbation_signals)  # shape is (N_samples, N_taxa, N_perts) @ (N_perts, N_times-1) --> (N_samples, N_taxa, N_times-1)
+                            )
+                            +
+                            ( # A is implemented here: A_ii = self-interaction, A_ij = interaction.
+                                # Note: The "@" operator auto-broadcasts (see np.matmul).
+                                    interactions  # shape is (N_samples, N_taxa, N_taxa)
+                                    @ subj_latent_x[:, :, :-1]  # shape is (N_samples, N_taxa, N_times-1)
+                            )
+                    )
+                    * dt[None, None, :]  # shape is (1, 1, N_times-1)
+            )
+    )  # final shape is (N_samples, N_taxa, N_times-1)
+
+    # raw logpdf shape is (N_samples, N_taxa, N_times-1), so invoke sum twice at the end to reduce to (N_samples)
+    return scipy.stats.norm.logpdf(loc=subj_latent_mu_log, scale=process_vars[:, None, None], x=subj_latent_x[:, :, 1:]).sum(axis=-1).sum(axis=-1)
+
+
+def filtered_data_ll(
+        subj: md2.Subject,
+        subj_latent_x: np.ndarray,
+        read_negbin_d0: float,
+        read_negbin_d1: float
+) -> np.ndarray:
+    reads_matrix = np.stack([subj.reads[t] for t in subj.times], axis=-1)  # shape is (N_taxa, N_times)
+    n_taxa = reads_matrix.shape[0]
+    n_times = len(subj.times)
+
+    assert subj_latent_x.shape[1] == n_taxa
+    assert subj_latent_x.shape[2] == n_times
+
+    # ===== READ LLS
+    total_reads = reads_matrix.sum(axis=0)  # shape is (N_times)
+
+    rel_abunds = subj_latent_x / np.sum(subj_latent_x, axis=1, keepdims=True)  # (N_samples, N_taxa, N_times)
+    nb_phi = total_reads[None, None, :] * rel_abunds
+    nb_eps = read_negbin_d1 + read_negbin_d0 / rel_abunds
+
+    nb_p = np.reciprocal(1 + nb_phi * nb_eps)
+    nb_n = np.reciprocal(nb_eps)
+    reads_ll = scipy.stats.nbinom.logpmf(n=nb_n, p=nb_p, k=reads_matrix).sum(axis=-1).sum(axis=-1)  # LL shape is (N_samples, N_taxa, N_times), then summed into (N_samples)
+
+    # ===== qPCR LLS
+    log_qpcr_matrix = np.stack([
+        np.log(subj.qpcr[t]._raw_data)
+        for t in subj.times
+    ], axis=0)  # shape is (N_times, N_replicates)
+    qpcr_mu = np.log(np.sum(subj_latent_x, axis=1))  # shape is (N_samples, N_times)
+    qpcr_scale = np.std(log_qpcr_matrix, axis=1)  # shape is (N_times)
+
+    # target shape is (N_samples, N_times, N_replicates)
+    qpcr_ll = scipy.stats.norm.logpdf(
+        loc=np.expand_dims(qpcr_mu, axis=2),
+        scale=qpcr_scale[None, :, None],
+        x=np.expand_dims(log_qpcr_matrix, axis=0)
+    ).sum(axis=-1).sum(axis=-1)
+
+    # ===== Output
+    return reads_ll + qpcr_ll
+
+
+def evaluate_likelihoods(
+        mcmc: md2.BaseMCMC, study: md2.Study
+):
+    # Growth prior ll
+    growths = mcmc.graph[STRNAMES.GROWTH].get_trace_from_disk(section='posterior')
+    growth_strength_means = mcmc.graph[STRNAMES.PRIOR_MEAN_GROWTH].get_trace_from_disk(section='posterior')
+    growth_strength_vars = mcmc.graph[STRNAMES.PRIOR_VAR_GROWTH].get_trace_from_disk(section='posterior')
+    growth_strength_prior_dof = mcmc.graph[STRNAMES.PRIOR_VAR_GROWTH].prior.dof.value
+    growth_strength_prior_tau2 = mcmc.graph[STRNAMES.PRIOR_VAR_GROWTH].prior.scale.value
+    growth_prior_lls = (
+        scipy.stats.norm.logpdf(loc=mcmc.graph[STRNAMES.PRIOR_MEAN_GROWTH].prior.loc.value, scale=mcmc.graph[STRNAMES.PRIOR_MEAN_GROWTH].prior.scale, x=growth_strength_means)
+        + scipy.stats.invgamma.logpdf(a=(0.5 * growth_strength_prior_dof), scale=(0.5 * growth_strength_prior_dof * growth_strength_prior_tau2), x=growth_strength_vars)
+    )
+    growth_lls = scipy.stats.norm.logpdf(loc=growth_strength_means, scale=np.sqrt(growth_strength_vars), x=growths)
+
+    # Self interaction prior ll
+    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section='posterior')
+    self_interaction_strength_means = mcmc.graph[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS].get_trace_from_disk(section='posterior')
+    self_interaction_strength_vars = mcmc.graph[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].get_trace_from_disk(section='posterior')
+    self_interaction_strength_prior_dof = mcmc.graph[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.dof.value
+    self_interaction_strength_prior_tau2 = mcmc.graph[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.scale.value
+    self_interaction_prior_lls = (
+        scipy.stats.norm.logpdf(loc=mcmc.graph[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS].prior.loc.value, scale=mcmc.graph[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS].prior.scale, x=self_interaction_strength_means)
+        + scipy.stats.invgamma.logpdf(a=(0.5 * self_interaction_strength_prior_dof), scale=(0.5 * self_interaction_strength_prior_dof * self_interaction_strength_prior_tau2), x=self_interaction_strength_vars)
+    )
+    self_interaction_lls = scipy.stats.norm.logpdf(loc=self_interaction_strength_means, scale=np.sqrt(self_interaction_strength_vars), x=self_interactions)
+
+    # clustering prior ll
+    alphas = mcmc.graph[STRNAMES.CONCENTRATION].get_trace_from_disk(section='posterior')
+    clusterings = np.stack(list(extract_clusterings(mcmc)))
+
+    clustering_lls = scipy.stats.gamma.logpdf(a=1e5, scale=1e-5, x=alphas)
+    clustering_lls += np.array([
+        crp_log_likelihood(alpha, clustering) for alpha, clustering in zip(alphas, clusterings)
+    ])
+
+    # interaction prior ll
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
+    interaction_indicator_a = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
+    interaction_indicator_b = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value
+    interaction_strength_means = mcmc.graph[STRNAMES.PRIOR_MEAN_INTERACTIONS].get_trace_from_disk(section='posterior')
+    interaction_strength_variances = mcmc.graph[STRNAMES.PRIOR_VAR_INTERACTIONS].get_trace_from_disk(section='posterior')
+    interaction_strength_prior_dof = mcmc.graph[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.dof.value
+    interaction_strength_prior_tau2 = mcmc.graph[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.scale.value
+    interaction_prior_lls = (
+        scipy.stats.norm.logpdf(loc=mcmc.graph[STRNAMES.PRIOR_MEAN_INTERACTIONS].prior.loc.value, scale=mcmc.graph[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.scale, x=interaction_strength_means)
+        + scipy.stats.invgamma.logpdf(a=(0.5 * interaction_strength_prior_dof), scale=(0.5 * interaction_strength_prior_dof * interaction_strength_prior_tau2), x=interaction_strength_variances)
+    )
+    interaction_lls = np.array([
+        module_interaction_log_likelihood(
+            clustering, interaction_matrix,
+            interaction_indicator_a,
+            interaction_indicator_b,
+            interaction_strength_means,
+            np.sqrt(interaction_strength_variances)
         )
-        for i in range(0, interactions.shape[0], subsample_every)
-    ]
-    coclusterings = coclusterings[::subsample_every]
+        for clustering, interaction_matrix in zip(clusterings, interactions)
+    ])
 
-    # Extract the best parameter set using forward simulations.
-    param_fwsim_errors = []
-    param_num_surviving_modules = []
-    # for param_set, coclust_mat in tqdm(zip(params, coclusterings), total=len(params)):
-    iter_idx = 0
-    for param_set, coclust_mat in zip(params, coclusterings):
-        err, surviving_taxa, surviving_modules, total_modules = evaluate_parameter_fwsim(param_set, study, sim_max, coclust_mat)
-        if len(surviving_taxa) < len(study.taxa):
-            param_fwsim_errors.append(np.inf)
-        else:
-            param_fwsim_errors.append(err)
-        param_num_surviving_modules.append(len(surviving_modules))
-        print("[iter={}] Modules survived: {} / {}".format(iter_idx, len(surviving_modules), total_modules))
-        iter_idx += subsample_every
+    # Perturbation prior ll
+    pert_indicator_a = 0.5   # weak-agnostic
+    pert_indicator_b = 0.5   # weak-agnostic
 
-    best_idx = np.argmin(param_fwsim_errors)
-    if param_fwsim_errors[best_idx] == np.inf:
-        raise ValueError("Couldn't find best sim with all surviving taxa")
-    print("Choice: index {} (total {} entries)".format(
-        best_idx,
-        len(params)
-    ))
-    return params[best_idx], coclusterings[best_idx], forward_simulate(params[best_idx], study, sim_max)
+    all_pert_strs = {}
+    perts_prior_lls = np.zeros(growth_lls.shape, dtype=float)
+    perts_ll = np.zeros(growth_lls.shape, dtype=float)
+
+    for pert in mcmc.graph.perturbations:
+        pert_strengths = pert.magnitude.get_trace_from_disk(section='posterior')
+        all_pert_strs[pert.name] = pert_strengths
+
+        pert_strength_means = pert.magnitude.prior.loc.get_trace_from_disk(section='posterior')
+        pert_strength_variances = pert.magnitude.prior.scale2.get_trace_from_disk(section='posterior')
+        perts_prior_lls += scipy.stats.norm.logpdf(loc=pert.magnitude.prior.loc.value, scale=pert.magnitude.prior.scale, x=pert_strength_means)
+        perts_prior_dof = pert.magnitude.prior.dof.value
+        perts_prior_tau2 = pert.magnitude.prior.scale.value
+        perts_prior_lls += scipy.stats.invgamma.logpdf(a=(0.5 * perts_prior_dof), scale=(0.5 * perts_prior_dof * perts_prior_tau2), x=pert_strength_variances)
+        perts_ll += np.array([
+            pert_log_likelihood(pert_str, clustering, pert_indicator_a, pert_indicator_b, pert_mean, pert_scale)
+            for pert_str, clustering, pert_mean, pert_scale in zip(
+                pert_strengths,
+                clusterings,
+                pert_strength_means,
+                np.sqrt(pert_strength_variances)
+            )
+        ])
+
+    # Data ll, given parameters
+    interactions[np.isnan(interactions)] = 0.
+    for i in range(self_interactions.shape[1]):
+        interactions[:, i, i] = -np.absolute(self_interactions[:, i])
+    for pert_name, pert_str in all_pert_strs.items():
+        pert_str[np.isnan(pert_str)] = 0.
+
+    data_ll = np.zeros(growth_lls.shape, dtype=float)
+    n_samples = growths.shape[0]
+    n_taxa = len(study.taxa)
+    process_vars = mcmc.graph[STRNAMES.PROCESSVAR].get_trace_from_disk(section='posterior')
+    read_negbin_d0 = mcmc.graph[STRNAMES.FILTERING].a0
+    read_negbin_d1 = mcmc.graph[STRNAMES.FILTERING].a1
+    for subj, subj_traj_variable in zip(study, mcmc.graph[STRNAMES.FILTERING].x.value):
+        n_timepoints = len(subj.times)
+        subj_latent_x = subj_traj_variable.get_trace_from_disk(section='posterior')  # shape is (samples, n_taxa, n_timepoints)
+        assert subj_latent_x.shape[0] == n_samples
+        assert subj_latent_x.shape[1] == n_taxa
+        assert subj_latent_x.shape[2] == n_timepoints
+        subj_filter_ll = forward_process_ll(subj, subj_latent_x, growths, interactions, all_pert_strs, process_vars)
+        subj_data_ll = filtered_data_ll(subj, subj_latent_x, read_negbin_d0, read_negbin_d1)
+
+        assert subj_filter_ll.size == n_samples
+        assert subj_data_ll.size == n_samples
+
+        data_ll += subj_filter_ll + subj_data_ll
+    return (
+            growth_prior_lls + growth_lls
+            + self_interaction_prior_lls + self_interaction_lls
+            + clustering_lls
+            + interaction_prior_lls + interaction_lls
+            + perts_prior_lls + perts_ll
+            + data_ll
+    )
+# ======================================== END: LIKELIHOOD FUNCTIONS/HELPERS
 
 
 def forward_simulate(
@@ -182,7 +434,9 @@ def forward_simulate_subject(
         glv_params: GLVParamSet,
         study: md2.Study,
         subject: md2.Subject,
-        sim_max: float
+        sim_dt: float,
+        sim_max: float,
+        time_subset: bool = True
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Forward simulation for a single subject"""
     # ======= Perturbations
@@ -193,124 +447,142 @@ def forward_simulate_subject(
             perturbations_start.append(pert.starts[subject.name])
             perturbations_end.append(pert.ends[subject.name])
 
-    # print("Data shape: ", subject.matrix()['abs'].shape)
-    initial_conditions = subject.matrix()['abs'][:, 0] + 1e4
-    fwsim_values = integrate_fwsim_discrete_euler(
-        glv_params.growth,
-        glv_params.interactions,
-        glv_params.perturbations,
-        perturbations_start,
-        perturbations_end,
-        x0=initial_conditions,
-        times=subject.times,
-        pert_is_multplicative=True,
+    dyn = md2.model.gLVDynamicsSingleClustering(
+        growth=glv_params.growth,
+        interactions=glv_params.interactions,
+        perturbations=glv_params.perturbations,
+        perturbation_starts=perturbations_start,
+        perturbation_ends=perturbations_end,
+        start_day=subject.times[0],
         sim_max=sim_max
     )
-    return fwsim_values, np.array(subject.times)
+
+    # print("Data shape: ", subject.matrix()['abs'].shape)
+    initial_conditions = subject.matrix()['abs'][:, 0] + 1e4
+    if time_subset:
+        x = md2.integrate(
+            dynamics=dyn,
+            initial_conditions=np.expand_dims(initial_conditions, 1),
+            dt=sim_dt,
+            final_day=subject.times[-1],
+            subsample=True,
+            times=subject.times
+        )
+    else:
+        x = md2.integrate(
+            dynamics=dyn,
+            initial_conditions=np.expand_dims(initial_conditions, 1),
+            dt=sim_dt,
+            final_day=subject.times[-1],
+            subsample=False
+        )
+    fwsim_values = x['X']
+    times = x['times']
+    return fwsim_values, times
 
 
-def integrate_fwsim_discrete_euler(
-        growths: np.ndarray,
-        interactions: np.ndarray,
-        perts,
-        pert_starts,
-        pert_ends,
-        x0,
-        times,
-        pert_is_multplicative: bool,
-        sim_max: float,
-) -> np.ndarray:
-    @numba.njit
-    def grad(log_x: np.ndarray, g: np.ndarray, A: np.ndarray):
-        return g + A @ np.exp(log_x)
-
-    sim_max_log = np.log(sim_max)
-    n_taxa = len(growths)
-    n_times = len(times)
-    log_x = np.zeros(shape=(n_taxa, n_times))
-    log_x[:, 0] = np.log(x0)
-
-    for t_idx in range(n_times - 1):
-        t = times[t_idx]
-        dt = times[t_idx + 1] - times[t_idx]
-        g = growths
-        for pert_strengths, pert_start, pert_end in zip(perts, pert_starts, pert_ends):
-            if t >= pert_start and t <= pert_end:
-                if pert_is_multplicative:
-                    g = g * (1 + pert_strengths)
-                else:
-                    g = g + pert_strengths
-        next_value = log_x[:, t_idx] + grad(log_x[:, t_idx], g, interactions) * dt
-        next_value[next_value > sim_max_log] = sim_max_log  # cap maximum value for numerical stability
-        log_x[:, t_idx + 1] = next_value
-    return np.exp(log_x)
+# def integrate_fwsim_discrete_euler(
+#         growths: np.ndarray,
+#         interactions: np.ndarray,
+#         perts,
+#         pert_starts,
+#         pert_ends,
+#         x0,
+#         times,
+#         pert_is_multplicative: bool,
+#         sim_max: float,
+# ) -> np.ndarray:
+#     @numba.njit
+#     def grad(log_x: np.ndarray, g: np.ndarray, A: np.ndarray):
+#         return g + A @ np.exp(log_x)
+#
+#     sim_max_log = np.log(sim_max)
+#     n_taxa = len(growths)
+#     n_times = len(times)
+#     log_x = np.zeros(shape=(n_taxa, n_times))
+#     log_x[:, 0] = np.log(x0)
+#
+#     for t_idx in range(n_times - 1):
+#         t = times[t_idx]
+#         dt = times[t_idx + 1] - times[t_idx]
+#         g = growths
+#         for pert_strengths, pert_start, pert_end in zip(perts, pert_starts, pert_ends):
+#             if t >= pert_start and t <= pert_end:
+#                 if pert_is_multplicative:
+#                     g = g * (1 + pert_strengths)
+#                 else:
+#                     g = g + pert_strengths
+#         next_value = log_x[:, t_idx] + grad(log_x[:, t_idx], g, interactions) * dt
+#         next_value[next_value > sim_max_log] = sim_max_log  # cap maximum value for numerical stability
+#         log_x[:, t_idx + 1] = next_value
+#     return np.exp(log_x)
 
 
 # =========== helpers
-def extract_clustering_from_matrix(_mat) -> np.ndarray:
-    n_items = _mat.shape[0]
-    items_left = set(range(n_items))
+# def extract_clustering_from_matrix(_mat) -> np.ndarray:
+#     n_items = _mat.shape[0]
+#     items_left = set(range(n_items))
+#
+#     clustering_assignments = np.zeros(n_items, dtype=int)
+#
+#     c_idx = -1
+#     while len(items_left) > 0:
+#         c_idx += 1  # new cluster
+#         x = items_left.pop()  # member
+#         clustering_assignments[x] = c_idx
+#
+#         # get all guys in the same cluster
+#         to_remove = set()
+#         for y in items_left:
+#             if _mat[x,y]:
+#                 clustering_assignments[y] = c_idx
+#                 to_remove.add(y)
+#         items_left = items_left.difference(to_remove)
+#     return clustering_assignments
 
-    clustering_assignments = np.zeros(n_items, dtype=int)
 
-    c_idx = -1
-    while len(items_left) > 0:
-        c_idx += 1  # new cluster
-        x = items_left.pop()  # member
-        clustering_assignments[x] = c_idx
-
-        # get all guys in the same cluster
-        to_remove = set()
-        for y in items_left:
-            if _mat[x,y]:
-                clustering_assignments[y] = c_idx
-                to_remove.add(y)
-        items_left = items_left.difference(to_remove)
-    return clustering_assignments
-
-
-def evaluate_parameter_fwsim(
-        params: GLVParamSet,
-        study: md2.Study,
-        sim_max: float,
-        coclust_matrix: np.ndarray
-) -> Tuple[float, Set[int], Set[int], int]:
-    """
-    Evaluate the fwsim error for each subject (And sum them).
-    """
-    fwsims = forward_simulate(params, study, sim_max)
-    errors = []
-    eps = 1e-5
-    for subj_name, fwsim_trajs in fwsims.items():
-        subj = study[subj_name]
-        measurements = subj.matrix()['abs']
-
-        # RMS-log10 error, excluding the points where data says zero.
-        # fwsim_trajs: [taxa x timepoints] array
-        # measurements: [taxa x timepoints] array, with zeroes in some of the entries
-
-        mask = measurements > 0
-        diff_logs = np.log10(fwsim_trajs + eps) - np.log10(measurements + eps)
-        subj_err = np.sqrt(np.mean(np.square(diff_logs[mask])))
-        errors.append(subj_err)
-
-    # What taxa survived? (Only keep taxa which surpasses 1e5 abundance for some timepoint in some synthetic mouse)
-    taxa_max_abundance = np.stack([
-        fwsim_trajs.max(axis=-1)  # length=n_taxa, after maximizing across timepoints
-        for subj_name, fwsim_trajs in fwsims.items()
-    ], axis=0).max(axis=0)  # length=n_taxa, max across subjects
-
-    clust_assignments = extract_clustering_from_matrix(coclust_matrix)
-    leftover_module_set = set()
-    leftover_taxa_set = set()
-    for taxa_idx, taxa in enumerate(study.taxa):
-        if taxa_max_abundance[taxa_idx] > 1e5:
-            leftover_module_set.add(clust_assignments[taxa_idx])
-            leftover_taxa_set.add(taxa_idx)
-    total_modules = np.max(clust_assignments) + 1
-
-    print("leftover taxa: {}".format(len(leftover_taxa_set)))
-    return np.sum(errors), leftover_taxa_set, leftover_module_set, total_modules
+# def evaluate_parameter_fwsim(
+#         params: GLVParamSet,
+#         study: md2.Study,
+#         sim_max: float,
+#         coclust_matrix: np.ndarray
+# ) -> Tuple[float, Set[int], Set[int], int]:
+#     """
+#     Evaluate the fwsim error for each subject (And sum them).
+#     """
+#     fwsims = forward_simulate(params, study, sim_max)
+#     errors = []
+#     eps = 1e-5
+#     for subj_name, fwsim_trajs in fwsims.items():
+#         subj = study[subj_name]
+#         measurements = subj.matrix()['abs']
+#
+#         # RMS-log10 error, excluding the points where data says zero.
+#         # fwsim_trajs: [taxa x timepoints] array
+#         # measurements: [taxa x timepoints] array, with zeroes in some of the entries
+#
+#         mask = measurements > 0
+#         diff_logs = np.log10(fwsim_trajs + eps) - np.log10(measurements + eps)
+#         subj_err = np.sqrt(np.mean(np.square(diff_logs[mask])))
+#         errors.append(subj_err)
+#
+#     # What taxa survived? (Only keep taxa which surpasses 1e5 abundance for some timepoint in some synthetic mouse)
+#     taxa_max_abundance = np.stack([
+#         fwsim_trajs.max(axis=-1)  # length=n_taxa, after maximizing across timepoints
+#         for subj_name, fwsim_trajs in fwsims.items()
+#     ], axis=0).max(axis=0)  # length=n_taxa, max across subjects
+#
+#     clust_assignments = extract_clustering_from_matrix(coclust_matrix)
+#     leftover_module_set = set()
+#     leftover_taxa_set = set()
+#     for taxa_idx, taxa in enumerate(study.taxa):
+#         if taxa_max_abundance[taxa_idx] > 1e5:
+#             leftover_module_set.add(clust_assignments[taxa_idx])
+#             leftover_taxa_set.add(taxa_idx)
+#     total_modules = np.max(clust_assignments) + 1
+#
+#     print("leftover taxa: {}".format(len(leftover_taxa_set)))
+#     return np.sum(errors), leftover_taxa_set, leftover_module_set, total_modules
 
 
 def sample_data_from_fwsim(
