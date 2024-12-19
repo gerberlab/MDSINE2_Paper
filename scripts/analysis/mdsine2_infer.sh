@@ -1,11 +1,19 @@
 #!/bin/bash
 set -e
-source analysis/settings.sh
+data_modality=$1
+if [ "${data_modality}" == "healthy" ]; then
+  source analysis/settings_healthy.sh
+elif [ "${data_modality}" == "uc" ]; then
+  source analysis/settings_uc.sh
+else
+  echo "data_modality argument is required and must be either 'healthy' or 'uc'. Exiting."
+  exit 1
+fi
 
 # Healthy cohort
 # --------------
 
-seed=$1
+seed=$2
 require_variable "seed" $seed
 
 
@@ -20,7 +28,7 @@ export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_inference_${study_name}.log"
 
 touch $LOG_FILEPATH
 mdsine2 infer \
-		--input $HEALTHY_DSET \
+		--input $MAIN_DSET \
 		--negbin $REPLICATE_MCMC \
 		--seed $seed \
 		--burnin $BURNIN \

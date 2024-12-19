@@ -1,5 +1,5 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export DATASET_NAME="gibson"
+export DATASET_NAME="gibson/healthy"
 source ./settings.sh  # use parent settings (scripts/settings.sh)
 
 _THIS_PATH="${PROJECT_DIR}/scripts/cross_validation/settings.sh"

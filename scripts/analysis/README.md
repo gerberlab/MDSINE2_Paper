@@ -5,7 +5,7 @@ Prerequisites: These scripts assume that the full pipeline found in `preprocess`
 # Step 1: Fit a negative-binomial distribution for reads.
 
 ```bash
-bash analysis/mdsine2_negbin.sh
+bash analysis/mdsine2_negbin.sh healthy
 ```
 
 This outputs inference pickle files (and accompanying plots) into
@@ -18,7 +18,7 @@ Next, run inference using ten multiple seeds.
 Inference is programmed by this script to run in series (one after the other).
 
 ```bash
-bash analysis/mdsine2_infer_all.sh
+bash analysis/mdsine2_infer_all.sh healthy
 ```
 
 This script will automatically:
@@ -36,7 +36,7 @@ in the `merged_studies` subdirectory.
 Next, run fixed-cluster inference using the concatenated seeds' posterior-approximating markov chains.
 
 ```bash
-bash analysis/mdsine2_infer_fixedcluster.sh
+bash analysis/mdsine2_infer_fixedcluster.sh healthy
 ```
 
 Outputs are located in `MDSINE2_Paper/datasets/gibson/output/mdsine2/inference/merged_studies_fixed_cluster`.

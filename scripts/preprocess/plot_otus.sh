@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
-source preprocess/settings.sh
+data_modality=$1
+if [ "${data_modality}" == "healthy" ]; then
+  source preprocess/settings_healthy.sh
+elif [ "${data_modality}" == "uc" ]; then
+  source preprocess/settings_uc.sh
+else
+  echo "data_modality argument is required and must be either 'healthy' or 'uc'. Exiting."
+  exit 1
+fi
 
 
 require_program python

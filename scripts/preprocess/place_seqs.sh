@@ -1,13 +1,21 @@
 #!/bin/bash
 set -e
-source preprocess/settings.sh
+data_modality=$1
+if [ "${data_modality}" == "healthy" ]; then
+  source preprocess/settings_healthy.sh
+elif [ "${data_modality}" == "uc" ]; then
+  source preprocess/settings_uc.sh
+else
+  echo "data_modality argument is required and must be either 'healthy' or 'uc'. Exiting."
+  exit 1
+fi
 
-rdp_dir=$1
-basename=$2
-out_dir=$3
-input_fasta=$4
-start_idx=$5
-end_idx=$6
+rdp_dir=$2
+basename=$3
+out_dir=$4
+input_fasta=$5
+start_idx=$6
+end_idx=$7
 
 require_variable 'rdp_dir' $rdp_dir
 require_variable 'basename' $basename

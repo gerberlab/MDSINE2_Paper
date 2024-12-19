@@ -21,7 +21,7 @@ mkdir -p $outdir
 # Note: index 19 = day 20
 mdsine2 evaluate-keystoneness \
 		-e $MDSINE2_OUT_DIR/merged_studies \
-		-s $HEALTHY_DSET \
+		-s $MAIN_DSET \
 		-it 19 \
 		-o $outdir \
 		--n-days 100 \
