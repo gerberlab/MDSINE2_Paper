@@ -1,15 +1,15 @@
 rm(list=ls())
 
-#if (!requireNamespace("BiocManager", quietly = TRUE))
-#  install.packages("BiocManager")
-#BiocManager::install("apeglm")
-#BiocManager::install("DESeq2")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("apeglm")
+BiocManager::install("DESeq2", force=TRUE)
 library("DESeq2") #v1.32.0 was used for this paper
 
 
 taxa_rank<-c('phylum', 'of')# 'otu', 'of','phylum'
-cohort_name<-c('healthy')
-folder<-'_tmp/'
+cohort_name<-c('healthy', 'uc')
+folder<-'out/'
 
 for (cohort in cohort_name)
 {
@@ -24,7 +24,7 @@ for (cohort in cohort_name)
 
   coldata$window<- factor(coldata$window)
 
-  dds <- DESeqDataSetFromMatrix(countData =pwd cts,
+  dds <- DESeqDataSetFromMatrix(countData =cts,
                               colData = coldata,
                               design = ~window)
                           
