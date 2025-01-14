@@ -11,6 +11,6 @@ require_variable "mdsine2_pkl" "${mdsine2_pkl}"
 
 set -e
 echo "[* prepare_input.sh] Creating CLV files in ${out_dir}"
-export PYTHONPATH="../submodules/clv_fork"
-python semisynthetic/regression/create_clv_inputs.py -i "${mdsine2_pkl}" -o "${out_dir}"
+env PYTHONPATH="../submodules/clv_fork" \
+  python semisynthetic/regression/create_clv_inputs.py -i "${mdsine2_pkl}" -o "${out_dir}"
 set +e
