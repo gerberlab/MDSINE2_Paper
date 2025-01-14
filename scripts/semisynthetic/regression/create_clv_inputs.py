@@ -36,7 +36,7 @@ if __name__ == "__main__":
     else:
         n_perts = len(study.perturbations)
 
-    subj_ordering = [str(x) for x in sorted(int(subj.name) for subj in study)]
+    subj_ordering = list(sorted(subj.name for subj in study))
     print("Subject ordering for regression code: {}".format(subj_ordering))
     for subj_name in subj_ordering:
         subj = study[subj_name]
