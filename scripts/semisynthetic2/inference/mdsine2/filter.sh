@@ -17,7 +17,6 @@ require_variable "inference_dir" "${inference_dir}"
 
 pickle_dir=${DATASET_DIR}/trajectory_replicate_${traj_repl}/perts_${n_perts}/data_replicate_${data_repl}/mice_${n_mice}/timepoints_${timeseries_id}/mdsine2
 
-set -e
 echo "[* filter.sh] Applying dataset filter."
 # filter relative abundance; relabund must exceed 0.0001 for at least 7 timepoints in 2 subjects, allowing for initial colonization time of 5 days.
 if [[ $n_mice == 1 ]]; then
@@ -41,7 +40,7 @@ else
 fi
 
 echo "[* filter.sh] Applying dataset filter to replicates."
-python semisynthetic2/inference/mdsine2/helpers/filter_replicate.py \
-  -r "${pickle_dir}/synthetic_replicate.pkl" \
+python semisynthetic2/inference/mdsine2/helpers/filter_like_other.py \
+  -i "${pickle_dir}/synthetic_replicate.pkl" \
   -l "${inference_dir}/synthetic_filtered.pkl" \
   -o "${inference_dir}/synthetic_replicate_filtered.pkl"
