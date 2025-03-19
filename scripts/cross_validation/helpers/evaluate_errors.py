@@ -1,7 +1,8 @@
 import argparse
+import signal
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, Iterator, Callable, Any
+from typing import Tuple, Iterator, Callable, Any, List
 
 import itertools
 import pickle
@@ -25,10 +26,16 @@ from lv_forward_sims import \
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
 
-"""
-MDSINE2 uses subject names, but clv code uses subject index.
-"""
-SUBJECT_IDS = ["2", "3", "4", "5"]
+
+class TimeoutException(Exception):   # Custom exception class
+    pass
+
+# https://stackoverflow.com/questions/25027122/break-the-function-after-certain-time
+def timeout_handler(signum, frame):   # Custom signal handler
+    raise TimeoutException()
+
+
+signal.signal(signal.SIGALRM, timeout_handler)
 
 
 def parse_args() -> argparse.Namespace:
@@ -47,6 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
     parser.add_argument('--subsample_every', type=int, required=False, default=1)
+    parser.add_argument('--healthy_or_uc', type=str, required=True, choices=['healthy', 'uc'])
     parser.add_argument('--recompute_cache', action='store_true')
     return parser.parse_args()
 
@@ -122,6 +130,31 @@ class HoldoutData:
                 'pred': rel_pred[taxa_idx, time_idx]
             })
         return pd.DataFrame(entries)
+
+
+def timelimit_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
+    """
+    Wraps around the regression code written by Joseph et al.
+    Attempts to run the regression code's built-in solver using RK45, then Radau if it takes too long.
+    :param fwsim_fn:
+    :return:
+    """
+    # max timelimit of 1 hour for fwsim:
+    timelimit_fwsim: int = 60 * 60 * 1  # seconds
+
+    def _wrapper(*args, **kwargs):
+        kwargs['solver_method'] = 'RK45'
+        signal.alarm(timelimit_fwsim)
+        try:
+            return fwsim_fn(*args, **kwargs)
+        except TimeoutException:
+            logger.error(f"Forward simulation timed out after {timelimit_fwsim} seconds. Trying alternative method...")
+            kwargs['solver_method'] = 'Radau'
+            signal.alarm(timelimit_fwsim)
+            return fwsim_fn(*args, **kwargs)
+        finally:
+            signal.alarm(0)
+    return _wrapper
 
 
 def cached_forward_simulation(fwsim_fn: Callable[[Any], np.ndarray]):
@@ -214,51 +247,62 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
         init = heldout.initial_conditions(lower_bound=init_limit_of_detection)
         if len(init.shape) == 1:
             init = init.reshape(-1, 1)
-        x = md2.integrate(dynamics=dyn, initial_conditions=init,
-                          dt=sim_dt, n_days=times[-1] + sim_dt, subsample=True, times=times)
+        x = md2.integrate(
+            dynamics=dyn,
+            initial_conditions=init,
+            dt=sim_dt,
+            final_day=times[-1],
+            subsample=True, times=times
+        )
         pred_matrix[pred_idx] = x['X']
     return pred_matrix
 
 
+@timelimit_forward_simulation
 @cached_forward_simulation
 def forward_sim_clv(data_path: Path,
                     x0: np.ndarray,
                     u: np.ndarray,
                     t: np.ndarray,
-                    pseudo_count: int=1e-6) -> np.ndarray:
-    logger.info(f"Evaluating cLV simulation using output ({data_path})")
+                    pseudo_count: int=1e-6,
+                    solver_method: str = 'RK45'
+                    ) -> np.ndarray:
+    logger.info(f"Evaluating cLV simulation using output ({data_path}), using {solver_method} solver.")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
         denom = model.denom
 
     x0 = x0 / np.sum(x0)  # normalize.
-    return forward_sim_single_subj_clv(A, g, B, x0, u, t, denom, pc=pseudo_count).transpose(1, 0)
+    return forward_sim_single_subj_clv(A, g, B, x0, u, t, denom, pc=pseudo_count, solver_method=solver_method).transpose(1, 0)
 
 
+@timelimit_forward_simulation
 @cached_forward_simulation
 def forward_sim_lra(data_path: Path,
                     x0: np.ndarray,
                     u: np.ndarray,
-                    t: np.ndarray) -> np.ndarray:
-    logger.info(f"Evaluating LRA simulation using output ({data_path})")
+                    t: np.ndarray,
+                    solver_method: str = 'RK45') -> np.ndarray:
+    logger.info(f"Evaluating LRA simulation using output ({data_path}), using {solver_method} solver.")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
 
     x0 = x0 / np.sum(x0)  # normalize.
-    return forward_sim_single_subj_lra(A, g, B, x0, u, t).transpose(1, 0)
+    return forward_sim_single_subj_lra(A, g, B, x0, u, t, solver_method=solver_method).transpose(1, 0)
 
 
+@timelimit_forward_simulation
 @cached_forward_simulation
 def forward_sim_glv(data_path: Path,
                     x0: np.ndarray,
                     u: np.ndarray,
                     t: np.ndarray,
-                    scale: float,
                     init_limit_of_detection: float,
-                    rel_abund: bool) -> np.ndarray:
-    logger.info(f"Evaluating gLV simulation using output ({data_path})")
+                    rel_abund: bool,
+                    solver_method: str = 'RK45') -> np.ndarray:
+    logger.info(f"Evaluating gLV simulation using output ({data_path}), using {solver_method} solver.")
     with open(data_path, "rb") as f:
         model = pickle.load(f)
         A, g, B = model.get_params()
@@ -267,18 +311,18 @@ def forward_sim_glv(data_path: Path,
     x0[x0 < init_limit_of_detection] = init_limit_of_detection
     if rel_abund:
         # Normalize (in log-scale)
+        scale = 1.0
         x0 = np.log(x0)
         x0 = x0 - scipy.special.logsumexp(x0)
     else:
-        """
-        gLV inference is run with scaling (for numerical precision). 
-        This is the inverse transformation!
-        """
-        # A = A * scale
-        x0 = np.log(x0)
+        # Perform rescaling for stability.
+        scale = 1 / np.mean(x0)
+
+        x0 = np.log(x0 * scale)
+        A = A / scale
 
     # Include the limit of detection value
-    return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund).transpose(1, 0)
+    return (1 / scale) * forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund, solver_method=solver_method).transpose(1, 0)
 
 
 @dataclass
@@ -320,38 +364,40 @@ class HeldoutInferences:
                                    subsample_every=subsample_every)
 
     def clv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
-        return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
+        return forward_sim_clv(data_path=self.clv_elastic, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t)
 
-    def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
+    def glv_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_elastic, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
+                               x0=x0, u=u, t=t, rel_abund=False, init_limit_of_detection=1e5)
 
-    def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
+    def glv_ra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_ra_elastic, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=True, init_limit_of_detection=1e5)
+                               x0=x0, u=u, t=t, rel_abund=True, init_limit_of_detection=1e5)
 
-    def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
+    def glv_ra_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_ra_ridge, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=True, init_limit_of_detection=1e5)
+                               x0=x0, u=u, t=t, rel_abund=True, init_limit_of_detection=1e5)
 
-    def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray, scale: float) -> np.ndarray:
+    def glv_ridge_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
         return forward_sim_glv(data_path=self.glv_ridge, recompute_cache=self.recompute_cache,
-                               x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
+                               x0=x0, u=u, t=t, rel_abund=False, init_limit_of_detection=1e5)
 
     def lra_elastic_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
-        return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
+        return forward_sim_lra(data_path=self.lra_elastic, recompute_cache=self.recompute_cache,
+                               x0=x0, u=u, t=t)
 
 
-def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[int, str, HeldoutInferences]]:
+def retrieve_grouped_results(directories: HeldoutInferences, subject_ids: List[str], healthy_or_uc: str) -> Iterator[Tuple[int, str, HeldoutInferences]]:
     """
     Group the mdsine2/clv/glv etc result paths by heldout subject.
 
     :return: A (subject_id) -> (mdsine2, clv-elastic, glv-elastic, glv-ra-elastic, glv-ra-ridge, glv-ridge
     """
-    for subject_idx, subject_id in enumerate(SUBJECT_IDS):
+    for subject_idx, subject_id in enumerate(subject_ids):
         yield subject_idx, subject_id, HeldoutInferences(
-            mdsine2=directories.mdsine2 / subject_id / "healthy" / "mcmc.pkl",
-            mdsine2_nomodule=directories.mdsine2_nomodule / subject_id / "healthy" / "mcmc.pkl",
+            mdsine2=directories.mdsine2 / subject_id / healthy_or_uc / "mcmc.pkl",
+            mdsine2_nomodule=directories.mdsine2_nomodule / subject_id / healthy_or_uc / "mcmc.pkl",
             clv_elastic=directories.clv_elastic / f'clv-{subject_idx}-model.pkl',
             glv_elastic=directories.glv_elastic / f'glv-elastic-net-{subject_idx}-model.pkl',
             glv_ra_elastic=directories.glv_ra_elastic / f'glv-ra-elastic-net-{subject_idx}-model.pkl',
@@ -367,8 +413,9 @@ def evaluate_all(regression_inputs_dir: Path,
                  complete_study: md2.Study,
                  sim_dt: float,
                  sim_max: float,
+                 healthy_or_uc: str,
                  mdsine2_subsample_every: int = 1):
-    # =========== Load regression inputs
+    #=========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
         Y = pickle.load(f)
     with open(regression_inputs_dir / "U.pkl", "rb") as f:
@@ -376,13 +423,21 @@ def evaluate_all(regression_inputs_dir: Path,
     with open(regression_inputs_dir / "T.pkl", "rb") as f:
         T = pickle.load(f)
 
-    _, scale = adjust_concentrations(Y)
-    logger.debug(f"Regression input rescaling value: {scale}")
+    # _, scale = adjust_concentrations(Y)
+    # logger.debug(f"Regression input rescaling value: {scale}")
 
     # =========== Load evaluations.
     absolute_df_entries = []
     relative_df_entries = []
-    for sidx, sid, inferences in retrieve_grouped_results(directories):
+    # subject_ids = sorted([subj.name for subj in complete_study])
+    # subject_ids = [str(x) for x in sorted([int(subj.name) for subj in complete_study])]
+
+    with open(regression_inputs_dir / "subj_ordering.txt", "rt") as f:
+        subject_ids = [line.rstrip() for line in f]
+        subject_ids = [x for x in subject_ids if len(x) > 0]
+    print(f"Found subjects: {subject_ids}")
+
+    for sidx, sid, inferences in retrieve_grouped_results(directories, subject_ids, healthy_or_uc=healthy_or_uc):
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
 
         heldout_data = HoldoutData(complete_study[sid], sidx)
@@ -413,119 +468,112 @@ def evaluate_all(regression_inputs_dir: Path,
 
         # Absolute abundance
         try:
-            traj = np.nanmedian(
-                inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                axis=0
-            )
+            mdsine2_fwsims = inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max,
+                                                      subsample_every=mdsine2_subsample_every)
+            traj = np.nanmedian(mdsine2_fwsims, axis=0)
             add_absolute_results(
                 'MDSINE2',
                 heldout_data.evaluate_absolute(traj)
             )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
 
-        try:
-            add_absolute_results(
-                'MDSINE2 (No Modules)',
-                heldout_data.evaluate_absolute(
-                    np.nanmedian(
-                        inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                        axis=0
-                    )
-                )
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
-
-        try:
-            add_absolute_results(
-                'gLV (elastic net)',
-                heldout_data.evaluate_absolute(inferences.glv_elastic_fwsim(x0, u, t, scale))
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate glv-elastic Net output: Holdout Subject {sid}.")
-
-        try:
-            add_absolute_results(
-                'gLV (ridge)',
-                heldout_data.evaluate_absolute(inferences.glv_ridge_fwsim(x0, u, t, scale))
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
-
-        # Relative abundance
-        try:
             add_relative_results(
                 'MDSINE2',
                 heldout_data.evaluate_relative(
-                    np.nanmedian(
-                        inferences.mdsine2_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                        axis=0
-                    )
+                    np.nanmedian(mdsine2_fwsims, axis=0)
                 )
             )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+        except FileNotFoundError as e:
+            print(e)
+            logger.error(f"Couldn't locate MDSINE2 output: Holdout Subject {sid}.")
 
         try:
+            mdsine2_nomod_fwsims = inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every)
+            add_absolute_results(
+                'MDSINE2 (No Modules)',
+                heldout_data.evaluate_absolute(
+                    np.nanmedian(mdsine2_nomod_fwsims, axis=0)
+                )
+            )
             add_relative_results(
                 'MDSINE2 (No Modules)',
                 heldout_data.evaluate_relative(
-                    np.nanmedian(
-                        inferences.mdsine2_nomodule_fwsim(heldout_data, sim_dt, sim_max, subsample_every=mdsine2_subsample_every),
-                        axis=0
-                    )
+                    np.nanmedian(mdsine2_nomod_fwsims, axis=0)
                 )
             )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate MDSINE2 output (relabund): Holdout Subject {sid}.")
+        except FileNotFoundError as e:
+            print(e)
+            logger.error(f"Couldn't locate MDSINE2 (nomodule) output: Holdout Subject {sid}.")
+
+        """
+        Regression simulation requires some careful handling.
+        The default RK45 solver can be really slow, so let's account for when the solver can't handle the learned system.
+        """
+        try:
+            _fwsim = inferences.glv_elastic_fwsim(x0, u, t)
+            add_absolute_results('gLV (elastic net)', heldout_data.evaluate_absolute(_fwsim))
+            add_relative_results('gLV (elastic net)', heldout_data.evaluate_relative(_fwsim))
+        except TimeoutError:
+            logger.error("Unable to finish forward simulation for glv elastic-net (timeout)")
+        except ValueError:
+            logger.error("Unable to finish forward simulation for glv elastic-net (generic ValueError")
+        except FileNotFoundError as e:
+            print(e)
+            logger.error(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
 
         try:
-            add_relative_results(
-                'cLV',
-                heldout_data.evaluate_relative(inferences.clv_elastic_fwsim(x0, u, t))
-            )
-        except FileNotFoundError:
+            _fwsim = inferences.glv_ridge_fwsim(x0, u, t)
+            add_absolute_results('gLV (ridge)', heldout_data.evaluate_absolute(_fwsim))
+            add_relative_results('gLV (ridge)', heldout_data.evaluate_relative(_fwsim))
+        except TimeoutError:
+            logger.error("Unable to finish forward simulation for glv ridge (timeout)")
+        except ValueError:
+            logger.error("Unable to finish forward simulation for glv ridge (generic ValueError")
+        except FileNotFoundError as e:
+            print(e)
+            logger.error(f"Couldn't locate glv-ridge output: Holdout Subject {sid}.")
+
+        try:
+            _fwsim = inferences.clv_elastic_fwsim(x0, u, t)
+            add_relative_results('cLV', heldout_data.evaluate_relative(_fwsim))
+        except TimeoutError:
+            logger.error("Unable to finish forward simulation for clv (timeout)")
+        except ValueError:
+            logger.error("Unable to finish forward simulation for clv (generic ValueError")
+        except FileNotFoundError as e:
+            print(e)
             logger.error(f"Couldn't locate clv output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_results(
-                'gLV-RA (elastic net)',
-                heldout_data.evaluate_relative(inferences.glv_ra_elastic_fwsim(x0, u, t, scale))
-            )
-        except FileNotFoundError:
+            _fwsim = inferences.glv_ra_elastic_fwsim(x0, u, t)
+            add_relative_results('gLV-RA (elastic net)', heldout_data.evaluate_relative(_fwsim))
+        except TimeoutError:
+            logger.error("Unable to finish forward simulation for glv-RA elastic-net (timeout)")
+        except ValueError:
+            logger.error("Unable to finish forward simulation for glv-RA elastic-net (generic ValueError")
+        except FileNotFoundError as e:
+            print(e)
             logger.error(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_results(
-                'gLV-RA (ridge)',
-                heldout_data.evaluate_relative(inferences.glv_ra_ridge_fwsim(x0, u, t, scale))
-            )
-        except FileNotFoundError:
+            _fwsim = inferences.glv_ra_ridge_fwsim(x0, u, t)
+            add_relative_results('gLV-RA (ridge)', heldout_data.evaluate_relative(_fwsim))
+        except TimeoutError:
+            logger.error("Unable to finish forward simulation for glv-RA ridge (timeout)")
+        except ValueError:
+            logger.error("Unable to finish forward simulation for glv-RA ridge (generic ValueError")
+        except FileNotFoundError as e:
+            print(e)
             logger.error(f"Couldn't locate glv-RA-ridge output (relabund): Holdout Subject {sid}.")
 
         try:
-            add_relative_results(
-                'gLV (elastic net)',
-                heldout_data.evaluate_relative(inferences.glv_elastic_fwsim(x0, u, t, scale))
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate glv-elastic net output (relabund): Holdout Subject {sid}.")
-
-        try:
-            add_relative_results(
-                'gLV (ridge)',
-                heldout_data.evaluate_relative(inferences.glv_ridge_fwsim(x0, u, t, scale))
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate glv-ridge output (relabund): Holdout Subject {sid}.")
-
-        try:
-            add_relative_results(
-                'LRA',
-                heldout_data.evaluate_relative(inferences.lra_elastic_fwsim(x0, u, t))
-            )
-        except FileNotFoundError:
+            _fwsim = inferences.lra_elastic_fwsim(x0, u, t)
+            add_relative_results('LRA', heldout_data.evaluate_relative(_fwsim))
+        except TimeoutError:
+            logger.error("Unable to finish forward simulation for LRA (timeout)")
+        except ValueError:
+            logger.error("Unable to finish forward simulation for LRA (generic ValueError")
+        except FileNotFoundError as e:
+            print(e)
             logger.error(f"Couldn't locate LRA output (relabund): Holdout Subject {sid}.")
 
     absolute_results = pd.DataFrame(absolute_df_entries)
@@ -558,6 +606,7 @@ def main():
         complete_study,
         args.sim_dt,
         args.sim_max,
+        healthy_or_uc=args.healthy_or_uc,
         mdsine2_subsample_every=args.subsample_every
     )
 

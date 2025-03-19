@@ -1,5 +1,6 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export DATASET_NAME="gibson/healthy"
+export DATA_MODALITY="uc"
+export DATASET_NAME="gibson/${DATA_MODALITY}"
 source ./settings.sh  # use parent settings (scripts/settings.sh)
 
 _THIS_PATH="${PROJECT_DIR}/scripts/cross_validation/settings.sh"
@@ -7,7 +8,7 @@ echo "[*] Using additional settings from ${_THIS_PATH}"
 
 
 export OUTPUT_DIR="${DATASET_DIR}/cross_validation"
-export DATASET_PKL=${DATASET_DIR}/preprocessed/gibson_healthy_agg_filtered.pkl
+export DATASET_PKL=${DATASET_DIR}/preprocessed/gibson_${DATA_MODALITY}_agg_filtered.pkl
 export REPLICATE_MCMC=${DATASET_DIR}/output/mdsine2/negbin/replicates/mcmc.pkl
 
 export REGRESSION_DATASET_DIR="${DATASET_DIR}/regression_files"

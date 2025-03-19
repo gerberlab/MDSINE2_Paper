@@ -57,6 +57,7 @@ def main(
     Note: it's not correct to do metadata['time'].isin(timepoints), because of floating-point precision issues.
     See: https://stackoverflow.com/questions/42566737/pandas-isin-returns-different-result-as-eq-floating-dtype-dependency-issue
     """
+    print("target timepoints: ", timepoints)
     time_isin_collection = np.isclose(metadata['time'], timepoints[0])
     for t in timepoints[1:]:
         time_isin_collection = time_isin_collection | np.isclose(metadata['time'], t)

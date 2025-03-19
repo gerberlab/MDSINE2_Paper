@@ -43,6 +43,6 @@ for dataset in ${data_modality} replicates inoculum; do
 			--sort-order "MIN_ASV_IDX" \
 			--naming-scheme "MIN_ASV_LABEL"
 done
-cp ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
+cp ${PREPROCESS_DIR}/gibson_${data_modality}_agg.fa ${OTU_FASTA}
 
 echo "Done."

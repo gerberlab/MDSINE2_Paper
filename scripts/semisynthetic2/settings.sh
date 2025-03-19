@@ -18,8 +18,8 @@ export SIM_MAX=1e20
 export SIM_DT=0.01
 
 # Real data
-export REAL_DATA_PKL="${PROJECT_DIR}/datasets/gibson/preprocessed/gibson_healthy_agg_filtered.pkl"
-export FIXED_MODULE_MCMC="${PROJECT_DIR}/datasets/gibson/output/mdsine2/inference/merged_studies_fixed_cluster/mcmc.pkl"
+export REAL_DATA_PKL="${PROJECT_DIR}/datasets/gibson/healthy/preprocessed/gibson_healthy_agg_filtered.pkl"
+export FIXED_MODULE_MCMC="${PROJECT_DIR}/datasets/gibson/healthy/output/mdsine2/inference/merged_studies_fixed_cluster/mcmc.pkl"
 
 # inference settings
 export NEGBIN_SEED=314159
@@ -29,13 +29,3 @@ export N_SAMPLES=15000
 export CHECKPOINT=100
 export MULTIPROCESSING=0
 
-
-
-dataset_dir() {
-  # TODO: implement the dataset hierarchy here.
-  traj_seed=$0
-  data_seed=$1
-
-  # Questions to ask:
-  # Variation of N_MICE: should 16 mice share randomness with 8 mice? (e.g. the first 8 mice of the 16 should always share randomness with the 8 mice set)
-}
