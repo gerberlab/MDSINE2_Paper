@@ -17,7 +17,7 @@ seed=$2
 require_variable "seed" $seed
 
 
-study_name="healthy-seed${seed}"
+study_name="${data_modality}-seed${seed}"
 
 # Seed 0
 echo "[*] Performing MDSINE2 inference on ${study_name}"
@@ -26,7 +26,11 @@ echo "[*] Writing files to ${MDSINE2_OUT_DIR}"
 export MDSINE2_LOG_INI="${PROJECT_DIR}/scripts/analysis/logging_to_file.ini"
 export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_inference_${study_name}.log"
 
+mkdir -p "${MDSINE2_OUT_DIR}"
 touch $LOG_FILEPATH
+echo "LOGGING START/END TIMES to ${MDSINE2_OUT_DIR}"
+start_time=$(date +%s.%N)
+
 mdsine2 infer \
 		--input $MAIN_DSET \
 		--negbin $REPLICATE_MCMC \
@@ -39,6 +43,12 @@ mdsine2 infer \
 		--basepath $MDSINE2_OUT_DIR \
 		--interaction-ind-prior $INTERACTION_IND_PRIOR \
 		--perturbation-ind-prior $PERTURBATION_IND_PRIOR
+
+# record runtime for inference
+end_time=$(date +%s.%N)
+duration=$(echo "$end_time - $start_time" | bc)
+echo "${duration}" >> ${MDSINE2_OUT_DIR}/runtime_inference.txt
+
 
 echo "[*] Visualizing output of ${study_name}"
 export LOG_FILEPATH="${MDSINE2_OUT_DIR}/mdsine2_visualization_${study_name}.log"

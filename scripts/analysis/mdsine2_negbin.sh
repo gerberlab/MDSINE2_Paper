@@ -10,11 +10,10 @@ else
   exit 1
 fi
 
-mkdir -p ${NEGBIN_OUT_DIR}
-
 echo "[*] Learning negative binomial dispersion parameters..."
 echo "Output Directory: ${NEGBIN_OUT_DIR}"
 
+mkdir -p ${NEGBIN_OUT_DIR}
 mdsine2 infer-negbin \
     --input ${REPLICATE_DSET} \
     --seed 0 \
