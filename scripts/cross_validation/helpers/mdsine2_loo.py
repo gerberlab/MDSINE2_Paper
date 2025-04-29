@@ -99,6 +99,11 @@ def parse_args() -> argparse.Namespace:
         required=False,
         help='<Optional> Tells the inference loop to print debug messages every k iterations.'
     )
+    parser.add_argument(
+        '--no-qpcr', action='store_true', dest='disable_qpcr',
+        required=False, default=False,
+        help='If flag is set, then runs inference using the "no-qpcr" model.'
+    )
     return parser.parse_args()
 
 
@@ -192,10 +197,14 @@ def main():
             'Since there is less than 30 taxa, we set the initialization of the clustering to `no-clusters`')
         params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
 
-    mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study)
     mdata_fname = os.path.join(params.MODEL_PATH, 'metadata.txt')
     params.make_metadata_file(fname=mdata_fname)
 
+    if args.disable_qpcr:
+        from mdsine2_ra import initialize_graph_no_qpcr
+        mcmc = initialize_graph_no_qpcr(params=params, graph_name=study.name, subjset=study, biomass_mean=1e11)
+    else:
+        mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study)
     _ = md2.run_graph(mcmc, crash_if_error=True, log_every=args.log_every)
 
 

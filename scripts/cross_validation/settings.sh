@@ -1,5 +1,5 @@
 # MODIFY THESE BASED ON LOCAL ENVIRONMENT.
-export DATA_MODALITY="uc"
+export DATA_MODALITY="healthy"
 export DATASET_NAME="gibson/${DATA_MODALITY}"
 source ./settings.sh  # use parent settings (scripts/settings.sh)
 
