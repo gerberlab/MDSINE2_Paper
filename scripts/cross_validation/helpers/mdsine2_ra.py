@@ -549,6 +549,12 @@ def initialize_graph_no_qpcr(
     mcmc = pl.BaseMCMC(burnin=params.BURNIN, n_samples=params.N_SAMPLES, graph=GRAPH)
     order = []
     for name in params.INFERENCE_ORDER:
+        if name == STRNAMES.QPCR_DOFS:
+            continue
+        if name == STRNAMES.QPCR_SCALES:
+            continue
+        if name == STRNAMES.QPCR_VARIANCES:
+            continue
         if params.LEARN[name]:
             if not STRNAMES.is_perturbation_param(name):
                 order.append(name)
