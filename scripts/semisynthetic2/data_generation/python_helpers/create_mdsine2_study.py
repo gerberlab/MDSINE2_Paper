@@ -61,13 +61,13 @@ def main(
     time_isin_collection = np.isclose(metadata['time'], timepoints[0])
     for t in timepoints[1:]:
         time_isin_collection = time_isin_collection | np.isclose(metadata['time'], t)
-    metadata = metadata.loc[
-        metadata['subject'].isin(mice_subset) & time_isin_collection,
-        :
-    ]
+
+    # Restrict the metadata table accordingly.
+    metadata = metadata.loc[metadata['subject'].isin(mice_subset) & time_isin_collection]
+
     if len(pd.unique(metadata['time'])) != len(timepoints):
         print("The following timepoints were requested but were not found in the metadata table: {}".format(
-            timepoints.difference(set(pd.unique(metadata['time'])))
+            set(timepoints).difference(set(pd.unique(metadata['time'])))
         ))
         raise ValueError("The timepoint collection found in the dataframe did not match the timepoint set.")
     else:
