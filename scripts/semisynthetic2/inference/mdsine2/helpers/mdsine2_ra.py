@@ -827,3 +827,7 @@ def main(args: argparse.Namespace):
     f = open(mdata_fname, 'a')
     f.write('\n\nTime for inference: {} hours'.format(t))
     f.close()
+
+
+if __name__ == "__main__":
+    main(parse_args())
