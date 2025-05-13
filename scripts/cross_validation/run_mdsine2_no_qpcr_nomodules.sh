@@ -13,7 +13,7 @@ echo "USING ${N_THREADS} THREADS"
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/mdsine2-noqpcr-modules/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/mdsine2-noqpcr-nomodules/${excluded_subj}
 mkdir -p ${inference_out_dir}
 echo "OUTPUT DIR: ${inference_out_dir}"
 
@@ -31,4 +31,5 @@ python cross_validation/helpers/mdsine2_loo.py \
 		--log-every 100 \
 		--exclude-subject $excluded_subj \
 		--no-qpcr \
+		--nomodules
 		| tee ${inference_out_dir}/log.txt
