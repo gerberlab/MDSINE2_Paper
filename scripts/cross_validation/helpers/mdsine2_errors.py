@@ -13,17 +13,13 @@ from mdsine2.logger import logger
 from tqdm import tqdm
 
 
-"""
-MDSINE2 uses subject names, but clv code uses subject index.
-"""
-SUBJECT_IDS = ["2", "3", "4", "5"]
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('--study', type=str, required=True)
     parser.add_argument('--mdsine_outdir', type=str, required=True)
     parser.add_argument('--out_dir', type=str, required=True)
+    parser.add_argument('--cohort', dest='healthy_or_uc', type=str, required=True)
     parser.add_argument('--sim_dt', type=float, required=False, default=0.01)
     parser.add_argument('--sim_max', type=float, required=False, default=1e20)
     parser.add_argument('--subsample_every', type=int, required=False, default=1)
@@ -203,13 +199,14 @@ def forward_sim_mdsine2(data_path: Path, heldout: HoldoutData, sim_dt: float, si
         if len(init.shape) == 1:
             init = init.reshape(-1, 1)
         x = md2.integrate(dynamics=dyn, initial_conditions=init,
-                          dt=sim_dt, n_days=times[-1] + sim_dt, subsample=True, times=times)
+                          dt=sim_dt, final_day=times[-1], subsample=True, times=times)
         pred_matrix[pred_idx] = x['X']
     return pred_matrix
 
 
 @dataclass
 class HeldoutInferences:
+    complete_study: md2.Study
     mdsine2: Path
     recompute_cache: bool
 
@@ -226,15 +223,18 @@ class HeldoutInferences:
                                    subsample_every=subsample_every)
 
 
-def retrieve_grouped_results(directories: HeldoutInferences) -> Iterator[Tuple[int, str, HeldoutInferences]]:
+def retrieve_grouped_results(directories: HeldoutInferences, healthy_or_uc: str) -> Iterator[Tuple[int, str, HeldoutInferences]]:
     """
     Group the mdsine2/clv/glv etc result paths by heldout subject.
 
     :return: A (subject_id) -> (mdsine2, clv-elastic, glv-elastic, glv-ra-elastic, glv-ra-ridge, glv-ridge
     """
-    for subject_idx, subject_id in enumerate(SUBJECT_IDS):
+
+    subject_ids = [subj.name for subj in directories.complete_study]
+    for subject_idx, subject_id in enumerate(subject_ids):
         yield subject_idx, subject_id, HeldoutInferences(
-            mdsine2=directories.mdsine2 / subject_id / "healthy" / "mcmc.pkl",
+            complete_study=directories.complete_study,
+            mdsine2=directories.mdsine2 / subject_id / healthy_or_uc / "mcmc.pkl",
             recompute_cache=directories.recompute_cache,
         )
 
@@ -244,12 +244,13 @@ def evaluate_all(
         complete_study: md2.Study,
         sim_dt: float,
         sim_max: float,
-        mdsine2_subsample_every: int = 1
+        healthy_or_uc: str,
+        mdsine2_subsample_every: int = 1,
 ):
     # =========== Load evaluations.
     absolute_df_entries = []
     relative_df_entries = []
-    for sidx, sid, inferences in retrieve_grouped_results(directories):
+    for sidx, sid, inferences in retrieve_grouped_results(directories, healthy_or_uc):
         heldout_data = HoldoutData(complete_study[sid], sidx)
 
         def add_absolute_results(_method: str, _res: pd.DataFrame):
@@ -319,6 +320,7 @@ def main():
 
     complete_study = md2.Study.load(args.study)
     directories = HeldoutInferences(
+        complete_study=complete_study,
         mdsine2=Path(args.mdsine_outdir),
         recompute_cache=args.recompute_cache
     )
@@ -329,6 +331,7 @@ def main():
         complete_study,
         args.sim_dt,
         args.sim_max,
+        healthy_or_uc=args.healthy_or_uc,
         mdsine2_subsample_every=args.subsample_every
     )
 
