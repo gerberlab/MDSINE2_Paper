@@ -550,10 +550,13 @@ def initialize_graph_no_qpcr(
     order = []
     for name in params.INFERENCE_ORDER:
         if name == STRNAMES.QPCR_DOFS:
+            params.LEARN[name] = False
             continue
         if name == STRNAMES.QPCR_SCALES:
+            params.LEARN[name] = False
             continue
         if name == STRNAMES.QPCR_VARIANCES:
+            params.LEARN[name] = False
             continue
         if params.LEARN[name]:
             if not STRNAMES.is_perturbation_param(name):

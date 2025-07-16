@@ -1,3 +1,7 @@
+"""
+DEPRECATED SCRIPT! run either "regression_errors.py" or "mdsine2_errors.py" instead.
+"""
+
 import argparse
 import signal
 from dataclasses import dataclass
@@ -582,6 +586,9 @@ def evaluate_all(regression_inputs_dir: Path,
 
 
 def main():
+    print("DEPRECATED SCRIPT!")
+    exit(1)
+
     args = parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)

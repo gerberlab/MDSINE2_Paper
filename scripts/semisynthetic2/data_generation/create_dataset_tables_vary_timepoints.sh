@@ -6,8 +6,7 @@ source semisynthetic2/settings.sh
 n_mice=4  # matches real data
 n_perts=3  # matches real data
 
-#declare -a timeseries_ids=("all" "thin1" "thin2" "thin3" "A" "B" "C")
-declare -a timeseries_ids=("A" "B" "C" "all" "thin1" "thin2" "thin3")
+declare -a timeseries_ids=("all" "thin1" "thin2" "thin2_alt" "thin3")
 
 
 for timeseries_id in "${timeseries_ids[@]}"; do

@@ -31,5 +31,5 @@ python cross_validation/helpers/mdsine2_loo.py \
 		--log-every 100 \
 		--exclude-subject $excluded_subj \
 		--no-qpcr \
-		--nomodules
+		--nomodules \
 		| tee ${inference_out_dir}/log.txt

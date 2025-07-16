@@ -197,6 +197,10 @@ def cosine_sim(x: np.ndarray, y: np.ndarray) -> float:
     return np.sum(x * y) / (np.linalg.norm(x) * np.linalg.norm(y))
 
 
+def spearman_corr(x: np.ndarray, y: np.ndarray) -> float:
+    return scipy.stats.spearmanr(x.flatten(), y.flatten())[0]
+
+
 def evaluate_growth_rate_metrics(true_growth: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
     df_entries = []
 
@@ -236,7 +240,7 @@ def evaluate_growth_rate_metrics(true_growth: np.ndarray, results_base_dir: Path
             _, growths, _ = mdsine1_output(result_dir)
             # errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
             pred_growth = np.median(growths, axis=0)
-            metrics = cosine_sim(pred_growth, true_growth)
+            metrics = spearman_corr(pred_growth, true_growth)
             _add_entry('MDSINE1', float(np.median(metrics)))
         except FileNotFoundError:
             pass
@@ -285,7 +289,7 @@ def evaluate_interaction_strength_metrics(true_interactions: np.ndarray, results
     df_entries = []
 
     def _error_metric(pred, truth) -> float:
-        return cosine_sim(
+        return spearman_corr(
             off_diagonal_entries(pred),
             off_diagonal_entries(truth)
         )
@@ -657,26 +661,26 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    print("Evaluating growth rate metrics.")
-    growth_rate_metrics = evaluate_growth_rate_metrics(growth, results_base_dir)
-    out_path = output_dir / "growth_rate_metrics.csv"
-    growth_rate_metrics.to_csv(output_dir / "growth_rate_metrics.csv")
-    print(f"Wrote growth rate metrics to {out_path.name}.")
-
-    print("Evaluating interaction strength metrics.")
-    interaction_strength_metrics = evaluate_interaction_strength_metrics(interactions, results_base_dir)
-    out_path = output_dir / "interaction_strength_metrics.csv"
-    interaction_strength_metrics.to_csv(output_dir / "interaction_strength_metrics.csv")
-    print(f"Wrote interaction strength metrics to {out_path.name}.")
-
-    print("Evaluating interaction topology metrics.")
-    topology_metrics = evaluate_topology_metrics(indicators, results_base_dir)
-    out_path = output_dir / "topology_metrics.csv"
-    topology_metrics.to_csv(output_dir / "topology_metrics.csv")
-    print(f"Wrote interaction topology metrics to {out_path.name}.")
+    # print("Evaluating growth rate metrics.")
+    # growth_rate_metrics = evaluate_growth_rate_metrics(growth, results_base_dir)
+    # out_path = output_dir / "growth_rate_metrics.csv"
+    # growth_rate_metrics.to_csv(output_dir / "growth_rate_metrics.csv")
+    # print(f"Wrote growth rate metrics to {out_path.name}.")
+    #
+    # print("Evaluating interaction strength metrics.")
+    # interaction_strength_metrics = evaluate_interaction_strength_metrics(interactions, results_base_dir)
+    # out_path = output_dir / "interaction_strength_metrics.csv"
+    # interaction_strength_metrics.to_csv(output_dir / "interaction_strength_metrics.csv")
+    # print(f"Wrote interaction strength metrics to {out_path.name}.")
+    #
+    # print("Evaluating interaction topology metrics.")
+    # topology_metrics = evaluate_topology_metrics(indicators, results_base_dir)
+    # out_path = output_dir / "topology_metrics.csv"
+    # topology_metrics.to_csv(output_dir / "topology_metrics.csv")
+    # print(f"Wrote interaction topology metrics to {out_path.name}.")
 
     print("Evaluating forward-simulation errors.")
-    dataset_dir = Path("/data/local/youn/MDSINE2_Paper/datasets/synthetic/data")
+    dataset_dir = Path("/data/cctm/youn/MDSINE2_Paper/datasets/synthetic/data")
     fwsim_errors = evaluate_fwsim_errors(
         growth,
         interactions,

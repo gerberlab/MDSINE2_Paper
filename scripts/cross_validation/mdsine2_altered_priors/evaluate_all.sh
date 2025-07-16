@@ -3,10 +3,10 @@ set -e
 source cross_validation/settings.sh
 
 
-evaluate_subdir()
+evaluate_mdsine2_subdir()
 {
   out_subdir=$1
-  python cross_validation/helpers/prior_comparison_errors.py \
+  python cross_validation/helpers/mdsine2_errors.py \
     --study ${DATASET_PKL} \
     --mdsine_outdir ${OUTPUT_DIR}/${out_subdir} \
     --out_dir ${OUTPUT_DIR}/${out_subdir} \
@@ -25,24 +25,24 @@ evaluate_regression_subdir()
 }
 
 
-evaluate_subdir "default_new"
-evaluate_subdir "edge_density_1"
-evaluate_subdir "edge_density_2"
-evaluate_subdir "edge_density_3"
-evaluate_subdir "edge_density_4"
-evaluate_subdir "edge_density_5"
-evaluate_subdir "growth_si_var_1"
-evaluate_subdir "growth_si_var_2"
-evaluate_subdir "growth_si_var_3"
-evaluate_subdir "growth_si_var_4"
-evaluate_subdir "interaction_var_1"
-evaluate_subdir "interaction_var_2"
-evaluate_subdir "interaction_var_3"
-evaluate_subdir "interaction_var_4"
-evaluate_subdir "pert_var_1"
-evaluate_subdir "pert_var_2"
-evaluate_subdir "pert_var_3"
-evaluate_subdir "pert_var_4"
+evaluate_mdsine2_subdir "default_new"
+evaluate_mdsine2_subdir "edge_density_1"
+evaluate_mdsine2_subdir "edge_density_2"
+evaluate_mdsine2_subdir "edge_density_3"
+evaluate_mdsine2_subdir "edge_density_4"
+evaluate_mdsine2_subdir "edge_density_5"
+evaluate_mdsine2_subdir "growth_si_var_1"
+evaluate_mdsine2_subdir "growth_si_var_2"
+evaluate_mdsine2_subdir "growth_si_var_3"
+evaluate_mdsine2_subdir "growth_si_var_4"
+evaluate_mdsine2_subdir "interaction_var_1"
+evaluate_mdsine2_subdir "interaction_var_2"
+evaluate_mdsine2_subdir "interaction_var_3"
+evaluate_mdsine2_subdir "interaction_var_4"
+evaluate_mdsine2_subdir "pert_var_1"
+evaluate_mdsine2_subdir "pert_var_2"
+evaluate_mdsine2_subdir "pert_var_3"
+evaluate_mdsine2_subdir "pert_var_4"
 evaluate_regression_subdir
 
 

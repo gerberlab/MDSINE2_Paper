@@ -25,10 +25,6 @@ from lv_forward_sims import \
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
 
-"""
-MDSINE2 uses subject names, but clv code uses subject index.
-"""
-SUBJECT_IDS = ["2", "3", "4", "5"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -272,27 +268,12 @@ def forward_sim_glv(data_path: Path,
     return forward_sim_single_subj_glv(A, g, B, x0, u, t, rel_abund=rel_abund).transpose(1, 0)
 
 
-@dataclass
-class HeldoutInferences:
-    regression_output: Path
-    recompute_cache: bool
-
-    def __post_init__(self):
-        def _require_file(path: Path):
-            if not path.exists:
-                raise FileNotFoundError(f"{path} not found!")
-
-        _require_file(self.regression_output)
-
-    def glv_fwsim(self, x0: np.ndarray, u: np.ndarray, t: np.ndarray) -> np.ndarray:
-        return forward_sim_glv(data_path=self.regression_output, recompute_cache=self.recompute_cache, x0=x0, u=u, t=t)
-
-
 def evaluate_all(regression_inputs_dir: Path,
                  regression_outdir: Path,
                  model_name: str,
                  complete_study: md2.Study,
-                 recompute_cache: bool):
+                 recompute_cache: bool,
+                 use_rel_abund: bool):
     # =========== Load regression inputs
     with open(regression_inputs_dir / "Y.pkl", "rb") as f:
         Y = pickle.load(f)
@@ -305,19 +286,19 @@ def evaluate_all(regression_inputs_dir: Path,
     logger.debug(f"Regression input rescaling value: {scale}")
 
     # =========== Load evaluations.
-    absolute_df_entries = []
-    relative_df_entries = []
-    for sidx, sid in enumerate(SUBJECT_IDS):
+    df_entries = []
+    subject_ids = [str(x) for x in sorted(int(subj.name) for subj in complete_study)]
+    for sidx, sid in enumerate(subject_ids):
         pkl_path = regression_outdir / f"{model_name}-{sidx}-model.pkl"
         heldout_data = HoldoutData(complete_study[sid], sidx)
 
         x0, u, t = Y[sidx][0], U[sidx], T[sidx]
         fwsim = forward_sim_glv(data_path=pkl_path, recompute_cache=recompute_cache,
-                                x0=x0, u=u, t=t, scale=scale, rel_abund=False, init_limit_of_detection=1e5)
+                                x0=x0, u=u, t=t, scale=scale, rel_abund=use_rel_abund, init_limit_of_detection=1e5)
 
-        def add_absolute_results(_method: str, _res: pd.DataFrame):
+        def add_results(_method: str, _res: pd.DataFrame):
             for _, row in _res.iterrows():
-                absolute_df_entries.append({
+                df_entries.append({
                     'HeldoutSubjectId': sid,
                     'HeldoutSubjectIdx': sidx,
                     'Method': _method,
@@ -328,17 +309,28 @@ def evaluate_all(regression_inputs_dir: Path,
                 })
 
         # Absolute abundance
-        try:
-            add_absolute_results(
-                'gLV (elastic net)',
-                heldout_data.evaluate_absolute(fwsim)
-            )
-        except FileNotFoundError:
-            logger.error(f"Couldn't locate glv-elastic Net output: Holdout Subject {sid}.")
+        if not use_rel_abund:
+            try:
+                add_results('gLV (elastic net)', heldout_data.evaluate_absolute(fwsim))
+            except TimeoutError:
+                logger.error("Unable to finish forward simulation for glv-RA elastic-net (timeout)")
+            except ValueError:
+                logger.error("Unable to finish forward simulation for glv-RA elastic-net (generic ValueError")
+            except FileNotFoundError as e:
+                print(e)
+                logger.error(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
+        else:
+            try:
+                add_results('gLV-RA (elastic net)', heldout_data.evaluate_relative(fwsim))
+            except TimeoutError:
+                logger.error("Unable to finish forward simulation for glv-RA elastic-net (timeout)")
+            except ValueError:
+                logger.error("Unable to finish forward simulation for glv-RA elastic-net (generic ValueError")
+            except FileNotFoundError as e:
+                print(e)
+                logger.error(f"Couldn't locate glv-RA-elastic net output (relabund): Holdout Subject {sid}.")
 
-    absolute_results = pd.DataFrame(absolute_df_entries)
-    relative_results = pd.DataFrame(relative_df_entries)
-    return absolute_results, relative_results
+    return pd.DataFrame(df_entries)
 
 
 def main():
@@ -349,12 +341,21 @@ def main():
     complete_study = md2.Study.load(args.study)
 
     # =================== Evaluate all errors.
-    absolute_results, relative_results = evaluate_all(
+    absolute_results = evaluate_all(
         Path(args.regression_inputs_dir),
         Path(args.regression_outdir),
         model_name=args.model_name,
         complete_study=complete_study,
-        recompute_cache=args.recompute_cache
+        recompute_cache=args.recompute_cache,
+        use_rel_abund=False
+    )
+    relative_results = evaluate_all(
+        Path(args.regression_inputs_dir),
+        Path(args.regression_outdir),
+        model_name=args.model_name,
+        complete_study=complete_study,
+        recompute_cache=False,
+        use_rel_abund=True
     )
 
     absolute_results.to_csv(out_dir / "absolute_cv.tsv", sep='\t', index=False)

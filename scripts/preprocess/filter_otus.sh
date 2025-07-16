@@ -30,4 +30,10 @@ python preprocess/helpers/filter_replicates_like_other_dataset.py \
     --like-other ${PREPROCESS_DIR}/gibson_${data_modality}_agg_filtered.pkl \
     --out-path ${PREPROCESS_DIR}/gibson_replicates_agg_filtered.pkl
 
+python preprocess/helpers/filter_replicates_like_other_dataset.py \
+    --replicate-dataset ${PREPROCESS_DIR}/gibson_inoculum_agg.pkl \
+    --like-other ${PREPROCESS_DIR}/gibson_${data_modality}_agg_filtered.pkl \
+    --out-path ${PREPROCESS_DIR}/gibson_inoculum_agg_filtered.pkl
+
+
 echo "Done."

@@ -7,14 +7,15 @@ excluded_subj=$1
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/mdsine2-modules/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/mdsine2-modules-seed10/${excluded_subj}
 mkdir -p ${inference_out_dir}
+echo "${inference_out_dir}"
 
 echo "[*] Running cross-validation run for MDSINE2 (Excluding subject: ${excluded_subj})"
 python cross_validation/helpers/mdsine2_loo.py \
 		--input $DATASET_PKL \
 		--negbin $REPLICATE_MCMC \
-		--seed ${seed} \
+		--seed 10 \
 		--burnin $MDSINE2_BURNIN \
 		--n-samples $MDSINE2_SAMPLES \
 		--checkpoint $MDSINE2_SAVE_EVERY \
