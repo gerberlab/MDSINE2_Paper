@@ -1,3 +1,7 @@
+NOTE: This is NOT the analysis that generated Supp. Figure 7 (runtime analysis). That was done using a newer script (`semisynthetic2/inference/runtime_benchmark.sh`)
+
+
+
 Run the scripts in the following order:
 
 1. `runtime_benchmarks/mdsine2_filter.sh`
