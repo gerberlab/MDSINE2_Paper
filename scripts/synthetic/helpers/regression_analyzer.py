@@ -38,8 +38,7 @@ class Ridge():
                     if U[i].shape[0] != X[i].shape[0]:
                         raise Exception("Error with dimensions.")
                     if np.sum([np.sum(u) for u in U]) != 0:
-                        xu = np.hstack((np.exp(X[i]), np.ones((X[i].shape[0], 1)),
-                            U[i]))
+                        xu = np.hstack((np.exp(X[i]), np.ones((X[i].shape[0], 1)), U[i]))
                         self.XU.append(xu[0:-1])
             else:
                 for i in range(len(X)):
@@ -151,7 +150,7 @@ class Ridge():
 
     def significance_test(self):
         """
-            performs a significance test proposed in Lule et al. 2011;
+            performs a significance test proposed in Cule et al. 2011;
             spits out a matrix of p-values associated with beta coefficients
             of the regression model
         """

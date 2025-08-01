@@ -24,10 +24,8 @@ def parse_args() -> argparse.Namespace:
                         help='<Required> The desired path to which all evaluation metrics will be saved.')
     parser.add_argument('-g', '--ground_truth_params', type=str, required=True,
                         help='<Required> The path to a .npz file containing `growth_rates`, `interactions` arrays')
-    parser.add_argument('-m', '--initial_cond_mean', type=float, required=True,
-                        help='<Required> The mean of the initial condition distribution.')
-    parser.add_argument('-s', '--initial_cond_std', type=float, required=True,
-                        help='<Required> The standard deviation of the initial condition distribution.')
+    parser.add_argument('-n', '--num_subjects', type=int, required=True,
+                        help='<Required> The number of subjecs to simulate to lump into a single cohort.')
 
     parser.add_argument('--subsample_fwsim', type=int, required=False, default=0.1,
                         help='<Optional> Subsamples this fraction of poster samples from MDSINE(1 or 2).'
@@ -195,11 +193,19 @@ def parse_ground_truth_params(params_path: Path) -> Tuple[np.ndarray, np.ndarray
     return growth, interactions, indicators
 
 
-def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
+def cosine_sim(x: np.ndarray, y: np.ndarray) -> float:
+    return np.sum(x * y) / (np.linalg.norm(x) * np.linalg.norm(y))
+
+
+def spearman_corr(x: np.ndarray, y: np.ndarray) -> float:
+    return scipy.stats.spearmanr(x.flatten(), y.flatten())[0]
+
+
+def evaluate_growth_rate_metrics(true_growth: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
     df_entries = []
 
-    def _error_metric(pred, truth) -> float:
-        return np.sqrt(np.mean(np.square(pred - truth)))
+    # def _error_metric(pred, truth) -> float:
+        # return np.sqrt(np.mean(np.square(pred - truth)))  # root-mean-square
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         def _add_entry(_method: str, _err: float):
@@ -208,21 +214,23 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
                 'ReadDepth': read_depth,
                 'Trial': trial_num,
                 'NoiseLevel': noise_level,
-                'Error': _err
+                'Metric': _err
             })
 
         def _add_regression_entry(_method: str, _regression_type: str):
             try:
                 pred_growth, _ = regression_output(result_dir, _method, _regression_type)
-                _add_entry(f'{_method}-{_regression_type}', _error_metric(pred_growth, true_growth))
+                _add_entry(f'{_method}-{_regression_type}', cosine_sim(pred_growth, true_growth))
             except FileNotFoundError:
                 pass
 
         # MDSINE2 inference error eval
         try:
             _, growths, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
-            errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
-            _add_entry('MDSINE2', float(np.median(errors)))
+            # errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
+            pred_growth = np.median(growths, axis=0)
+            metrics = cosine_sim(pred_growth, true_growth)
+            _add_entry('MDSINE2', float(np.median(metrics)))
         except FileNotFoundError:
             print("Skipping MDSINE2 (read depth={}, trial={}, noise={}), dir = {}".format(read_depth, trial_num, noise_level, result_dir))
             pass
@@ -230,8 +238,10 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
         # MDSINE1 error
         try:
             _, growths, _ = mdsine1_output(result_dir)
-            errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
-            _add_entry('MDSINE1', float(np.median(errors)))
+            # errors = np.array([_error_metric(pred_growth, true_growth) for pred_growth in growths])
+            pred_growth = np.median(growths, axis=0)
+            metrics = spearman_corr(pred_growth, true_growth)
+            _add_entry('MDSINE1', float(np.median(metrics)))
         except FileNotFoundError:
             pass
 
@@ -250,18 +260,49 @@ def evaluate_growth_rate_errors(true_growth: np.ndarray, results_base_dir: Path)
     return df
 
 
-def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
+def mcmc_to_consensus(mcmc_samples: np.ndarray, posterior_lb: float) -> np.ndarray:
+    mats = np.copy(mcmc_samples)
+
+    # First, remove all instances with zero values.
+    mats[mats == 0] = np.nan
+
+    # Second, filter by posterior (empty out locs where posterior < lb)
+    posterior = np.mean(~np.isnan(mats), axis=0)
+
+    # Then, compute the conditional averages.
+    cond_means = np.nanmedian(mats, axis=0)
+
+    # Finally, zero out locs with small posterior values.
+    cond_means[posterior <= posterior_lb] = 0.0
+    return cond_means
+
+
+def off_diagonal_entries(A: np.ndarray):
+    r_tril, c_tril = np.tril_indices(n=A.shape[0], m=A.shape[1], k=-1)
+    r_triu, c_triu = np.triu_indices(n=A.shape[0], m=A.shape[1], k=1)
+    off_diag_r = np.concatenate([r_triu, r_tril])
+    off_diag_c = np.concatenate([c_triu, c_tril])
+    return A[off_diag_r, off_diag_c]
+
+
+def evaluate_interaction_strength_metrics(true_interactions: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
     df_entries = []
 
     def _error_metric(pred, truth) -> float:
-        assert pred.shape[0] == pred.shape[1]  # Square matrix
-        # return np.sqrt(np.mean(np.square(pred - truth)))
-
-        # ===== Don't count diagonals (self interactions)
-        np.fill_diagonal(pred, 0)
-        np.fill_diagonal(truth, 0)
-        num_entries = pred.shape[0] * (pred.shape[0] - 1)
-        return np.sqrt((1 / num_entries) * np.sum(np.square(pred - truth)))
+        return spearman_corr(
+            off_diagonal_entries(pred),
+            off_diagonal_entries(truth)
+        )
+        # assert pred.shape[0] == pred.shape[1]  # Square matrix
+        # pred = np.copy(pred)
+        # truth = np.copy(truth)
+        # # return np.sqrt(np.mean(np.square(pred - truth)))
+        #
+        # # ===== Don't count diagonals (self interactions)
+        # np.fill_diagonal(pred, 0)
+        # np.fill_diagonal(truth, 0)
+        # num_entries = pred.shape[0] * (pred.shape[0] - 1)
+        # return np.sqrt((1 / num_entries) * np.sum(np.square(pred - truth)))
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
         def _add_entry(_method: str, _err: float):
@@ -270,7 +311,7 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
                 'ReadDepth': read_depth,
                 'Trial': trial_num,
                 'NoiseLevel': noise_level,
-                'Error': _err
+                'Metric': _err
             })
 
         def _add_regression_entry(_method: str, _regression_type: str):
@@ -282,19 +323,21 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
 
         # MDSINE2 inference error eval
         try:
-            interactions, _, _ = mdsine2_output(result_dir)
-            errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
-            _add_entry('MDSINE2', float(np.median(errors)))
-            # pred_interaction = np.median(interactions, axis=0)
-            # _add_entry('MDSINE2', _error_metric(pred_interaction, true_interactions))
+            interactions, _, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
+            # errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
+            # _add_entry('MDSINE2', float(np.median(errors)))
+            pred_interactions = mcmc_to_consensus(interactions, 0.5)
+            _add_entry('MDSINE2', _error_metric(pred_interactions, true_interactions))
         except FileNotFoundError:
             pass
 
         # MDSINE1 error
         try:
             interactions, _, _ = mdsine1_output(result_dir)
-            errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
-            _add_entry('MDSINE1', float(np.median(errors)))
+            # errors = np.array([_error_metric(pred_interaction, true_interactions) for pred_interaction in interactions])
+            # _add_entry('MDSINE1', float(np.median(errors)))
+            pred_interactions = mcmc_to_consensus(interactions, 0.5)
+            _add_entry('MDSINE1', _error_metric(pred_interactions, true_interactions))
         except FileNotFoundError:
             pass
 
@@ -313,66 +356,50 @@ def evaluate_interaction_strength_errors(true_interactions: np.ndarray, results_
     return df
 
 
-def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
+def evaluate_topology_metrics(true_indicators: np.ndarray, results_base_dir: Path) -> pd.DataFrame:
     df_entries = []
+    from sklearn.metrics import roc_auc_score
 
-    def _false_positive_rate(pred, truth) -> float:
-        return 1 - _true_negative_rate(pred, truth)
-
-    def _true_negative_rate(pred, truth) -> float:
-        not_pred = np.logical_not(pred)
-        not_truth = np.logical_not(truth)
-        # don't count diagonal entries.
-        return _count(not_pred & not_truth) / _count(not_truth)
-
-    def _true_positive_rate(pred, truth) -> float:
-        # Don't count diagonal entries.
-        return _count(pred & truth) / _count(truth)
-
-    def _count(b) -> int:
-        off_diag = (np.eye(b.shape[0]) == 0)
-        return int(np.sum(b & off_diag))
+    def _compute_auroc(_method: str, _p: np.ndarray):
+        auc = roc_auc_score(
+            off_diagonal_entries(true_indicators),
+            off_diagonal_entries(_p),
+        )
+        return auc
 
     for read_depth, trial_num, noise_level, result_dir in result_dirs(results_base_dir):
-        def _compute_roc_curve(_method: str, _p: np.ndarray, _q: np.ndarray, use_greater_than: bool):
+        def _compute_roc_curve(_method: str, _pred: np.ndarray):
             """
             Computes a range of FPR/TPR pairs and adds them all to the dataframe.
-            :param _p: An (N_taxa x N_taxa) matrix of p-values for each pair of interactions.
             """
-            if use_greater_than:
-                preds = np.expand_dims(_p, axis=2) > np.expand_dims(_q, axis=(0, 1))
-            else:
-                preds = np.expand_dims(_p, axis=2) < np.expand_dims(_q, axis=(0, 1))
-            for i in range(len(_q)):
-                preds_i = preds[:, :, i]
-                df_entries.append({
-                    'Method': _method,
-                    'ReadDepth': read_depth,
-                    'Trial': trial_num,
-                    'NoiseLevel': noise_level,
-                    'FPR': _false_positive_rate(preds_i, true_indicators),
-                    'TPR': _true_positive_rate(preds_i, true_indicators)
-                })
+            df_entries.append({
+                'Method': _method,
+                'ReadDepth': read_depth,
+                'Trial': trial_num,
+                'NoiseLevel': noise_level,
+                'AUROC': _compute_auroc(_method, _pred)
+            })
 
         def _add_regression_entry(_method: str, _regression_type: str):
             try:
                 interaction_p_values = regression_interaction_pvals(result_dir, _method, _regression_type)  # (N x N)
-                _compute_roc_curve(f'{_method}-{_regression_type}', np.log(interaction_p_values), np.linspace(-100., 0., 1000), use_greater_than=False)
+                # smalller p-value = more significant, so convert it into a "score" by passing 1-p.
+                _compute_roc_curve(f'{_method}-{_regression_type}', 1.0 - interaction_p_values)
             except FileNotFoundError:
                 pass
 
         # MDSINE2 inference error eval
         try:
-            _, _, interaction_indicators = mdsine2_output(result_dir)
-            indicator_pvals = np.mean(interaction_indicators, axis=0)
-            _compute_roc_curve('MDSINE2', indicator_pvals, np.linspace(0, 1, 1000), use_greater_than=True)
+            _, _, interaction_indicators = mdsine2_output(result_dir / 'mdsine2' / f'simulated-{noise_level}')
+            indicator_probs = np.mean(interaction_indicators, axis=0)
+            _compute_roc_curve('MDSINE2', indicator_probs)
         except FileNotFoundError:
             pass
 
         # MDSINE1 inference error eval
         try:
             _, _, indicator_probs = mdsine1_output(result_dir)
-            _compute_roc_curve('MDSINE1', indicator_probs, np.linspace(0, 1, 1000), use_greater_than=True)
+            _compute_roc_curve('MDSINE1', indicator_probs)
         except FileNotFoundError:
             pass
 
@@ -392,25 +419,25 @@ def evaluate_topology_errors(true_indicators: np.ndarray, results_base_dir: Path
     return df
 
 
-def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
-                                       true_interactions: np.ndarray,
-                                       init_rv: scipy.stats.rv_continuous,
-                                       initial_min_value: float,
-                                       results_base_dir: Path,
-                                       subsample_frac: float) -> pd.DataFrame:
+def evaluate_fwsim_errors(true_growth: np.ndarray,
+                          true_interactions: np.ndarray,
+                          initial_min_value: float,
+                          results_base_dir: Path,
+                          dataset_dir: Path,
+                          n_subjects: int,
+                          subsample_frac: float) -> pd.DataFrame:
     """
     Generate a new subject and use it as a "holdout" dataset.
     :param true_growth:
     :param true_interactions:
-    :param init_rv: The (1-d) distribution from which the initial condition will be sampled (iid for each taxon)
     :param results_base_dir:
     :return:
     """
-    def _error_metric(_pred_traj, _true_traj) -> float:
-        _pred_traj[_pred_traj < 1.0] = 1.0
-        _pred_traj = np.log10(_pred_traj)
-        _true_traj = np.log10(_true_traj)
-        return np.sqrt(np.mean(np.square(_pred_traj - _true_traj)))
+    def _error_metric(_pred_trajs, _true_trajs) -> float:
+        eps = 1e0
+        _pred_trajs = np.log10(_pred_trajs + eps)
+        _true_trajs = np.log10(_true_trajs + eps)
+        return np.sqrt(np.mean(np.square(_pred_trajs - _true_trajs)))
 
     """ Simulation parameters """
     sim_seed = 0
@@ -427,12 +454,19 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
         sim_seed += 1
         np.random.seed(sim_seed)
 
-        # generate initial conditions.
-        initial_cond = init_rv.rvs(size=len(true_growth))
-        initial_cond[initial_cond < initial_min_value] = initial_min_value
+        # load initial conditions.
+        true_trajs = []
+        initial_conds = []
+        for subj_idx in range(n_subjects):
+            subj_name = f'subj_{subj_idx}'
+            initial_cond = np.load(dataset_dir / f'trial_{trial_num}' / f'{subj_name}.npz')['sims'][:, 0]
+            initial_cond[initial_cond < initial_min_value] = initial_min_value
+            initial_conds.append(initial_cond)
 
-        true_traj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
-        true_traj = true_traj[:, target_t_idx]
+            true_traj_subj, _ = forward_sim(true_growth, true_interactions, initial_cond, dt=sim_dt, sim_max=sim_max, sim_t=sim_t)
+            true_traj_subj = true_traj_subj[:, target_t_idx]
+            true_trajs.append(true_traj_subj)
+        true_trajs = np.stack(true_trajs, axis=0)  # (n_subj x n_taxa x n_times)
 
         def _add_entry(_method: str, _err: float):
             df_entries.append({
@@ -440,18 +474,21 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                 'ReadDepth': read_depth,
                 'Trial': trial_num,
                 'NoiseLevel': noise_level,
-                'Error': _err
+                'Metric': _err
             })
 
         def _eval_mdsine(_method: str, _pred_interactions: np.ndarray, _pred_growths: np.ndarray):
             subsample_idxs = np.arange(0, _pred_interactions.shape[0], int(subsample_frac * _pred_interactions.shape[0]))
-            pred_traj = np.median(
-                posterior_forward_sims(_pred_growths[subsample_idxs, :],
-                                       _pred_interactions[subsample_idxs, :, :],
-                                       initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
-                axis=0
-            )
-            _add_entry(_method, _error_metric(pred_traj, true_traj))
+            pred_trajs = np.stack([
+                np.median(
+                    posterior_forward_sims(_pred_growths[subsample_idxs, :],
+                                           _pred_interactions[subsample_idxs, :, :],
+                                           initial_cond, sim_dt, sim_max, sim_t, t, target_t_idx),
+                    axis=0
+                )  # median trajectory
+                for initial_cond in initial_conds
+            ])
+            _add_entry(_method, _error_metric(pred_trajs, true_trajs))
 
         def _eval_regression(_model_name: str, _regression_type: str):
             pkl_dir = result_dir / _model_name / _regression_type
@@ -460,12 +497,15 @@ def evaluate_holdout_trajectory_errors(true_growth: np.ndarray,
                 print(f"Unable to locate any .pkl files in {result_dir}.")
                 return
             pkl_path = result_paths[0]
-            pred_traj = np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
-            _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_traj, true_traj))
+            pred_trajs = np.stack([
+                np.transpose(regression_forward_simulate(pkl_path, init_abundance=initial_cond, times=target_t))
+                for initial_cond in initial_conds
+            ])
+            _add_entry(f'{_model_name}-{_regression_type}', _error_metric(pred_trajs, true_trajs))
 
         # MDSINE2 error
         try:
-            pred_interactions, pred_growths, _ = mdsine2_output(result_dir)
+            pred_interactions, pred_growths, _ = mdsine2_output(result_dir / "mdsine2" / f"simulated-{noise_level}")
             _eval_mdsine('MDSINE2', pred_interactions, pred_growths)
         except FileNotFoundError:
             pass
@@ -592,17 +632,23 @@ def forward_sim(growth,
 
     :return: N x T array of simulated trajs (N = # of taxa, T = # timepoints)
     """
-    dyn = md2.model.gLVDynamicsSingleClustering(growth=None, interactions=None,
-                                                perturbation_ends=[], perturbation_starts=[],
-                                                start_day=0, sim_max=sim_max)
+    dyn = md2.model.gLVDynamicsSingleClustering(
+        growth=None, interactions=None,
+        perturbation_ends=[], perturbation_starts=[],
+        start_day=0, sim_max=sim_max)
     initial_conditions = initial_conditions.reshape(-1, 1)
 
     dyn.growth = growth
     dyn.interactions = interactions
     dyn.perturbations = []
 
-    x = md2.integrate(dynamics=dyn, initial_conditions=initial_conditions,
-                      dt=dt, n_days=sim_t, subsample=False)
+    x = md2.integrate(
+        dynamics=dyn,
+        initial_conditions=initial_conditions,
+        dt=dt,
+        final_day=sim_t,
+        subsample=False
+    )
     return x['X'], x['times']
 
 
@@ -615,37 +661,38 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"Outputs will be saved to {output_dir}.")
 
-    print("Evaluating growth rate errors.")
-    growth_rate_errors = evaluate_growth_rate_errors(growth, results_base_dir)
-    out_path = output_dir / "growth_rate_errors.csv"
-    growth_rate_errors.to_csv(output_dir / "growth_rate_errors.csv")
-    print(f"Wrote growth rate errors to {out_path.name}.")
+    # print("Evaluating growth rate metrics.")
+    # growth_rate_metrics = evaluate_growth_rate_metrics(growth, results_base_dir)
+    # out_path = output_dir / "growth_rate_metrics.csv"
+    # growth_rate_metrics.to_csv(output_dir / "growth_rate_metrics.csv")
+    # print(f"Wrote growth rate metrics to {out_path.name}.")
+    #
+    # print("Evaluating interaction strength metrics.")
+    # interaction_strength_metrics = evaluate_interaction_strength_metrics(interactions, results_base_dir)
+    # out_path = output_dir / "interaction_strength_metrics.csv"
+    # interaction_strength_metrics.to_csv(output_dir / "interaction_strength_metrics.csv")
+    # print(f"Wrote interaction strength metrics to {out_path.name}.")
+    #
+    # print("Evaluating interaction topology metrics.")
+    # topology_metrics = evaluate_topology_metrics(indicators, results_base_dir)
+    # out_path = output_dir / "topology_metrics.csv"
+    # topology_metrics.to_csv(output_dir / "topology_metrics.csv")
+    # print(f"Wrote interaction topology metrics to {out_path.name}.")
 
-    print("Evaluating interaction strength errors.")
-    interaction_strength_errors = evaluate_interaction_strength_errors(interactions, results_base_dir)
-    out_path = output_dir / "interaction_strength_errors.csv"
-    interaction_strength_errors.to_csv(output_dir / "interaction_strength_errors.csv")
-    print(f"Wrote interaction strength errors to {out_path.name}.")
-
-    print("Evaluating interaction topology errors.")
-    topology_errors = evaluate_topology_errors(indicators, results_base_dir)
-    out_path = output_dir / "topology_errors.csv"
-    topology_errors.to_csv(output_dir / "topology_errors.csv")
-    print(f"Wrote interaction topology errors to {out_path.name}.")
-
-    # print("Evaluating holdout trajectory errors.")
-    # init_dist = scipy.stats.norm(loc=args.initial_cond_mean, scale=args.initial_cond_std)
-    # holdout_trajectory_errors = evaluate_holdout_trajectory_errors(
-    #     growth,
-    #     interactions,
-    #     init_dist,
-    #     100.0,
-    #     results_base_dir,
-    #     args.subsample_fwsim
-    # )
-    # out_path = output_dir / "holdout_trajectory_errors.csv"
-    # holdout_trajectory_errors.to_csv(out_path)
-    # print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
+    print("Evaluating forward-simulation errors.")
+    dataset_dir = Path("/data/cctm/youn/MDSINE2_Paper/datasets/synthetic/data")
+    fwsim_errors = evaluate_fwsim_errors(
+        growth,
+        interactions,
+        100.0,
+        results_base_dir,
+        dataset_dir,
+        args.num_subjects,
+        args.subsample_fwsim
+    )
+    out_path = output_dir / "forward_sim_errors.csv"
+    fwsim_errors.to_csv(out_path)
+    print(f"Wrote heldout trajectory prediction errors to {out_path.name}.")
 
 
 if __name__ == "__main__":

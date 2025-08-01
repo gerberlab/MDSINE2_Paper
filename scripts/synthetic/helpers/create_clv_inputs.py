@@ -39,11 +39,12 @@ if __name__ == "__main__":
         counts = subj.matrix()["abs"].T
         times = subj.times
         perturb_ids = np.zeros(len(times), dtype=int)
-        for p_idx, pert in enumerate(study.perturbations):
-            start = pert.starts[subj.name]
-            end = pert.starts[subj.name]
-            indices, = np.where((times >= start) & (times <= end))
-            perturb_ids[indices] = p_idx + 1
+        if study.perturbations is not None:
+            for p_idx, pert in enumerate(study.perturbations):
+                start = pert.starts[subj.name]
+                end = pert.ends[subj.name]
+                indices, = np.where((times >= start) & (times <= end))
+                perturb_ids[indices] = p_idx + 1
 
         assert len(times) == counts.shape[0]
         assert counts.shape[1] == len(taxa)

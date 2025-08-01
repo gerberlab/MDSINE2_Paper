@@ -36,11 +36,14 @@ def create_files(study: md2.Study, counts_path: Path, metadata_path: Path, bioma
         for subj_idx, subj in enumerate(study):
             times = subj.times
             pert_ids = np.zeros(len(times), dtype=int)
-            for p_idx, pert in enumerate(study.perturbations):
-                start = pert.starts[subj.name]
-                end = pert.starts[subj.name]
-                indices, = np.where((times >= start) & (times <= end))
-                pert_ids[indices] = p_idx + 1
+            if study.perturbations is not None:
+                for p_idx, pert in enumerate(study.perturbations):
+                    start = pert.starts[subj.name]
+                    end = pert.starts[subj.name]
+                    indices, = np.where((times >= start) & (times <= end))
+                    pert_ids[indices] = p_idx + 1
+            else:
+                print("No perturbations found in synthetic subject {}.".format(subj.name))
 
             for t_idx, (t, reads) in enumerate(subj.reads.items()):
                 sample_id = f'SUBJ{subj_idx}_T{t}'

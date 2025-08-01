@@ -1,0 +1,45 @@
+# uniformly thinned version of inference_timepoints.txt, hereby called "thin2"
+# note: we always keep the timepoint-window measurements.
+# p=1/2, rarified by a factor of 2/3 from thin1 (p=3/4)
+1.0
+1.5
+2.0
+3.5
+4.0
+6.0
+7.0
+10.0
+11.0
+18.0
+21.0
+21.5
+23.0
+23.5
+28.0
+28.5
+29.0
+30.5
+31.0
+33.0
+35.0
+35.5
+37.0
+37.5
+42.0
+42.5
+43.0
+44.5
+45.0
+47.0
+50.0
+50.5
+52.0
+52.5
+57.0
+57.5
+58.0
+59.5
+60.0
+62.0
+63.0
+64.5

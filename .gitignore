@@ -11,5 +11,4 @@ __pycache__
 sequence_analysis/tmp/
 sequence_analysis/raw_reads/
 sequence_analysis/taxa/silva/
-datasets/gibson/metadata_OTU/plots/
 scripts/differential_abundance/_tmp/

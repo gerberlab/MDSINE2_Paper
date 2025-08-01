@@ -1,53 +1,53 @@
 rm(list=ls())
 
-#if (!requireNamespace("BiocManager", quietly = TRUE))
-#  install.packages("BiocManager")
-#BiocManager::install("apeglm")
-#BiocManager::install("DESeq2")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("apeglm")
+BiocManager::install("DESeq2", force=TRUE)
 library("DESeq2") #v1.32.0 was used for this paper
 
 
 taxa_rank<-c('phylum', 'of')# 'otu', 'of','phylum'
-cohort_name<-c('healthy')
-folder<-'_tmp/'
+cohort_name<-c('healthy', 'uc')
+parent_folder<-'../../datasets/gibson/'
 
 for (cohort in cohort_name)
 {
   for (taxa in taxa_rank)
   {
-  name<-paste(cohort,taxa, sep='_')
-  print(name)
-  print(paste(folder,name,'_counts.csv', sep=''))
-  
-  cts <- read.csv(paste(folder,name,'_counts.csv', sep=''), row.names = 1)
-  coldata <- read.csv(paste(folder,name,'_meta.csv', sep=''))
+	  folder<-paste(parent_folder,cohort,"differential_abundance/",sep='/')
+	  name<-paste(cohort,taxa, sep='_')
+	  print(name)
+	  print(paste(folder,name,'_counts.csv', sep=''))
 
-  coldata$window<- factor(coldata$window)
+	  cts <- read.csv(paste(folder,name,'_counts.csv', sep=''), row.names = 1)
+	  coldata <- read.csv(paste(folder,name,'_meta.csv', sep=''))
 
-  dds <- DESeqDataSetFromMatrix(countData =pwd cts,
-                              colData = coldata,
-                              design = ~window)
-                          
-  akeep <- rowSums(counts(dds)) >= 100 
-  dds <- dds[akeep,]
-  dds<- DESeq(dds)
-  
-  contrast <- c("window", "1", "0")
-  res<- results(dds, contrast=contrast)
-  resOrdered <- res[order(res$pvalue),]
-  write.csv(as.data.frame(resOrdered), file=paste(folder,name,'_window_1.csv', sep=''))
+	  coldata$window<- factor(coldata$window)
 
-  contrast <- c("window", "2", "1.5")
-  res<- results(dds, contrast=contrast)
-  resOrdered <- res[order(res$pvalue),]
-  write.csv(as.data.frame(resOrdered), file=paste(folder,name,'_window_2.csv', sep=''))
+	  dds <- DESeqDataSetFromMatrix(countData =cts,
+								  colData = coldata,
+								  design = ~window)
+
+	  akeep <- rowSums(counts(dds)) >= 100
+	  dds <- dds[akeep,]
+	  dds<- DESeq(dds)
+
+	  contrast <- c("window", "1", "0")
+	  res<- results(dds, contrast=contrast)
+	  resOrdered <- res[order(res$pvalue),]
+	  write.csv(as.data.frame(resOrdered), file=paste(folder,name,'_window_1.csv', sep=''))
+
+	  contrast <- c("window", "2", "1.5")
+	  res<- results(dds, contrast=contrast)
+	  resOrdered <- res[order(res$pvalue),]
+	  write.csv(as.data.frame(resOrdered), file=paste(folder,name,'_window_2.csv', sep=''))
 
 
-  contrast <- c("window", "3", "2.5")
-  res<- results(dds, contrast=contrast)
-  resOrdered <- res[order(res$pvalue),]
-  write.csv(as.data.frame(resOrdered), file=paste(folder,name,'_window_3.csv', sep=''))
-
+	  contrast <- c("window", "3", "2.5")
+	  res<- results(dds, contrast=contrast)
+	  resOrdered <- res[order(res$pvalue),]
+	  write.csv(as.data.frame(resOrdered), file=paste(folder,name,'_window_3.csv', sep=''))
   }
 }
 

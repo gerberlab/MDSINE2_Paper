@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
-source preprocess/settings.sh
+data_modality=$1
+if [ "${data_modality}" == "healthy" ]; then
+  source preprocess/settings_healthy.sh
+elif [ "${data_modality}" == "uc" ]; then
+  source preprocess/settings_uc.sh
+else
+  echo "data_modality argument is required and must be either 'healthy' or 'uc'. Exiting."
+  exit 1
+fi
 
 require_program python
 echo "Agglomerating ASVs into OTUs"
@@ -21,7 +29,7 @@ python preprocess/helpers/prefilter_asvs.py \
 
 
 echo "[*] Agglomerating ASVs into OTUs."
-for dataset in healthy replicates inoculum; do
+for dataset in ${data_modality} replicates inoculum; do
 	echo "[*] Extracting dataset: ${dataset}"
 	python preprocess/helpers/preprocess.py \
 			--hamming-distance 0 \
@@ -35,6 +43,6 @@ for dataset in healthy replicates inoculum; do
 			--sort-order "MIN_ASV_IDX" \
 			--naming-scheme "MIN_ASV_LABEL"
 done
-cp ${PREPROCESS_DIR}/gibson_healthy_agg.fa ${OTU_FASTA}
+cp ${PREPROCESS_DIR}/gibson_${data_modality}_agg.fa ${OTU_FASTA}
 
 echo "Done."

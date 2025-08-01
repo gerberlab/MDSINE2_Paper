@@ -1,12 +1,19 @@
 #!/bin/bash
 set -e
-source analysis/settings.sh
-
-mkdir -p ${NEGBIN_OUT_DIR}
+data_modality=$1
+if [ "${data_modality}" == "healthy" ]; then
+  source analysis/settings_healthy.sh
+elif [ "${data_modality}" == "uc" ]; then
+  source analysis/settings_uc.sh
+else
+  echo "data_modality argument is required and must be either 'healthy' or 'uc'. Exiting."
+  exit 1
+fi
 
 echo "[*] Learning negative binomial dispersion parameters..."
 echo "Output Directory: ${NEGBIN_OUT_DIR}"
 
+mkdir -p ${NEGBIN_OUT_DIR}
 mdsine2 infer-negbin \
     --input ${REPLICATE_DSET} \
     --seed 0 \

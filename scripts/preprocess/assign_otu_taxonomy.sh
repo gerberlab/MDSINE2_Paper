@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
-source preprocess/settings.sh
+data_modality=$1
+if [ "${data_modality}" == "healthy" ]; then
+  source preprocess/settings_healthy.sh
+elif [ "${data_modality}" == "uc" ]; then
+  source preprocess/settings_uc.sh
+else
+  echo "data_modality argument is required and must be either 'healthy' or 'uc'. Exiting."
+  exit 1
+fi
 
 require_program python
 echo "Assigning Taxonomy for OTUs..."
@@ -14,7 +22,7 @@ fi
 echo "[*] This script assumes each OTU is just an ASV. (Todo: deprecate OTU agglomeration.)"
 
 
-for dataset in healthy replicates inoculum; do
+for dataset in ${data_modality} replicates inoculum; do
 	python preprocess/helpers/assign_taxonomy_for_consensus_seqs.py \
 	--rdp-table $rdp_file \
 	--confidence-threshold 50 \

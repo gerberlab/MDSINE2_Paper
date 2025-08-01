@@ -225,7 +225,7 @@ def simulate_trajectories(synth: Synthetic,
                 dynamics=synth.model,
                 initial_conditions=init_abund.reshape(-1, 1),
                 dt=dt,
-                n_days=total_n_days + dt,
+                final_day=total_n_days,
                 processvar=processvar,
                 subsample=False
             )
@@ -236,13 +236,13 @@ def simulate_trajectories(synth: Synthetic,
 
             total_n_days = synth.times[-1]
             d_pre = pylab.integrate(dynamics=synth.model, initial_conditions=init_abund.reshape(-1, 1),
-                                    dt=dt, n_days=intervene_day, processvar=processvar,
+                                    dt=dt, final_day=intervene_day, processvar=processvar,
                                     subsample=False)
 
             new_abund = d_pre['X'][:, -1]
             new_abund[0] = pathogen_abund
             d_post = pylab.integrate(dynamics=synth.model, initial_conditions=new_abund.reshape(-1, 1),
-                                     dt=dt, n_days=total_n_days - intervene_day + dt, processvar=processvar,
+                                     dt=dt, final_day=total_n_days - intervene_day, processvar=processvar,
                                      subsample=False)
             # Merge the two results
             d = {
@@ -323,22 +323,21 @@ def main():
     # Plot the trajectories.
     for subj in synthetic.subjs:
         fig, ax = plt.subplots(figsize=(10, 8))
-        trajs = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
+        sims = raw_trajs[subj]['X']  # (n_taxa) x (n_times)
 
         times = raw_trajs[subj]['times']
-
-
-
-        print(times)
-        print(trajs)
-        for taxa_traj in trajs:
+        for taxa_traj in sims:
             ax.plot(times, taxa_traj, marker=None)
         ax.set_yscale('log')
 
         traj_plot_path = out_dir / f'{subj}.pdf'
         plt.savefig(traj_plot_path)
         plt.close(fig)
-        print(f"Saved trajectories to {traj_plot_path}")
+        print(f"Saved trajectory plots to {traj_plot_path}")
+
+        traj_value_path = out_dir / f'{subj}.npz'
+        np.savez(traj_value_path, sims=sims, times=times)
+        print(f"Saved trajectory values to {traj_value_path}")
 
     # Simulate noise levels.
     noise_levels = {
