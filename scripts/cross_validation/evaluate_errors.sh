@@ -55,33 +55,14 @@ evaluate_regression_subdir()
 }
 
 
-#evaluate_mdsine2_subdir "mdsine2-modules"
-#evaluate_mdsine2_subdir "mdsine2-nomodules"
-#evaluate_mdsine2_subdir "mdsine2-noqpcr-modules"
-#evaluate_mdsine2_subdir "mdsine2-noqpcr-nomodules"
-evaluate_mdsine2_subdir "mdsine2-modules-seed10"
-#evaluate_regression_subdir "regression_clv_elastic_net" "clv"
-#evaluate_regression_subdir "regression_glv_elastic_net" "glv-elastic-net"
-#evaluate_regression_subdir "regression_glv_ridge" "glv-ridge"
-#evaluate_regression_subdir "regression_glv-ra_elastic_net" "glv-ra-elastic-net"
-#evaluate_regression_subdir "regression_glv-ra_ridge" "glv-ra-ridge"
-#evaluate_regression_subdir "regression_lra_elastic_net" "lra"
+evaluate_mdsine2_subdir "mdsine2-modules"
+evaluate_mdsine2_subdir "mdsine2-nomodules"
+evaluate_mdsine2_subdir "mdsine2-noqpcr-modules"
+evaluate_mdsine2_subdir "mdsine2-noqpcr-nomodules"
+evaluate_regression_subdir "regression_clv_elastic_net" "clv"
+evaluate_regression_subdir "regression_glv_elastic_net" "glv-elastic-net"
+evaluate_regression_subdir "regression_glv_ridge" "glv-ridge"
+evaluate_regression_subdir "regression_glv-ra_elastic_net" "glv-ra-elastic-net"
+evaluate_regression_subdir "regression_glv-ra_ridge" "glv-ra-ridge"
+evaluate_regression_subdir "regression_lra_elastic_net" "lra"
 
-
-#export PYTHONPATH="${PYTHONPATH}:${CLV_DIR}"
-#echo "[*] Evaluating cross-validation runs."
-#python cross_validation/helpers/evaluate_errors.py \
-#--study ${DATASET_PKL} \
-#--regression_inputs_dir ${REGRESSION_DATASET_DIR} \
-#--mdsine_outdir ${OUTPUT_DIR}/mdsine2-modules \
-#--mdsine_nomodule_outdir ${OUTPUT_DIR}/mdsine2-nomodules \
-#--clv_elastic_outdir ${OUTPUT_DIR}/regression_clv_elastic_net \
-#--glv_elastic_outdir ${OUTPUT_DIR}/regression_glv_elastic_net \
-#--glv_ra_elastic_outdir ${OUTPUT_DIR}/regression_glv-ra_elastic_net \
-#--glv_ra_ridge_outdir ${OUTPUT_DIR}/regression_glv-ra_ridge \
-#--glv_ridge_outdir ${OUTPUT_DIR}/regression_glv_ridge \
-#--out_dir ${OUTPUT_DIR} \
-#--lra_elastic_outdir ${OUTPUT_DIR}/regression_lra_elastic_net \
-#--subsample_every 100 \
-#--healthy_or_uc "${DATA_MODALITY}" \
-#--recompute_cache \
