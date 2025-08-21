@@ -7,7 +7,7 @@ excluded_subj=$1
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/interaction_var_4/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/other_priors/interaction_var_4/${excluded_subj}
 mkdir -p ${inference_out_dir}
 
 tau_rescale=1e4

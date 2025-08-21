@@ -7,7 +7,7 @@ excluded_subj=$1
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/edge_density_2/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/other_priors/edge_density_2/${excluded_subj}
 mkdir -p ${inference_out_dir}
 
 beta_b=5.0

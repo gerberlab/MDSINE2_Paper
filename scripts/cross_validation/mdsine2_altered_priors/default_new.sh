@@ -7,7 +7,7 @@ excluded_subj=$1
 
 
 seed=$((excluded_subj * 100))
-inference_out_dir=$OUTPUT_DIR/default_new/${excluded_subj}
+inference_out_dir=$OUTPUT_DIR/other_priors/default_new/${excluded_subj}
 mkdir -p ${inference_out_dir}
 
 
