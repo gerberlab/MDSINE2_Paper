@@ -19,11 +19,6 @@ brew install brewsci/bio/pplacer
 
 ## Step 1: Run DADA2
 
-- Specify how to obtain the reads. Should we host it somewhere on the web?
-
-- TODO update the read file pathing for the following script.
-- TODO specify that the user needs to run RDP separately.
-
 ```bash
 bash preprocess/run_dada2.sh
 ```
@@ -52,8 +47,9 @@ bash preprocess/phylo_placement_otus.sh healthy
 
 ## Step 5: Assign taxonomic labels to OTUs.
 
-- todo specify that RDP needs to be run and outputs downloaded to the correct folder.
-- does RDP have a web API? (REST/AJAX?)
+In general, RDP needs to be run separately on the input sequences, 
+located in metadata_asv/prefiltered_asvs.fa.
+In this repository, we've included pre-generated RDP outputs. Simply run the script below:
 
 ```bash
 bash preprocess/assign_otu_taxonomy.sh healthy
