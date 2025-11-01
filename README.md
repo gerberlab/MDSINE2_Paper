@@ -25,6 +25,11 @@ git clone --recurse-submodules https://github.com/gerberlab/MDSINE2_Paper.git
 
 # Instructions
 
+This repo requires the usage of two tools, inaddition to MDSINE2:
+
+- HMMER (http://hmmer.org/)
+- PPlacer (https://matsen.fhcrc.org/pplacer/)
+
 For details about individual steps in the analysis, refer to the primary internal README: [scripts/README.md](scripts/README.md)
 
 As noted in that document, all scripts should be run from the `scripts` directory.
